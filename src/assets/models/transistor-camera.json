@@ -1,0 +1,153 @@
+{
+  "fov": 30.0,
+  "position": [
+    -1.6885,
+    1.1787,
+    3.8044
+  ],
+  "target": [
+    -0.74,
+    -0.02,
+    -0.0
+  ],
+  "desktop": {
+    "fov": 30.0,
+    "aspect": 1.6,
+    "position": [
+      -1.6885,
+      1.1787,
+      3.8044
+    ],
+    "target": [
+      -0.74,
+      -0.02,
+      -0.0
+    ],
+    "posterSize": [
+      1600,
+      1000
+    ],
+    "anchors": {
+      "source": [
+        0.6201,
+        0.3693
+      ],
+      "gate": [
+        0.7436,
+        0.3579
+      ],
+      "drain": [
+        0.8609,
+        0.3471
+      ],
+      "channel": [
+        0.7304,
+        0.6972
+      ]
+    }
+  },
+  "mobile": {
+    "fov": 38.0,
+    "aspect": 0.6429,
+    "position": [
+      -0.8305,
+      1.5579,
+      3.9071
+    ],
+    "target": [
+      0.0,
+      0.26,
+      -0.0
+    ],
+    "posterSize": [
+      900,
+      1400
+    ],
+    "anchors": {
+      "source": [
+        0.2914,
+        0.5239
+      ],
+      "gate": [
+        0.5427,
+        0.513
+      ],
+      "drain": [
+        0.7831,
+        0.5025
+      ],
+      "channel": [
+        0.5402,
+        0.7675
+      ]
+    }
+  },
+  "orbitDeg": 5.0,
+  "environment": "src/assets/env/studio-1k.hdr",
+  "lightsNote": "Lit by studio-1k.hdr alone, like the hero (see hero-camera.json); no punctual lights.",
+  "toneMapping": "NeutralToneMapping",
+  "viewTransform": "Khronos PBR Neutral",
+  "exposure": 1.1892,
+  "environmentIntensity": 1.25,
+  "outputColorSpace": "srgb",
+  "anchors": {
+    "source": [
+      -0.43,
+      0.335,
+      0.35
+    ],
+    "gate": [
+      0.0,
+      0.335,
+      0.35
+    ],
+    "drain": [
+      0.43,
+      0.335,
+      0.35
+    ],
+    "channel": [
+      0.0,
+      -0.42,
+      0.35
+    ]
+  },
+  "flow": {
+    "markers": 16,
+    "queued": 5,
+    "gap": 0.042,
+    "radius": 0.015,
+    "speed": 0.16,
+    "barrierX": -0.205,
+    "on": "#e0a45c",
+    "off": "#6d8db0",
+    "onIntensity": 2.2,
+    "offIntensity": 0.9,
+    "channelOn": "#dcd6ca",
+    "channelOnIntensity": 1.4,
+    "path": [
+      [
+        -0.43,
+        0.335,
+        0.354
+      ],
+      [
+        -0.43,
+        -0.018,
+        0.354
+      ],
+      [
+        0.43,
+        -0.018,
+        0.354
+      ],
+      [
+        0.43,
+        0.335,
+        0.354
+      ]
+    ]
+  },
+  "triangles": 2458,
+  "units": "metres, glTF Y-up, device centred at x = 0, cut face at z = +0.35 (Three.js), not to scale"
+}

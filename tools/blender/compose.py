@@ -2,6 +2,7 @@
 
   python3 compose.py poster in.png out.webp #0b0e12 cx cy radius glowhex alpha
   python3 compose.py sheet out.webp cols "label|label|..." tile1.png tile2.png ...
+  python3 compose.py alpha in.png out.webp     # keep the alpha channel (page background shows through)
 """
 import sys
 
@@ -45,6 +46,12 @@ def poster(src, dst, bg, cx, cy, radius, color, alpha, quality=86):
     print(dst, img.size)
 
 
+def alpha(src, dst, quality=86):
+    img = Image.open(src).convert("RGBA")
+    img.save(dst, "WEBP", quality=int(quality), alpha_quality=90, method=6)
+    print(dst, img.size)
+
+
 def sheet(dst, cols, labels, *tiles):
     cols = int(cols)
     labels = labels.split("|")
@@ -63,4 +70,4 @@ def sheet(dst, cols, labels, *tiles):
 
 
 if __name__ == "__main__":
-    {"poster": poster, "sheet": sheet}[sys.argv[1]](*sys.argv[2:])
+    {"poster": poster, "sheet": sheet, "alpha": alpha}[sys.argv[1]](*sys.argv[2:])
