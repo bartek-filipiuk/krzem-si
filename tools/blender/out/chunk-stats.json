@@ -1,0 +1,10 @@
+{
+  "seed": 14,
+  "high_tris": 1310720,
+  "runtime_tris": {
+    "2k": 56000,
+    "1k": 22000
+  },
+  "patch_tris": 23998,
+  "entry_piece": 13
+}

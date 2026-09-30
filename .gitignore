@@ -13,3 +13,4 @@ krzem-si-source.zip
 node_modules/
 dist/
 test-results/
+.claude/worktrees/

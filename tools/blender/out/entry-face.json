@@ -1,0 +1,13 @@
+{
+  "center": [
+    0.2777,
+    -0.057,
+    0.2389
+  ],
+  "normal": [
+    0.6953,
+    -0.2893,
+    0.6579
+  ],
+  "note": "object space of the GLB (before chunkRotationY); centroid and outward normal of the fracture face the camera enters"
+}
