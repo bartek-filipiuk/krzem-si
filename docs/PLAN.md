@@ -160,3 +160,29 @@ Do NOT take (brief overrides the mood board):
 
 ## Open items (owner)
 - None blocking. Physical device tests remain owner tasks (Stage D checklist).
+
+## Asset contract between A2 (Blender) and A3 (runtime)
+
+Units: metres, glTF Y-up, chunk centred at origin, longest dimension 1.0 m.
+
+| Path | Producer | Content |
+|---|---|---|
+| `src/assets/models/silicon-chunk-2k.glb` | A2 | runtime chunk, <= 60k tris, embedded 2K WebP/PNG textures (baseColor, normal, metallicRoughness, optional occlusion) |
+| `src/assets/models/silicon-chunk-1k.glb` | A2 | same mesh (or a 30k LOD), 1K textures, for balanced/mobile |
+| `src/assets/env/studio-1k.hdr` | A2 | equirect studio HDR, 1024x512, RGBE |
+| `src/assets/models/hero-camera.json` | A2 | `{ "fov": <vertical deg>, "position": [x,y,z], "target": [x,y,z], "desktop": {...}, "mobile": {...}, "lights": [{ "type": "key|fill|rim", "position": [..], "color": "#rrggbb", "intensity": n }], "exposure": n, "chunkRotationY": rad }` at hero progress 0 |
+| `src/assets/posters/hero-desktop.webp` (1600x1000) and `hero-mobile.webp` (900x1400) | A2 | Cycles render from exactly the camera above, same lights + HDR, graphite background matching CSS `#0b0e12` |
+| `src/assets/models/fracture-face.glb` | A2 | close-up high-detail fracture face for the entry transition, or a note in the manifest that the 2K chunk face is dense enough (measured) |
+| `tools/blender/*.py`, `tools/blender/src/*.blend` (if < 20 MiB) | A2 | reproducible pipeline, seeds, commands in `tools/README.md` |
+| `docs/ASSET_MANIFEST.md` | A2 starts, A3 appends fonts/libs | per brief §5 |
+
+A3 must load these paths; until they exist, A3 develops against the v0.1 procedural mesh but
+never ships or screenshots that as final.
+
+Ports: 4173 is taken on this machine by another project. Dev/preview use 4174 (`--port`),
+QA scripts read `KRZEM_TEST_URL`.
+
+GPU for headless QA on this machine (from A1): Chromium with `--use-gl=angle --use-angle=gl-egl
+--ignore-gpu-blocklist` and `__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json`
+renders on the RTX 3070; without the variable it is the AMD Renoir iGPU (useful as the
+"integrated GPU" measurement). See `docs/qa/before/capture.py`.
