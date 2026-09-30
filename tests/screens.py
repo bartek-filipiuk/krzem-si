@@ -5,6 +5,7 @@ Serve the build first:  npm run build && npm run preview      (http://127.0.0.1:
     python tests/screens.py                       # everything on the NVIDIA GPU
     python tests/screens.py --gpu amd shots perf  # integrated AMD GPU: balanced shots + timings
 Steps: shots, board, handover, perf, transfer, record.  Output: docs/qa/after/
+The board also takes the AMD rows when they exist: run `--gpu amd shots perf` first, then the NVIDIA run.
 """
 from __future__ import annotations
 import argparse
@@ -69,27 +70,44 @@ def shots(browser, gpu, profiles):
     return log
 
 
-def board(gpu):
-    prefix = 'hero-amd-' if gpu == 'amd' else 'hero-'
-    rows = []
-    for profile in (['balanced'] if gpu == 'amd' else ['cinematic', 'balanced', 'calm']):
+BOARD_ROWS = [('cinematic · RTX 3070', 'hero-cinematic'), ('balanced · RTX 3070', 'hero-balanced'),
+              ('balanced · AMD iGPU', 'hero-amd-balanced'), ('calm · poster', 'hero-calm')]
+
+
+def board():
+    """hero-board.webp: every profile/GPU row captured so far (run the amd shots first to include it)."""
+    rows, h, cell = [], 250, 368
+    for label, prefix in BOARD_ROWS:
         for name in VIEWPORTS:
-            tiles = [Image.open(OUT / f'{prefix}{profile}-{name}-{int(p * 100):03d}.webp') for p in PROGRESS]
-            h = 250
-            rows.append((f'{profile} / {name}', [t.resize((round(t.width * h / t.height), h)) for t in tiles]))
-    width = max(sum(t.width for t in tiles) + 8 * len(tiles) for _, tiles in rows) + 150
-    img = Image.new('RGB', (width, len(rows) * 262 + 30), (11, 14, 18))
+            files = [OUT / f'{prefix}-{name}-{int(p * 100):03d}.webp' for p in PROGRESS]
+            if all(f.exists() for f in files):
+                rows.append((f'{label}\n{name}', [(t := Image.open(f)).resize((round(t.width * h / t.height), h)) for f in files]))
+    img = Image.new('RGB', (190 + cell * len(PROGRESS), len(rows) * (h + 12) + 30), (11, 14, 18))
     draw = ImageDraw.Draw(img)
     for i, p in enumerate(PROGRESS):
-        draw.text((150 + i * 368, 8), f'hero progress {p:.2f}', fill=(200, 200, 200))
+        draw.text((190 + i * cell, 8), f'hero progress {p:.2f}', fill=(200, 200, 200))
     for r, (label, tiles) in enumerate(rows):
-        y = 30 + r * 262
-        draw.text((8, y + 110), label, fill=(210, 190, 150))
-        x = 150
-        for t in tiles:
-            img.paste(t, (x, y))
-            x += (360 if t.width > 200 else t.width) + 8
-    img.save(OUT / f'{prefix}board.webp', 'WEBP', quality=80, method=6)
+        y = 30 + r * (h + 12)
+        draw.multiline_text((8, y + 110), label, fill=(210, 190, 150))
+        for i, t in enumerate(tiles):
+            img.paste(t, (190 + i * cell, y))
+    img.save(OUT / 'hero-board.webp', 'WEBP', quality=80, method=6)
+
+
+def before_after():
+    """before-after-hero.webp: v0.1 hero (docs/qa/before) next to the new cinematic hero at progress 0."""
+    before = ROOT / 'docs/qa/before'
+    pairs = [('v0.1 desktop', before / 'poczatek-desktop.webp'), ('A3 desktop', OUT / 'hero-cinematic-desktop-000.webp'),
+             ('v0.1 mobile', before / 'poczatek-mobile.webp'), ('A3 mobile', OUT / 'hero-cinematic-mobile-000.webp')]
+    h = 600
+    tiles = [(label, (t := Image.open(f).convert('RGB')).resize((round(t.width * h / t.height), h))) for label, f in pairs]
+    img = Image.new('RGB', (sum(t.width for _, t in tiles) + 12 * (len(tiles) + 1), h + 44), (11, 14, 18))
+    draw, x = ImageDraw.Draw(img), 12
+    for label, t in tiles:
+        draw.text((x, 12), label, fill=(210, 190, 150))
+        img.paste(t, (x, 32))
+        x += t.width + 12
+    img.save(OUT / 'before-after-hero.webp', 'WEBP', quality=82, method=6)
 
 
 def handover(browser):
@@ -143,6 +161,13 @@ SCROLL = '''async ([segments])=>{const hero=document.getElementById('poczatek'),
     await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,top+(end-top)*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
 
 
+def stats(xs):
+    xs = sorted(xs)
+    return {'frames': len(xs), 'median_ms': round(statistics.median(xs), 2) if xs else None,
+            'p95_ms': round(xs[int(.95 * len(xs))], 2) if xs else None,
+            'max_ms': round(xs[-1], 1) if xs else None, 'over_50ms': sum(x > 50 for x in xs)}
+
+
 def perf(browser, gpu, profiles):
     out = {}
     for profile in profiles:
@@ -161,11 +186,6 @@ def perf(browser, gpu, profiles):
             cpu = page.evaluate('krzemDebug.cpu')
             info = page.evaluate(INFO)
 
-            def stats(xs):
-                xs = sorted(xs)
-                return {'frames': len(xs), 'median_ms': round(statistics.median(xs), 2) if xs else None,
-                        'p95_ms': round(xs[int(.95 * len(xs))], 2) if xs else None,
-                        'max_ms': round(xs[-1], 1) if xs else None, 'over_50ms': sum(x > 50 for x in xs)}
             out[f'{profile}/{name}'] = {'idle_hero': stats(idle), 'scroll_entry': stats(moving),
                                         'cpu_frame_median_ms': round(statistics.median(cpu), 3) if cpu else None,
                                         'gl': info['gl'], 'buffer': info['gpu']['buffer'] if info['gpu'] else None,
@@ -175,17 +195,18 @@ def perf(browser, gpu, profiles):
 
 
 def transfer(browser):
-    """Bytes per request as a static host with precompressed .br serves them (dist/ sizes)."""
+    """Bytes per request from dist/: *_kib as a static host with the precompressed .br variants serves
+    them (WebP has none), *_raw_kib uncompressed. vite preview itself does not send brotli."""
     dist = ROOT / 'dist'
 
-    def size(url):
+    def size(url, raw=False):
         path = dist / urlparse(url).path.lstrip('/')
         if path.is_dir():
             path = path / 'index.html'
         if not path.exists():
             return 0
         br = Path(str(path) + '.br')
-        return (br if br.exists() else path).stat().st_size
+        return (br if br.exists() and not raw else path).stat().st_size
     out = {}
     for name, ctx in VIEWPORTS.items():
         page = browser.new_page(**ctx)
@@ -204,10 +225,12 @@ def transfer(browser):
           new PerformanceObserver(l=>{const e=l.getEntries().at(-1);lcp={ms:Math.round(e.startTime),element:e.element?.tagName+'.'+(e.element?.className||e.element?.parentElement?.className)}}).observe({type:'largest-contentful-paint',buffered:true});
           setTimeout(()=>r({cls:Math.round(cls*1000)/1000,lcp}),200)})''')
         kib = lambda urls: round(sum(size(u) for u in set(urls)) / 1024, 1)
+        raw = lambda urls: round(sum(size(u, True) for u in set(urls)) / 1024, 1)
         out[name] = {
-            'first_view_kib': kib(first), 'first_view': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(first)},
-            'hero_interactive_kib': kib(live), 'hero_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(live)},
+            'first_view_kib': kib(first), 'first_view_raw_kib': raw(first), 'first_view': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(first)},
+            'hero_interactive_kib': kib(live), 'hero_interactive_raw_kib': raw(live), 'hero_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(live)},
             'after_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(later)},
+            'after_interactive_kib': kib(later), 'after_interactive_raw_kib': raw(later),
             'lab_vitals': vitals,
         }
         page.close()
@@ -215,8 +238,10 @@ def transfer(browser):
 
 
 def record(p, gpu):
-    """Desktop ~40 s and mobile ~15 s: hold, parallax, slow entry, fling back, turn mid-move."""
+    """Desktop ~40 s and mobile ~15 s: hold, parallax, slow entry, fling back, turn mid-move.
+    Returns the rendered-frame intervals measured during the recording (video capture included)."""
     browser = launch(p, gpu)
+    measured = {}
     plans = {
         'desktop': (VIEWPORTS['desktop'], [[0, 0, 3000], [0, .6, 9000], [.6, .35, 1500], [.35, 1, 9000], [1, 1, 2500], [1, .1, 1200], [.1, .75, 3000], [.75, 1, 4000], [1, 1, 3000]]),
         'mobile': (VIEWPORTS['mobile'], [[0, 0, 1500], [0, 1, 7000], [1, .3, 1000], [.3, 1, 3500], [1, 1, 1500]]),
@@ -226,20 +251,24 @@ def record(p, gpu):
             size = ctx['viewport']
             context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=size)
             page = context.new_page()
-            page.goto(URL, wait_until='networkidle')
+            page.goto(URL + '?debug', wait_until='networkidle')
             page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
             page.wait_for_timeout(1500)
+            page.evaluate('krzemDebug.reset()')
             if name == 'desktop':
                 for x, y in [(900, 400), (1100, 600), (700, 500), (1000, 450)]:
                     page.mouse.move(x, y, steps=40)
                     page.wait_for_timeout(400)
             page.evaluate(SCROLL, [segments])
+            measured[name] = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                              'seconds': round(sum(ms for _, _, ms in segments) / 1000, 1)}
             video = page.video.path()
             context.close()
             dst = OUT / f'hero-scroll-{name}.webm'
             subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
                             '-crf', '42', '-row-mt', '1', '-an', str(dst)], check=True)
     browser.close()
+    return measured
 
 
 if __name__ == '__main__':
@@ -264,8 +293,10 @@ if __name__ == '__main__':
             log['transfer'] = transfer(browser)
         browser.close()
         if 'board' in a.steps or 'shots' in a.steps:
-            board(a.gpu)
+            board()
+            if (OUT / 'hero-cinematic-desktop-000.webp').exists():
+                before_after()
         if 'record' in a.steps and a.gpu == 'nvidia':
-            record(p, a.gpu)
+            log['record'] = record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
     print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer')}, indent=1)[:6000])

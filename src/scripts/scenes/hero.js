@@ -22,6 +22,8 @@ const URLS = {
   // High-detail patch of the entry face (A2): same object space, denser UVs and its own maps.
   face: new URL('../../assets/models/fracture-face.glb', import.meta.url).href,
 };
+/** Exposure factor at the end of the approach (see render()). */
+const ENTRY_EXPOSURE = .6;
 /** One turn every 90 s on the ambient clock. */
 export const TURN_SECONDS = 90;
 const TONE = { AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, NoToneMapping };
@@ -68,11 +70,11 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
   scene.add(pivot);
   chunk.updateMatrixWorld(true);
   const face = entryFace(chunk);
-  face.approach = approachDirection(face.normal);
   setAnisotropy(chunk, anisotropy);
 
   renderer.toneMapping = TONE[config.toneMapping] ?? NeutralToneMapping;
-  renderer.toneMappingExposure = config.exposure ?? 1;
+  const exposure = config.exposure ?? 1;
+  renderer.toneMappingExposure = exposure;
 
   const rest = config.chunkRotationY ?? 0;
   const lightYaw = config.entryFace?.lightRotationY ?? rest;
@@ -117,6 +119,12 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       const theta = rest + state.time * 2 * Math.PI / TURN_SECONDS;
       if (!detail && (state.hero > .02 || ++frames > 20)) loadDetail();
       const s = entryPhases(state.hero).camera;
+      // The entry face looks almost straight into the key softbox: at hero exposure the close-up
+      // clips to white and the grain reads as a honeycomb. The camera therefore ends on the face
+      // normal (no bias towards the key's mirror direction) and the exposure eases down along the
+      // approach: x1 at s = 0, so the poster match is untouched, ENTRY_EXPOSURE once the face fills
+      // the frame. Measured choice, see docs/qa/PREMIUM_REPORT.md.
+      renderer.toneMappingExposure = exposure * (1 - (1 - ENTRY_EXPOSURE) * smoothstep(.25, 1, s));
       const pose = cameraPose({ s, theta, hero, face, parallax: state.parallax });
       pivot.rotation.y = theta;
       // During the final approach the studio turns into the entry face's own light frame
@@ -137,22 +145,6 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
 }
 
 const wrap = a => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
-
-/**
- * End the approach slightly oblique: halfway between the face normal and the mirror direction
- * of the key softbox (in the entry face's light frame), so the fracture face carries a soft specular
- * gradient instead of reflecting the dark studio behind the camera.
- */
-function approachDirection(normal) {
-  const key = (config.lights ?? []).find(l => l.name === 'key') ?? (config.lights ?? []).find(l => l.type === 'key');
-  if (!key) return normal;
-  const yaw = config.entryFace?.lightRotationY ?? config.chunkRotationY ?? 0;
-  const n = normalize(normal), l = normalize(rotateY(key.position, -yaw));
-  const d = n[0] * l[0] + n[1] * l[1] + n[2] * l[2];
-  if (d <= .05) return normal;
-  const mirror = n.map((v, i) => 2 * d * v - l[i]);
-  return normalize(n.map((v, i) => v + (mirror[i] - v) * .45));
-}
 
 function setAnisotropy(root, value) {
   root.traverse(node => {
