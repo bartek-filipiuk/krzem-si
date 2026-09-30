@@ -170,7 +170,7 @@ async function start(next) {
     // The text layer and the posters have painted already. GPU code is a separate chunk.
     const { createGpuLayer } = await import('./rendering/renderer.js');
     if (token !== generation) return;
-    const created = await createGpuLayer({ canvas, profile, framing, signal: abort.signal, invalidate: () => { dirty = true; schedule(); } });
+    const created = await createGpuLayer({ canvas, profile, framing, signal: abort.signal, gpuTimer: debug, invalidate: () => { dirty = true; schedule(); } });
     if (token !== generation || destroyed) { created.dispose(); return; }
     layer = created; liveAt = 0; lastFrame = 0;
     layer.resize(innerWidth, innerHeight, { profile, framing });
@@ -219,7 +219,8 @@ window.addEventListener('pageshow', () => { if (!destroyed) { lastFrame = 0; con
 if (debug) Object.defineProperty(window, 'krzemDebug', { get: () => ({
   ...story, profile, reason, framing, mode: root.dataset.motion, rafActive: !!raf, live: !!liveAt, ambient, parallax,
   window: controller.last, intervals: intervals.map(([dt]) => dt), cpu: intervals.map(([, c]) => c),
-  reset() { intervals.length = 0; }, gpu: layer?.diagnostics ?? null,
+  gpuMs: layer?.gpuTimes ? [...layer.gpuTimes] : null,
+  reset() { intervals.length = 0; if (layer?.gpuTimes) layer.gpuTimes.length = 0; }, gpu: layer?.diagnostics ?? null,
 }) });
 
 root.dataset.framing = framing; root.dataset.compact = String(isCompact(innerWidth, innerHeight));

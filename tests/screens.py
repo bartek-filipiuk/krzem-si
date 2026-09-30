@@ -183,10 +183,11 @@ def perf(browser, gpu, profiles):
             # hero -> material over 8 s, hold, back halfway, forward again
             page.evaluate(SCROLL, [[[0, 1, 8000], [1, 1, 1000], [1, .4, 2500], [.4, 1, 2500]]])
             moving = page.evaluate('krzemDebug.intervals')
+            gpu_ms = page.evaluate('krzemDebug.gpuMs') or []
             cpu = page.evaluate('krzemDebug.cpu')
             info = page.evaluate(INFO)
 
-            out[f'{profile}/{name}'] = {'idle_hero': stats(idle), 'scroll_entry': stats(moving),
+            out[f'{profile}/{name}'] = {'idle_hero': stats(idle), 'scroll_entry': stats(moving), 'gpu_time_scroll': stats(gpu_ms),
                                         'cpu_frame_median_ms': round(statistics.median(cpu), 3) if cpu else None,
                                         'gl': info['gl'], 'buffer': info['gpu']['buffer'] if info['gpu'] else None,
                                         'pixel_ratio': info['gpu']['pixelRatio'] if info['gpu'] else None}
@@ -261,6 +262,7 @@ def record(p, gpu):
                     page.wait_for_timeout(400)
             page.evaluate(SCROLL, [segments])
             measured[name] = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                              'gpu_time': stats(page.evaluate('krzemDebug.gpuMs') or []),
                               'seconds': round(sum(ms for _, _, ms in segments) / 1000, 1)}
             video = page.video.path()
             context.close()
