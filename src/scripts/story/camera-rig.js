@@ -26,7 +26,7 @@ function rotateAxis(v, k, a) {
 
 export const PARALLAX_DEG = 2;
 /** Distance from the entry face at s = 1, in metres (chunk longest side = 1 m). */
-export const END_DISTANCE = .16;
+export const END_DISTANCE = .26;
 
 /**
  * Framing is layout, never quality. The camera variant follows the same width rule as the
@@ -65,7 +65,7 @@ export function heroPose(config, framing, aspect) {
 export function cameraPose({ s = 0, theta = 0, hero, face, parallax = [0, 0] }) {
   s = clamp(s);
   const heroPos = rotateY(hero.position, -theta), heroTarget = rotateY(hero.target, -theta);
-  const n = normalize(face.normal);
+  const n = normalize(face.approach ?? face.normal);
   const d0 = normalize(sub(heroPos, heroTarget)), r0 = length(sub(heroPos, heroTarget));
   const orbit = smoothstep(0, .62, s), slide = smoothstep(.08, .92, s), dolly = smoothstep(.2, 1, s);
   // The further the face points away (w: 0 facing the camera, 1 opposite), the higher the camera

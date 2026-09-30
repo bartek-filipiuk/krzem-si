@@ -13,12 +13,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import config from '../../assets/models/hero-camera.json';
 import { cameraPose, heroPose, normalize, rotateY } from '../story/camera-rig.js';
-import { entryPhases } from '../story/timeline.js';
+import { entryPhases, smoothstep } from '../story/timeline.js';
 
 const URLS = {
   '2k': new URL('../../assets/models/silicon-chunk-2k.glb', import.meta.url).href,
   '1k': new URL('../../assets/models/silicon-chunk-1k.glb', import.meta.url).href,
   env: new URL('../../assets/env/studio-1k.hdr', import.meta.url).href,
+  // High-detail patch of the entry face (A2): same object space, denser UVs and its own maps.
+  face: new URL('../../assets/models/fracture-face.glb', import.meta.url).href,
 };
 /** One turn every 90 s on the ambient clock. */
 export const TURN_SECONDS = 90;
@@ -45,7 +47,7 @@ function entryFace(chunk) {
   return { point: hit.point.toArray(), normal: hit.face.normal.clone().transformDirection(hit.object.matrixWorld).toArray() };
 }
 
-export async function createHero({ renderer, assets, textures, anisotropy, signal }) {
+export async function createHero({ renderer, assets, textures, anisotropy, signal, invalidate }) {
   const gltfLoader = new GLTFLoader();
   const glbUrl = URLS[textures];
   const [gltf, hdr] = await Promise.all([
@@ -66,15 +68,38 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
   scene.add(pivot);
   chunk.updateMatrixWorld(true);
   const face = entryFace(chunk);
+  face.approach = approachDirection(face.normal);
   setAnisotropy(chunk, anisotropy);
 
   renderer.toneMapping = TONE[config.toneMapping] ?? NeutralToneMapping;
   renderer.toneMappingExposure = config.exposure ?? 1;
 
+  const rest = config.chunkRotationY ?? 0;
   const camera = new PerspectiveCamera(config.fov, 1, .01, 40);
   let hero = heroPose(config, 'desktop', 1.6);
   await renderer.compileAsync(scene, camera);
   signal?.throwIfAborted();
+
+  // The close-up patch is not needed for the first interactive frame (budget), so it loads once
+  // the reader starts scrolling or after ~3 s. Until it arrives the 2K/1K chunk carries the entry.
+  let detail = null, frames = 0;
+  function loadDetail() {
+    detail = assets.acquire(URLS.face, buffer => gltfLoader.parseAsync(buffer, ''), signal).then(async patch => {
+      patch.scene.traverse(node => {
+        if (!node.material) return;
+        // Coplanar with the chunk's own face: pull it forward in depth instead of z-fighting.
+        Object.assign(node.material, { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+      });
+      setAnisotropy(patch.scene, anisotropy);
+      // Upload and compile off the critical frame, so its arrival does not stall the turn.
+      patch.scene.traverse(node => { for (const v of Object.values(node.material ?? {})) if (v?.isTexture) renderer.initTexture(v); });
+      await renderer.compileAsync(patch.scene, camera, scene);
+      signal?.throwIfAborted();
+      pivot.add(patch.scene);
+      invalidate?.();
+      return patch;
+    }).catch(error => { if (error?.name !== 'AbortError') console.warn('[krzem.si] entry detail unavailable:', error); });
+  }
 
   return {
     resize(width, height, framing) {
@@ -83,12 +108,17 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       camera.fov = hero.fov;
       camera.updateProjectionMatrix();
     },
-    setAnisotropy(value) { setAnisotropy(chunk, value); },
+    setAnisotropy(value) { setAnisotropy(pivot, value); },
     /** state: { hero: hero progress, time: ambient seconds, parallax: [x, y] } */
     render(state) {
-      const theta = (config.chunkRotationY ?? 0) + state.time * 2 * Math.PI / TURN_SECONDS;
-      const pose = cameraPose({ s: entryPhases(state.hero).camera, theta, hero, face, parallax: state.parallax });
+      const theta = rest + state.time * 2 * Math.PI / TURN_SECONDS;
+      if (!detail && (state.hero > .02 || ++frames > 180)) loadDetail();
+      const s = entryPhases(state.hero).camera;
+      const pose = cameraPose({ s, theta, hero, face, parallax: state.parallax });
       pivot.rotation.y = theta;
+      // During the final approach the studio turns with the chunk, so the close-up is lit the
+      // same way whatever angle the ambient turn had reached (the turn is at rest by then).
+      scene.environmentRotation.y = wrap(theta - rest) * smoothstep(.35, .85, s);
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
       renderer.render(scene, camera);
@@ -96,9 +126,27 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
     dispose() {
       environment.dispose();
       assets.release(glbUrl);
+      if (detail) assets.release(URLS.face);
     },
     face,
   };
+}
+
+const wrap = a => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
+
+/**
+ * End the approach slightly oblique: halfway between the face normal and the mirror direction
+ * of the key softbox (in the chunk's rest frame), so the fracture face carries a soft specular
+ * gradient instead of reflecting the dark studio behind the camera.
+ */
+function approachDirection(normal) {
+  const key = (config.lights ?? []).find(l => l.name === 'key') ?? (config.lights ?? []).find(l => l.type === 'key');
+  if (!key) return normal;
+  const n = normalize(normal), l = normalize(rotateY(key.position, -(config.chunkRotationY ?? 0)));
+  const d = n[0] * l[0] + n[1] * l[1] + n[2] * l[2];
+  if (d <= .05) return normal;
+  const mirror = n.map((v, i) => 2 * d * v - l[i]);
+  return normalize(n.map((v, i) => v + (mirror[i] - v) * .45));
 }
 
 function setAnisotropy(root, value) {

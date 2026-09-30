@@ -10,7 +10,7 @@ import { entryPhases } from '../story/timeline.js';
 import { createHero } from '../scenes/hero.js';
 import { createLegacyScenes } from '../scenes/legacy.js';
 
-export async function createGpuLayer({ canvas, profile, framing, signal }) {
+export async function createGpuLayer({ canvas, profile, framing, signal, invalidate }) {
   const settings = PROFILES[profile];
   // Throws when WebGL 2 is unavailable; the caller falls back to posters.
   const renderer = new WebGLRenderer({ canvas, antialias: settings.antialias, alpha: true, powerPreference: 'high-performance' });
@@ -18,7 +18,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal }) {
   const assets = createAssetManager();
   let hero = null, legacy = null, current = { profile, framing, width: 1, height: 1 };
   try {
-    hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal });
+    hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
     hero?.dispose(); assets.dispose(); renderer.dispose();

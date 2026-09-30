@@ -170,7 +170,7 @@ async function start(next) {
     // The text layer and the posters have painted already. GPU code is a separate chunk.
     const { createGpuLayer } = await import('./rendering/renderer.js');
     if (token !== generation) return;
-    const created = await createGpuLayer({ canvas, profile, framing, signal: abort.signal });
+    const created = await createGpuLayer({ canvas, profile, framing, signal: abort.signal, invalidate: () => { dirty = true; schedule(); } });
     if (token !== generation || destroyed) { created.dispose(); return; }
     layer = created; liveAt = 0; lastFrame = 0;
     layer.resize(innerWidth, innerHeight, { profile, framing });
