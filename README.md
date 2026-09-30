@@ -1,60 +1,100 @@
 # krzem.si — od materii do możliwości
 
-Pierwsza działająca wersja interaktywnej opowieści o krzemie: siedem rozdziałów, natywny scroll, proceduralne 3D, demonstracja tranzystora i matematyki AI. Bez frameworka frontendowego, paczek npm, API, CMS i zewnętrznych fontów.
+Interaktywna opowieść o krzemie: siedem rozdziałów, natywny scroll, semantyczny HTML. Warstwa
+tekstowa działa bez JavaScriptu i bez GPU. Nad nią, ładowana na żądanie, jest warstwa 3D na
+Three.js (WebGL 2) z bryłką krzemu z pipeline'u Blendera.
 
-**Status: funkcjonalny prototyp v0.1, nie finalny film fotorealistyczny.** Geometria jest generowana kodem. To autorska ilustracja, nie dokumentacja fizycznej budowy konkretnego procesora. Projekt nie jest jeszcze opublikowany na domenie.
+**Status: etap A3 wersji premium.** Hero i wejście w materię są zrobione na nowym rendererze.
+Rozdziały 01–06 nadal używają proceduralnych scen v0.1 (etapy B i C je zastąpią). Projekt nie
+jest opublikowany na domenie.
 
 ## Uruchomienie
 
-Wymagany Node.js 22 lub nowszy. Nie trzeba wykonywać `npm install`.
+Node.js 22.12 lub nowszy (`.nvmrc`: 22).
 
 ```bash
-npm run dev
-# http://127.0.0.1:4173
+npm ci
+npm run dev        # http://127.0.0.1:4174 (Vite, hot reload)
+npm run build      # dist/ (względne ścieżki, działa też w podkatalogu)
+npm run preview    # podgląd dist/ na http://127.0.0.1:4174
+npm test           # testy Node (story, kamera, profile, assety)
+npm run verify     # kontrola źródeł + testy + build z budżetami
 ```
 
-Zmiany w plikach są widoczne po odświeżeniu przeglądarki; nie ma automatycznego hot reloadu.
+Port 4174, bo 4173 zajmuje inny projekt na maszynie referencyjnej. Build nie potrzebuje
+Blendera: gotowe GLB, HDR, JSON kamery i postery leżą w `src/assets/`.
+
+## Tryb QA
+
+Parametry adresu ustawiają stan deterministycznie. To narzędzie do screenów, nie zamiennik
+testu natywnego scrollowania.
+
+```
+?scene=<id>&progress=<0..1>&quality=<profil>&freeze=1&seed=<n>
+```
+
+- `scene`: id rozdziału (`poczatek`, `materia`, `tranzystor`, `skala`, `swiat`, `inteligencja`,
+  `fundament`). Strona przewija się do tego miejsca po załadowaniu.
+- `progress`: dla `poczatek` postęp hero od góry hero (0) do przypięcia rozdziału materii (1),
+  czyli razem z przejściem do materii. Dla pozostałych rozdziałów postęp przypiętej sceny.
+- `quality`: `cinematic`, `balanced` albo `calm`. Wymusza profil i wyłącza automatyczną degradację.
+- `freeze=1`: zatrzymuje zegar ambientu i paralaksę; klatka jest rysowana tylko po scrollu/resize.
+- `seed`: faza obrotu bryłki (0 = poza z posteru). Każda liczba daje zawsze tę samą fazę.
+- `debug`: udostępnia `window.krzemDebug` (stan, profil, odstępy klatek, diagnostyka GPU).
+  Włącza się też samo przy `scene` lub `quality`.
+
+Przykład: `http://127.0.0.1:4174/?scene=poczatek&progress=0.7&quality=balanced&freeze=1`.
+
+## Profile i wydajność
+
+- **cinematic** (domyślny): tekstury 2K na desktopie, 1K przy kadrze mobile, MSAA, DPR do 1,5.
+- **balanced:** tekstury 1K, bez MSAA i anizotropii, DPR do 1,0 z limitem pikseli.
+- **calm:** postery i pełna treść, bez Three.js (moduł nie jest nawet pobierany).
+
+Kolejność wyboru: jawny wybór w przycisku „Ogranicz animacje / Włącz animacje” (zapamiętany
+lokalnie) > `prefers-reduced-motion` i Save-Data > pomiar. Pomiar tylko obniża profil: mediana
+i p95 odstępów między narysowanymi klatkami w oknach po 60 klatek lub 2 s, dwa wolne okna z rzędu
+to jeden stopień w dół (cinematic → balanced → calm), nigdy w górę. Kompilacja shaderów, pierwsza
+sekunda po powrocie do karty i przerwy dłuższe niż 250 ms nie są liczone. Szerokość ekranu,
+liczba rdzeni i `deviceMemory` nie wpływają na profil. Niski ekran wybiera ciaśniejszy układ,
+nie gorszą jakość.
+
+Ukryta karta zatrzymuje pętlę. Utrata kontekstu WebGL, brak WebGL 2 albo błąd pobierania lub
+dekodowania assetu kończy się posterem i tekstem, z jednym ostrzeżeniem w konsoli. Liczby,
+budżety i pomiary: `docs/PERFORMANCE.md`, raport QA: `docs/qa/PREMIUM_REPORT.md`.
+
+To mechanizmy ochronne, nie gwarancja 60 fps na każdym urządzeniu.
+
+## Testy przeglądarkowe i screeny
+
+Wymagany Python z Playwright (Chromium) i Pillow. Najpierw `npm run build && npm run preview`, potem:
 
 ```bash
-npm run verify        # kontrola składni/linków, testy, build + budżet rozmiaru
-npm run build         # gotowy katalog dist/
-npm run preview       # lokalny podgląd dist/ na porcie 4173
-npm run standalone    # pojedynczy preview.html z osadzonym kodem i grafiką
+python tests/browser_smoke.py          # asercje: WebGL, rozdziały, nawigacja, fallbacki, QA mode
+python tests/screens.py                # screeny hero 0/25/50/75/100 %, plansza, przejęcie posteru,
+                                       # czasy klatek, transfer, nagrania -> docs/qa/after/
+python tests/screens.py --gpu amd shots perf   # to samo na zintegrowanym GPU AMD (balanced)
 ```
 
-Zatrzymaj `dev` przed uruchomieniem `preview`, ponieważ oba używają domyślnie portu 4173. Inny port: `npm run preview -- --port=4174`.
-
-`preview.html` służy do przekazania podglądu, a **nie** jako zalecany format produkcyjnego wdrożenia. Produkcja korzysta z osobnych modułów i assetów w `dist/`.
-
-## Co działa
-
-Siedem scen: bryłka → przygotowanie materiału / płytka → tranzystor → struktury układu → komputer / telefon → obliczenia AI → powrót do fundamentu. Scroll steruje etapem, skalą, obrotem i przejściami; czas steruje dyskretnym oświetleniem. Mysz dodaje niewielką zmianę perspektywy. Nie przechwytujemy kółka myszy i nie podmieniamy natywnego przewijania.
-
-Przełącznik tranzystora ma dwa stany i opis dla czytnika ekranu. Demonstracja AI odsłania wcześniej napisane reprezentacje liczbowe; niczego nie wysyła do modelu. Linki do rozdziałów, źródła, przycisk ograniczania ruchu oraz widoki mobilne są gotowe.
-
-**To nie jest jeszcze całość wcześniejszej reżyserskiej wizji.** Brakuje prerenderowanych ujęć produkcji materiału, fotorealistycznej geometrii/tekstur, dopracowanego przelotu przez mikrostrukturę, pełnej wizualnej pętli ekranu w ekranie i opcjonalnego sound designu. Obecny finał zmienia komputer w bryłkę; nie odtwarza samej strony na modelu monitora. Dalszy kierunek opisuje `docs/ART_DIRECTION.md`.
-
-## Wydajność i dostępność
-
-Zwykły HTML jest podstawą. Bez JavaScriptu dostępna jest kompletna, nieprzypięta opowieść z lekkimi ilustracjami. Moduł GPU jest importowany dopiero po pierwszym wyświetleniu treści i tylko wtedy, gdy preferencje oraz zasoby na to pozwalają.
-
-`prefers-reduced-motion`, oszczędzanie danych, bardzo mała ilość pamięci/rdzeni lub krótki ekran wybierają wersję spokojną. Na bardzo krótkim ekranie sterowanie animacją jest ukryte, aby zachować czytelny układ. W innych trybach można wyłączyć ruch ręcznie; zapisywana jest wyłącznie ta lokalna preferencja, jeśli przeglądarka pozwala na zapis.
-
-Renderer używa jednego kontekstu WebGL 1, jednego programu shaderowego i scalonych buforów. Rozdzielczość jest ograniczona budżetem pikseli; tryb oszczędny dodatkowo ogranicza renderowanie do około 30 klatek/s. Monitor czasu klatek obniża jakość lub wraca do statycznej opowieści. Pętla zatrzymuje się w ukrytej karcie. Utrata kontekstu lub niedostępny WebGL nie blokują treści.
-
-To mechanizmy ochronne, **nie gwarancja 60 fps na każdym urządzeniu**. Testy w emulowanych viewportach nie zastępują iPhone'a, słabego Androida ani pomiarów rzeczywistej sieci.
-
-Materiały techniczne: [MDN — WebGL best practices](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices), [MDN — prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion).
+Na laptopie referencyjnym headless Chromium renderuje na RTX 3070 tylko z
+`__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json` (skrypty ustawiają
+to same, `KRZEM_GPU=amd` albo `--gpu amd` wybiera iGPU). `KRZEM_TEST_URL` zmienia adres.
 
 ## Deploy
 
-Wdróż **zawartość `dist/`**, nie cały projekt, na dowolnym hostingu statycznym. Build: `npm run build`; output: `dist`. Nie ma backendu ani wymaganych sekretów. Pliki `.br` i `.gz` są opcjonalnymi gotowymi wariantami kompresji; host może też serwować zwykłe pliki.
+Wdróż **zawartość `dist/`** na dowolnym hostingu statycznym. Build: `npm ci && npm run build`;
+output: `dist`. Nie ma backendu ani sekretów. Pliki `.br` i `.gz` są gotowymi wariantami kompresji.
 
 Canonical, Open Graph i sitemap mają domyślnie adres `https://krzem.si/`. Inny adres:
 
 ```bash
 SITE_URL=https://example.com/ npm run build
 ```
+
+**Uwaga, CSP w `deploy/Caddyfile`:** nagłówek ma `connect-src 'none'` i `img-src 'self' data:`.
+Warstwa 3D pobiera GLB/HDR przez `fetch()`, a GLTFLoader dekoduje osadzone tekstury z adresów
+`blob:`. Z tym nagłówkiem hero w kontenerze Caddy zostanie na posterze (strona działa, ale bez
+3D). Zmiana CSP czeka na decyzję właściciela, szczegóły w `docs/qa/PREMIUM_REPORT.md`.
 
 ### Docker / Hetzner / reverse proxy
 
@@ -63,37 +103,34 @@ docker compose up --build -d
 # http://127.0.0.1:8080
 ```
 
-Kontener jest związany z localhost hosta. W istniejącym reverse proxy skieruj domenę na port 8080. Caddy wewnątrz kontenera serwuje HTTP; TLS i DNS należą do konfiguracji zewnętrznego reverse proxy. Jest też przykład `deploy/Caddyfile.host` do serwowania plików bez kontenera.
-
-**Dockerfile i konfiguracje są przygotowane, ale nie były uruchomione w Dockerze podczas przygotowywania tej paczki.** Lokalnie zweryfikowano build i serwer Node. Wersje obrazów Docker są tagami głównymi; przed twardym wdrożeniem można przypiąć sprawdzone digesty.
+Kontener jest związany z localhost hosta. Caddy w kontenerze serwuje HTTP; TLS i DNS należą do
+zewnętrznego reverse proxy. Przykład bez kontenera: `deploy/Caddyfile.host`. Dockerfile nie był
+uruchamiany w tym etapie.
 
 ### GitHub Pages
 
-Repo zawiera ręczny workflow `.github/workflows/pages.yml`. W Settings → Pages wybierz źródło GitHub Actions i uruchom workflow dopiero po ustawieniu tej usługi. Dla domeny krzem.si skonfiguruj ją oraz DNS w ustawieniach repo. Bez domeny ustaw zmienną repo `SITE_URL` na adres strony GitHub Pages. Ścieżki do zasobów są względne, więc działają też w podkatalogu repo.
-
-Wrzucenie kodu samo **nie** uruchamia publikacji Pages. CI wykonuje tylko kontrolę i testy. Instrukcja: [GitHub Pages — custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+Ręczny workflow `.github/workflows/pages.yml` (Settings → Pages → źródło GitHub Actions). Ścieżki
+są względne, więc strona działa też w podkatalogu repo. Wrzucenie kodu nie publikuje strony; CI
+wykonuje tylko `npm ci` i `npm run verify`.
 
 ## Pliki
 
-- `src/index.html`, `src/styles.css`: treść, dostępność, układ i design.
-- `src/scripts/app.js`: scroll, interakcje, preferencje, cykl życia.
-- `src/scripts/renderer.js`, `geometry.js`, `math.js`, `quality.js`: GPU, geometria, matematyka i limity.
-- `src/assets/`: lokalne ilustracje zapasowe, favicon i karta społecznościowa.
-- `tests/`: testy Node oraz opcjonalny test przeglądarkowy z robieniem screenshotów.
-- `scripts/art/`: opcjonalne odtwarzanie scen przez Mesa EGL do wygenerowania ilustracji zapasowych; nie jest potrzebne do builda strony.
-
-## Testy przeglądarkowe i screeny
-
-Opcjonalnie zainstaluj Python Playwright i jego Chromium w oddzielnym środowisku. Następnie uruchom serwer `npm run dev`, a w drugim terminalu:
-
-```bash
-python tests/browser_smoke.py
-```
-
-Wyniki trafiają do `test-results/`. Zmienna `KRZEM_TEST_HTML` pozwala testować pojedynczy plik standalone; `KRZEM_BROWSER_EXECUTABLE` oraz `KRZEM_BROWSER_ARGS` wybierają przeglądarkę. Dołączony raport opisuje dokładnie wykonany wariant, zamiast sugerować testy na fizycznych urządzeniach.
+- `src/index.html`, `src/styles.css`: treść, dostępność, układ, postery.
+- `src/scripts/app.js`: warstwa tekstowa, wybór profilu, jedyna pętla `requestAnimationFrame`.
+- `src/scripts/story/`: `timeline.js` (scroll → rozdział, postęp, fazy przejścia),
+  `camera-rig.js` (czysta funkcja pozy kamery).
+- `src/scripts/rendering/`: `renderer.js` (warstwa GPU, ładowana leniwie), `assets.js`
+  (współdzielone, anulowalne ładowanie i zwalnianie), `quality.js` (profile i kontroler).
+- `src/scripts/scenes/`: `hero.js` (bryłka), `legacy*.js` (sceny v0.1 rozdziałów 01–06).
+- `src/assets/`: modele, HDR, JSON kamery i postery z etapu A2 (`docs/ASSET_MANIFEST.md`).
+- `tools/`: pipeline Blendera (niepotrzebny do builda). `scripts/art/`: odtwarzanie posterów v0.1.
+- `tests/`: testy Node, smoke w Playwright, screeny i nagrania.
 
 ## Materiały i licencja
 
-Geometria i ilustracje zapasowe powstają z kodu projektu. Nie dołączamy cudzych modeli ani plików fontów. Fonty dobiera system użytkownika, więc na macOS i Windowsie mogą wyglądać odrobinę inaczej niż na screenach. Źródła merytoryczne są w stopce strony oraz `docs/SCIENCE.md`.
+Bryłka, HDR i postery powstają w projekcie (Blender, skrypty w `tools/blender/`). Three.js jest
+na licencji MIT. Fonty: systemowe (decyzja w `docs/ASSET_MANIFEST.md`). Źródła merytoryczne są
+w stopce strony oraz `docs/SCIENCE.md`.
 
-Nie wybrano jeszcze licencji open source. `private: true` w package.json zabezpiecza przed przypadkowym opublikowaniem paczki npm; nie wymaga prywatnego repozytorium GitHub.
+Nie wybrano jeszcze licencji open source. `private: true` w package.json chroni przed
+przypadkowym opublikowaniem paczki npm.
