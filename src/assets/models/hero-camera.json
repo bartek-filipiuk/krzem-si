@@ -73,11 +73,11 @@
         3.2056,
         2.2539
       ],
-      "color": "#f3f9ff",
-      "intensity": 11.0,
+      "color": "#f9fbff",
+      "intensity": 16.0,
       "size": [
-        3.6,
-        2.6
+        5.0,
+        3.4
       ],
       "unit": "emitted radiance of an area softbox facing the origin (W/sr/m2 scale, Cycles)"
     },
@@ -101,12 +101,12 @@
       "type": "rim",
       "name": "rim",
       "position": [
-        1.4949,
-        0.5979,
-        -4.7337
+        4.0185,
+        0.6028,
+        -2.9134
       ],
       "color": "#ffc78a",
-      "intensity": 10.0,
+      "intensity": 6.0,
       "size": [
         0.13,
         2.2
@@ -150,20 +150,23 @@
   "environment": "src/assets/env/studio-1k.hdr",
   "background": "#0b0e12",
   "toneMapping": "NeutralToneMapping",
-  "exposure": 1.0,
+  "viewTransform": "Khronos PBR Neutral",
+  "exposure": 1.1892,
+  "environmentIntensity": 1.35,
+  "exposureNote": "Blender film exposure +0.25 EV = renderer.toneMappingExposure (linear, applied before tone mapping in both); Blender 'Khronos PBR Neutral' = THREE.NeutralToneMapping",
   "outputColorSpace": "srgb",
-  "chunkRotationY": -1.65806,
+  "chunkRotationY": 3.14159,
   "chunkRotationNote": "radians about the Three.js Y axis, applied to the GLB root at hero progress 0",
   "entryFace": {
     "center": [
-      0.2777,
-      -0.057,
-      0.2389
+      0.0028,
+      0.2159,
+      -0.3976
     ],
     "normal": [
-      0.6953,
-      -0.2893,
-      0.6579
+      -0.146,
+      0.3249,
+      -0.9344
     ],
     "note": "object space of the GLB (before chunkRotationY); centroid and outward normal of the fracture face the camera enters"
   },
