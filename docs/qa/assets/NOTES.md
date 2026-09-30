@@ -36,3 +36,20 @@ What differed and what was done:
 - The Cycles poster has a faint sawtooth on two flake-scar edges (right edge and lower right of the
   desktop poster). It comes from the 56k-triangle decimation of the thin walls and shows in both
   renderers. Would need the flake walls kept out of the decimation or fewer, wider flakes.
+
+## A3 update: pose 120 deg
+
+`chunk-in-three.webp` is now the desktop canvas frame at the A3 hero pose (`chunkRotationY` 2pi/3,
+camera pulled back to 2.5 m). Handover re-measured with `python tests/screens.py handover`:
+at environmentIntensity 1.35 the canvas was darker than the new poster (desktop 72.8 vs 84.0,
+mobile 82.9 vs 93.7); 1.6 gave 82.0 / 92.2, 1.8 gave 88.6 / 98.8, so the shipped value is **1.65**
+(83.7 vs 84.0, 93.9 vs 93.7). Background 14.9 vs 15.2.
+
+The hair-like streaks are still visible in Three.js on the flake scars at the upper left of the
+new pose (not in the Cycles poster). Runtime isolation on the RTX, same frame: anisotropy 8 is
+already on; `geometry.computeTangents()` and `minFilter = LinearFilter` (no mips) changed nothing;
+dropping the normal map made them stronger; dropping the metallicRoughness map removed most of
+them. Source: the metallicRoughness bake around sub-texel UV islands, where the 16 px `EXTEND`
+bake margin (radial smears) is what the sampler reads. Cycles samples the exact UV and does not
+show it. Not fixable at runtime without losing the map; asset fix: `margin_type="ADJACENT_FACES"`
+and a larger `island_margin` in `tools/blender/silicon_chunk.py` (needs the 21 min chunk build).

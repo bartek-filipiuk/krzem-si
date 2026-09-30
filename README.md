@@ -40,7 +40,8 @@ testu natywnego scrollowania.
 - `quality`: `cinematic`, `balanced` albo `calm`. Wymusza profil i wyłącza automatyczną degradację.
 - `freeze=1`: zatrzymuje zegar ambientu i paralaksę; klatka jest rysowana tylko po scrollu/resize.
 - `seed`: faza obrotu bryłki (0 = poza z posteru). Każda liczba daje zawsze tę samą fazę.
-- `debug`: udostępnia `window.krzemDebug` (stan, profil, odstępy klatek, diagnostyka GPU).
+- `debug`: udostępnia `window.krzemDebug` (stan, profil, odstępy klatek `intervals`, czas GPU na
+  klatkę `gpuMs` z `EXT_disjoint_timer_query_webgl2`, gdy przeglądarka go ma, diagnostyka GPU).
   Włącza się też samo przy `scene` lub `quality`.
 
 Przykład: `http://127.0.0.1:4174/?scene=poczatek&progress=0.7&quality=balanced&freeze=1`.
@@ -73,7 +74,8 @@ Wymagany Python z Playwright (Chromium) i Pillow. Najpierw `npm run build && npm
 python tests/browser_smoke.py          # asercje: WebGL, rozdziały, nawigacja, fallbacki, QA mode
 python tests/screens.py                # screeny hero 0/25/50/75/100 %, plansza, przejęcie posteru,
                                        # czasy klatek, transfer, nagrania -> docs/qa/after/
-python tests/screens.py --gpu amd shots perf   # to samo na zintegrowanym GPU AMD (balanced)
+python tests/screens.py --gpu amd shots perf   # zintegrowane GPU AMD (balanced); uruchom przed
+                                               # przebiegiem NVIDIA, wtedy plansza ma też wiersz AMD
 ```
 
 Na laptopie referencyjnym headless Chromium renderuje na RTX 3070 tylko z

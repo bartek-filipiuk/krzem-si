@@ -16,9 +16,9 @@ Commands and run times: `tools/README.md`. `B` = `~/tools/blender/blender -b --f
 | `src/assets/models/silicon-chunk-1k.glb` | 00 hero, balanced / mobile | same shape, own decimation, UVs and bake | 1,036,772 (728,120) | normal 1024² 158 KB, ORM 1024² 123 KB | 22,000 | 2K / 1K | same command |
 | `src/assets/models/fracture-face.glb` | 00 entry transition | high-detail patch of the entry face (piece id in `tools/blender/out/chunk-stats.json`), same object space as the chunk | 709,424 (507,637) | normal 2048² 68 KB, ORM 2048² 96 KB | 23,999 | one | same command |
 | `src/assets/env/studio-1k.hdr` | 00 hero | equirect 1024x512 RGBE of the five softboxes (key 5.0x3.4 m with falloff, fill, amber rim, top strip, kick) + dim sky gradient | 198,589 (70,164) | 1024x512 | n/a | one | `B tools/blender/studio.py -- hdr` (3 s) |
-| `src/assets/models/hero-camera.json` | 00 hero | cameras (desktop, mobile), rig, `chunkRotationY` = pi, `entryFace`, `toneMapping` NeutralToneMapping, `viewTransform` "Khronos PBR Neutral", `exposure` 1.1892 (= +0.25 EV), `environmentIntensity` 1.35 (note 2) | 3,661 | n/a | n/a | one | `B tools/blender/studio.py -- camera` (1 s, after the chunk build) |
-| `src/assets/posters/hero-desktop.webp` | 00 hero poster, no-JS, calm | Cycles 384 spp, 1600x1000, HDR-only light, graphite `#0b0e12` + cool glow composited | 24,882 | 1600x1000 | n/a | desktop / mobile | `B tools/blender/studio.py -- posters` (23 s both) |
-| `src/assets/posters/hero-mobile.webp` | 00 hero poster (mobile framing) | same, 900x1400 | 23,154 | 900x1400 | n/a | desktop / mobile | same command |
+| `src/assets/models/hero-camera.json` | 00 hero | cameras (desktop, mobile), rig, `chunkRotationY` = 2pi/3 (120 deg, A3), `entryFace` (+ `lightRotationY` = pi, the frame it was picked and lit in), `toneMapping` NeutralToneMapping, `viewTransform` "Khronos PBR Neutral", `exposure` 1.1892 (= +0.25 EV), `environmentIntensity` 1.65 (note 2) | 3,872 | n/a | n/a | one | `B tools/blender/studio.py -- camera` (1 s, after the chunk build) |
+| `src/assets/posters/hero-desktop.webp` | 00 hero poster, no-JS, calm | Cycles 384 spp, 1600x1000, HDR-only light, graphite `#0b0e12` + cool glow composited; pose and framing re-rendered in A3 | 16,834 | 1600x1000 | n/a | desktop / mobile | `B tools/blender/studio.py -- posters` (23 s both) |
+| `src/assets/posters/hero-mobile.webp` | 00 hero poster (mobile framing) | same, 900x1400 | 13,126 | 900x1400 | n/a | desktop / mobile | same command |
 | `docs/qa/assets/chunk-turntable.webp` | QA only, not shipped | 6 angles x 3 lights (studio, studio rotated 140°, raking) of the shipped 2K GLB | 70,586 | 2400x1200 | n/a | n/a | `B tools/blender/studio.py -- sheet` (38 s) |
 | `docs/qa/assets/chunk-in-three.webp` | QA only, not shipped | the 2K GLB in Three.js at hero progress 0 (NVIDIA, cinematic) | 47,432 | 1440x1000 | n/a | n/a | `npm run build && npm run preview -- --port 4174`, then `python tests/screens.py handover`, copy `docs/qa/after/handover-desktop-canvas.webp` |
 
@@ -33,8 +33,9 @@ tangents and then stripped by a lossless repack (only the TANGENT accessor remov
 exports with `export_tangents=False`, which gives the same data or fewer vertices.
 
 Note 2, environmentIntensity: Three.js has no interreflection, so concave faces only see the dark
-studio. 1.35 matches the poster's mean chunk luminance within 0.4 (desktop) and 3.2 (mobile) of
-255 (`docs/qa/after/capture-nvidia.json`, key `handover`).
+studio. At the A2 pose (180 deg) 1.35 matched the poster; at the A3 pose (120 deg) the value is
+1.65: mean chunk luminance canvas vs poster 83.7 vs 84.0 (desktop) and 93.9 vs 93.7 (mobile) of 255
+(`docs/qa/after/capture-nvidia.json`, key `handover`).
 
 ### Look references (reference only, not shipped, not used by any build)
 

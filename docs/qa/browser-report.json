@@ -1,9 +1,18 @@
 {
-  "mode": "offline inlined production source",
-  "browser": "Chromium",
+  "url": "http://127.0.0.1:4174/",
+  "browser": "Chromium 145.0.7632.6",
+  "gpu": "nvidia",
   "checks": [
     {
-      "name": "Desktop: real WebGL renderer starts",
+      "name": "Desktop: WebGL 2 renderer starts",
+      "passed": true
+    },
+    {
+      "name": "Desktop: cinematic profile by default",
+      "passed": true
+    },
+    {
+      "name": "Desktop: poster hands over to the canvas",
       "passed": true
     },
     {
@@ -15,11 +24,19 @@
       "passed": true
     },
     {
+      "name": "Chapter 0: nav marks it aria-current",
+      "passed": true
+    },
+    {
       "name": "Chapter 0: GPU returns NO_ERROR",
       "passed": true
     },
     {
       "name": "Chapter 1: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 1: nav marks it aria-current",
       "passed": true
     },
     {
@@ -31,11 +48,19 @@
       "passed": true
     },
     {
+      "name": "Chapter 2: nav marks it aria-current",
+      "passed": true
+    },
+    {
       "name": "Chapter 2: GPU returns NO_ERROR",
       "passed": true
     },
     {
       "name": "Chapter 3: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 3: nav marks it aria-current",
       "passed": true
     },
     {
@@ -47,6 +72,10 @@
       "passed": true
     },
     {
+      "name": "Chapter 4: nav marks it aria-current",
+      "passed": true
+    },
+    {
       "name": "Chapter 4: GPU returns NO_ERROR",
       "passed": true
     },
@@ -55,11 +84,19 @@
       "passed": true
     },
     {
+      "name": "Chapter 5: nav marks it aria-current",
+      "passed": true
+    },
+    {
       "name": "Chapter 5: GPU returns NO_ERROR",
       "passed": true
     },
     {
       "name": "Chapter 6: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 6: nav marks it aria-current",
       "passed": true
     },
     {
@@ -79,7 +116,7 @@
       "passed": true
     },
     {
-      "name": "Motion OFF: static mode",
+      "name": "Motion OFF: static (calm) mode",
       "passed": true
     },
     {
@@ -87,7 +124,15 @@
       "passed": true
     },
     {
+      "name": "Motion OFF: choice is persisted",
+      "passed": true
+    },
+    {
       "name": "Motion ON: renderer returns",
+      "passed": true
+    },
+    {
+      "name": "Motion ON: keeps current chapter",
       "passed": true
     },
     {
@@ -95,7 +140,35 @@
       "passed": true
     },
     {
-      "name": "Context loss: readable static fallback",
+      "name": "Back returns to the previous chapter",
+      "passed": true
+    },
+    {
+      "name": "Forward returns to the next chapter",
+      "passed": true
+    },
+    {
+      "name": "Context loss event: readable static fallback",
+      "passed": true
+    },
+    {
+      "name": "WEBGL_lose_context: static mode",
+      "passed": true
+    },
+    {
+      "name": "WEBGL_lose_context: hero poster visible again",
+      "passed": true
+    },
+    {
+      "name": "GLB 404: static mode",
+      "passed": true
+    },
+    {
+      "name": "GLB 404: hero poster visible",
+      "passed": true
+    },
+    {
+      "name": "GLB 404: logged once",
       "passed": true
     },
     {
@@ -104,6 +177,10 @@
     },
     {
       "name": "mobile: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "mobile: motion control available",
       "passed": true
     },
     {
@@ -139,7 +216,15 @@
       "passed": true
     },
     {
-      "name": "small-phone: starts in static mode",
+      "name": "small-phone: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "small-phone: motion control available",
+      "passed": true
+    },
+    {
+      "name": "small-phone: short screen picks compact framing, not a quality tier",
       "passed": true
     },
     {
@@ -171,11 +256,59 @@
       "passed": true
     },
     {
+      "name": "landscape-phone: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone: motion control available",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone: short screen picks compact framing, not a quality tier",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "landscape-phone/fundament: heading visible",
+      "passed": true
+    },
+    {
       "name": "tablet: no horizontal overflow",
       "passed": true
     },
     {
       "name": "tablet: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "tablet: motion control available",
       "passed": true
     },
     {
@@ -215,6 +348,14 @@
       "passed": true
     },
     {
+      "name": "reduced-motion: never downloads the GPU layer",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion: hero poster is the first frame",
+      "passed": true
+    },
+    {
       "name": "reduced-motion/poczatek: heading visible",
       "passed": true
     },
@@ -251,6 +392,14 @@
       "passed": true
     },
     {
+      "name": "no-javascript: never downloads the GPU layer",
+      "passed": true
+    },
+    {
+      "name": "no-javascript: hero poster is the first frame",
+      "passed": true
+    },
+    {
       "name": "no-javascript/poczatek: heading visible",
       "passed": true
     },
@@ -279,7 +428,87 @@
       "passed": true
     },
     {
+      "name": "User choice \"motion\" beats reduced motion",
+      "passed": true
+    },
+    {
+      "name": "QA mode: scene and progress",
+      "passed": true
+    },
+    {
+      "name": "QA mode: forced profile",
+      "passed": true
+    },
+    {
+      "name": "QA mode: frozen ambient clock",
+      "passed": true
+    },
+    {
+      "name": "QA calm: no GPU download",
+      "passed": true
+    },
+    {
+      "name": "Direct load at #materia lands on the material chapter",
+      "passed": true
+    },
+    {
+      "name": "Keyboard: skip link is the first stop",
+      "passed": true
+    },
+    {
+      "name": "Keyboard: Enter on a chapter link moves there",
+      "passed": true
+    },
+    {
+      "name": "Fling: state follows the last scroll position",
+      "passed": true
+    },
+    {
+      "name": "Fling: canvas opacity matches the entry phase",
+      "passed": true
+    },
+    {
+      "name": "Hidden tab: loop stopped",
+      "passed": true
+    },
+    {
+      "name": "Hidden tab: ambient clock paused",
+      "passed": true
+    },
+    {
+      "name": "Tab return: loop resumes in the same state",
+      "passed": true
+    },
+    {
+      "name": "Resize to phone: mobile framing, still WebGL",
+      "passed": true
+    },
+    {
+      "name": "Toggle burst: ends in one live renderer",
+      "passed": true
+    },
+    {
+      "name": "Slow frames: cinematic -> balanced -> calm, one step at a time",
+      "passed": true
+    },
+    {
+      "name": "Slow frames: demotion takes seconds, not one bad window",
+      "passed": true
+    },
+    {
+      "name": "Slow frames: calm keeps the story readable (static layout, poster)",
+      "passed": true
+    },
+    {
+      "name": "Slow frames: never promotes back",
+      "passed": true
+    },
+    {
       "name": "WebGL unavailable: static fallback",
+      "passed": true
+    },
+    {
+      "name": "WebGL unavailable: poster shown",
       "passed": true
     },
     {
