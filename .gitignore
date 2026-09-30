@@ -9,3 +9,7 @@ playwright-report/
 __pycache__/
 
 /preview.html
+krzem-si-source.zip
+node_modules/
+dist/
+test-results/
