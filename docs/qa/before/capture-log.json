@@ -1,0 +1,168 @@
+{
+ "poczatek-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "0",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "materia-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "1",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "tranzystor-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "2",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "skala-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "3",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "swiat-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "4",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "inteligencja-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "5",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "fundament-desktop": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "6",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "poczatek-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "0",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "materia-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "1",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "tranzystor-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "2",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "skala-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "3",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "swiat-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "4",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "inteligencja-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "5",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "fundament-mobile": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "6",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   585,
+   1266
+  ]
+ },
+ "video": {
+  "renderer": "webgl",
+  "quality": "high",
+  "chapter": "6",
+  "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "canvas": [
+   1440,
+   1000
+  ]
+ },
+ "browser": "145.0.7632.6"
+}
