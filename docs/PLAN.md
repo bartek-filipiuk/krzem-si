@@ -129,6 +129,34 @@ truly enters the surface, calm profile complete, budgets measured and written do
   Android, integrated-GPU laptop) plus an owner checklist.
 - Static build committed as verified command output, not as `dist/` in git.
 
+## Reference: `references/concept.png` (992x1586 mood board, not a spec)
+
+Take from it:
+- Hero: near-black polycrystalline chunk with sharp, glossy conchoidal fracture faces, cool
+  silver highlights, one warm amber rim accent, dark graphite background with a faint cool
+  glow behind the object. Object right of centre, big serif headline left, element card
+  "14 / Si, 28,085" as a thin technical annotation.
+- Typography: large calm serif for headlines (e.g. Instrument Serif / Playfair-like), small
+  spaced sans-serif caps for technical labels and eyebrows.
+- Chapter 01: horizontal strip of five stages (quartz -> purified granules -> polycrystalline
+  -> monocrystal ingot -> wafer), each a distinct believable material. This reads well as a
+  DOM + small 3D/prerender strip; keep the labels.
+- Chapter 02: transistor as a dark cube on a dark substrate with two sides showing 0 (cool
+  blue) and 1 (amber) flows. Keep the colour code but the brief requires a real cross-section
+  with labelled layers and a "umowna wizualizacja przepływu" note, not just a lit cube.
+- Palette overall: graphite #0b0e12-ish, muted white text, silver, sparse amber.
+
+Do NOT take (brief overrides the mood board):
+- Chapter 03 literal city skyscrapers: brief §6/03 forbids it. Build microelectronic
+  structure (vias, interconnect layers, channels, repeated cells) with the same monumental
+  low-sun lighting and depth feel.
+- "Ziarnko piasku ok. 1 mm" comparison and "zdjęcie rzeczywiste" thumbnail: no unjustified
+  scale claims, no fake photos.
+- Chapter 05 server hall + globe with network lines: brief wants prompt -> numbers -> ops ->
+  hardware -> answer, no glowing globe. The chat-box UI element is fine as the DOM demo.
+- Finale with man on a mountain: brief wants chip -> device -> screen showing krzem.si ->
+  chunk -> Si/SI loop.
+- "Sztuczna inteligencja istnieje dzięki krzemowi" style claims: SCIENCE.md limits apply.
+
 ## Open items (owner)
-- `references/` package (concept.png) is not in the repo. Work from the brief's palette
-  description; note this in ART_DIRECTION. Add the files to `references/` if they turn up.
+- None blocking. Physical device tests remain owner tasks (Stage D checklist).
