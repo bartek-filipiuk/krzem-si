@@ -775,9 +775,9 @@ def export_glb(ob, path):
 
 
 def entry_face(chunk, ids, p_src, centre, scale):
-    """Largest, flattest fracture face facing the desktop camera at the hero pose -> entry face."""
-    cam = np.array(studio.CAMERAS["desktop"]["position"])
-    rz = studio.CHUNK_ROTATION_Z
+    """Largest, flattest fracture face facing the camera in studio.ENTRY_PICK -> entry face."""
+    cam = np.array(studio.ENTRY_PICK["camera"])
+    rz = studio.ENTRY_PICK["rotation_z"]
     Rz = np.array([[math.cos(rz), -math.sin(rz), 0], [math.sin(rz), math.cos(rz), 0], [0, 0, 1]])
     best = None
     for i, pl in enumerate(chunk.planes):

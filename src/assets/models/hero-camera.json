@@ -1,26 +1,26 @@
 {
   "fov": 42.0,
   "position": [
-    -0.42,
-    0.16,
-    1.8
+    -0.47,
+    0.24,
+    2.5
   ],
   "target": [
-    -0.42,
-    -0.02,
+    -0.47,
+    0.0,
     -0.0
   ],
   "desktop": {
     "fov": 42.0,
     "aspect": 1.6,
     "position": [
-      -0.42,
-      0.16,
-      1.8
+      -0.47,
+      0.24,
+      2.5
     ],
     "target": [
-      -0.42,
-      -0.02,
+      -0.47,
+      0.0,
       -0.0
     ],
     "posterSize": [
@@ -29,8 +29,8 @@
     ],
     "glow": {
       "center": [
-        0.685,
-        0.5
+        0.65,
+        0.52
       ],
       "radius": 0.36,
       "color": "#5a7896",
@@ -41,13 +41,13 @@
     "fov": 50.0,
     "aspect": 0.6429,
     "position": [
-      0.0,
-      0.36,
-      2.05
+      0.08,
+      0.84,
+      3.7
     ],
     "target": [
-      0.0,
-      0.3,
+      0.08,
+      0.76,
       -0.0
     ],
     "posterSize": [
@@ -56,8 +56,8 @@
     ],
     "glow": {
       "center": [
-        0.5,
-        0.66
+        0.46,
+        0.72
       ],
       "radius": 0.5,
       "color": "#5a7896",
@@ -155,7 +155,7 @@
   "environmentIntensity": 1.35,
   "exposureNote": "Blender film exposure +0.25 EV = renderer.toneMappingExposure (linear, applied before tone mapping in both); Blender 'Khronos PBR Neutral' = THREE.NeutralToneMapping",
   "outputColorSpace": "srgb",
-  "chunkRotationY": 3.14159,
+  "chunkRotationY": 2.0944,
   "chunkRotationNote": "radians about the Three.js Y axis, applied to the GLB root at hero progress 0",
   "entryFace": {
     "center": [
@@ -168,7 +168,9 @@
       0.3249,
       -0.9344
     ],
-    "note": "object space of the GLB (before chunkRotationY); centroid and outward normal of the fracture face the camera enters"
+    "note": "object space of the GLB (before chunkRotationY); centroid and outward normal of the fracture face the camera enters",
+    "lightRotationY": 3.14159,
+    "lightNote": "chunk rotation the face was picked and lit at; the runtime turns the studio into this frame during the approach, so the close-up does not depend on the hero pose"
   },
   "units": "metres, glTF Y-up, chunk centred at origin, longest dimension 1.0"
 }

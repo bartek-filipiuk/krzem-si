@@ -75,6 +75,7 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
   renderer.toneMappingExposure = config.exposure ?? 1;
 
   const rest = config.chunkRotationY ?? 0;
+  const lightYaw = config.entryFace?.lightRotationY ?? rest;
   const camera = new PerspectiveCamera(config.fov, 1, .01, 40);
   let hero = heroPose(config, 'desktop', 1.6);
   await renderer.compileAsync(scene, camera);
@@ -118,9 +119,10 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       const s = entryPhases(state.hero).camera;
       const pose = cameraPose({ s, theta, hero, face, parallax: state.parallax });
       pivot.rotation.y = theta;
-      // During the final approach the studio turns with the chunk, so the close-up is lit the
-      // same way whatever angle the ambient turn had reached (the turn is at rest by then).
-      scene.environmentRotation.y = wrap(theta - rest) * smoothstep(.35, .85, s);
+      // During the final approach the studio turns into the entry face's own light frame
+      // (entryFace.lightRotationY), so the close-up is lit the same way whatever the hero pose and
+      // whatever angle the ambient turn had reached (the turn is at rest by then).
+      scene.environmentRotation.y = wrap(theta - lightYaw) * smoothstep(.35, .85, s);
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
       renderer.render(scene, camera);
@@ -138,13 +140,14 @@ const wrap = a => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 
 /**
  * End the approach slightly oblique: halfway between the face normal and the mirror direction
- * of the key softbox (in the chunk's rest frame), so the fracture face carries a soft specular
+ * of the key softbox (in the entry face's light frame), so the fracture face carries a soft specular
  * gradient instead of reflecting the dark studio behind the camera.
  */
 function approachDirection(normal) {
   const key = (config.lights ?? []).find(l => l.name === 'key') ?? (config.lights ?? []).find(l => l.type === 'key');
   if (!key) return normal;
-  const n = normalize(normal), l = normalize(rotateY(key.position, -(config.chunkRotationY ?? 0)));
+  const yaw = config.entryFace?.lightRotationY ?? config.chunkRotationY ?? 0;
+  const n = normalize(normal), l = normalize(rotateY(key.position, -yaw));
   const d = n[0] * l[0] + n[1] * l[1] + n[2] * l[2];
   if (d <= .05) return normal;
   const mirror = n.map((v, i) => 2 * d * v - l[i]);

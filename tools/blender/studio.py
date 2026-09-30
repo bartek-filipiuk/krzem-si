@@ -35,7 +35,14 @@ VIEW_TRANSFORM = "Khronos PBR Neutral"   # Three.js: THREE.NeutralToneMapping
 # so the runtime lifts the environment to match the poster's mean chunk luminance (measured with
 # tests/screens.py handover: 1.0 -> 63.6 vs 75.4, 1.25 -> 71.9, 1.45 -> 77.9). Highlights stay aligned.
 ENV_INTENSITY_THREE = 1.35
-CHUNK_ROTATION_Z = math.radians(180)     # hero pose at progress 0 (= Three.js rotation.y), picked with `poses`
+CHUNK_ROTATION_Z = math.radians(120)     # hero pose at progress 0 (= Three.js rotation.y), picked with `poses`
+# 120 deg (stage A3): broad grey fracture face with the long crack towards the camera, clear outline.
+# 180 deg showed the elongated end and its thin flake-scar walls (hair-like streaks, docs/qa/assets/NOTES.md).
+# The entry face (out/entry-face.json) was picked at 180 deg; at 120 it sits on the left flank and the
+# runtime camera arcs to it (src/scripts/story/camera-rig.js), so the 21 min chunk build is not needed.
+# The entry face is picked (silicon_chunk.entry_face) and lit for the close-up in this frame; kept apart
+# from the hero pose so a rebuild picks the same face. The runtime turns the studio to it on the approach.
+ENTRY_PICK = dict(rotation_z=math.radians(180), camera=(-0.42, -1.80, 0.16))
 
 # Softboxes: direction from the chunk (Blender coords, camera sits on -Y), distance, size (w, h),
 # linear colour, emission radiance. These planes are what studio-1k.hdr captures.
@@ -54,14 +61,15 @@ RIG = [
 WORLD_COLOR = (0.006, 0.007, 0.009)      # graphite surroundings seen in reflections
 WORLD_SKY = 4.0                           # upper hemisphere this many times brighter (dim ceiling)
 
-# Hero framing. fov is vertical. Object right of centre on desktop, low-centre on mobile.
+# Hero framing. fov is vertical. Object right of centre on desktop (clear of the element card),
+# low and slightly left on mobile, below the H1 and the call to action.
 CAMERAS = {
-    "desktop": dict(fov=42.0, res=(1600, 1000), position=(-0.42, -1.80, 0.16), target=(-0.42, 0.0, -0.02)),
-    "mobile": dict(fov=50.0, res=(900, 1400), position=(0.0, -2.05, 0.36), target=(0.0, 0.0, 0.30)),
+    "desktop": dict(fov=42.0, res=(1600, 1000), position=(-0.47, -2.50, 0.24), target=(-0.47, 0.0, 0.0)),
+    "mobile": dict(fov=50.0, res=(900, 1400), position=(0.08, -3.70, 0.84), target=(0.08, 0.0, 0.76)),
 }
 GLOW = {  # faint cool glow behind the object, composited in display space (reproduce in CSS)
-    "desktop": dict(center=(0.685, 0.50), radius=0.36, color="#5a7896", alpha=0.16),
-    "mobile": dict(center=(0.50, 0.66), radius=0.50, color="#5a7896", alpha=0.16),
+    "desktop": dict(center=(0.65, 0.52), radius=0.36, color="#5a7896", alpha=0.16),
+    "mobile": dict(center=(0.46, 0.72), radius=0.50, color="#5a7896", alpha=0.16),
 }
 
 
@@ -307,7 +315,9 @@ def cmd_camera():
         "outputColorSpace": "srgb",
         "chunkRotationY": round(CHUNK_ROTATION_Z, 5),
         "chunkRotationNote": "radians about the Three.js Y axis, applied to the GLB root at hero progress 0",
-        "entryFace": entry,
+        "entryFace": {**entry, "lightRotationY": round(ENTRY_PICK["rotation_z"], 5),
+                      "lightNote": "chunk rotation the face was picked and lit at; the runtime turns the studio "
+                                   "into this frame during the approach, so the close-up does not depend on the hero pose"},
         "units": "metres, glTF Y-up, chunk centred at origin, longest dimension 1.0",
     }
     CAMERA_JSON.write_text(json.dumps(data, indent=2) + "\n")

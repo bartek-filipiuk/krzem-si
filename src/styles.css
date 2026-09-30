@@ -28,15 +28,18 @@ html[data-renderer=webgl] #scene-canvas{opacity:var(--dip,1)}
    cropped like the poster's object-fit:cover, so the handover does not shift the background. */
 .hero-glow{position:fixed;inset:0;z-index:0;pointer-events:none;container-type:size;overflow:hidden;opacity:var(--hero-copy,0)}
 .hero-glow:before{content:"";position:absolute;left:50%;top:50%;translate:-50% -50%;width:max(100cqw,160cqh);height:max(100cqh,62.5cqw);
-  background:radial-gradient(circle max(36cqw,57.6cqh) at 68.5% 50%,#5a789629 0,#5a78961a 20%,#5a78960f 40%,#5a789607 60%,#5a789602 80%,#5a789600 100%)}
+  background:radial-gradient(circle max(36cqw,57.6cqh) at 65% 52%,#5a789629 0,#5a78961a 20%,#5a78960f 40%,#5a789607 60%,#5a789602 80%,#5a789600 100%)}
 @media(max-width:759px){.hero-glow:before{width:max(100cqw,64.2857cqh);height:max(100cqh,155.556cqw);
-  background:radial-gradient(circle max(50cqw,32.143cqh) at 50% 66%,#5a789629 0,#5a78961a 20%,#5a78960f 40%,#5a789607 60%,#5a789602 80%,#5a789600 100%)}}
+  background:radial-gradient(circle max(50cqw,32.143cqh) at 46% 72%,#5a789629 0,#5a78961a 20%,#5a78960f 40%,#5a789607 60%,#5a789602 80%,#5a789600 100%)}}
 /* Hero poster: first paint, and the fallback for calm, no-JS, asset errors and context loss.
    It sits above the canvas and fades once the renderer has drawn the same frame underneath. */
 .hero-poster{position:absolute;inset:0;z-index:1;pointer-events:none}
 .hero-poster img{width:100%;height:100%;object-fit:cover}
 html[data-hero=live] .hero-poster{opacity:0;visibility:hidden;transition:opacity .3s linear,visibility 0s .3s}
 html[data-hero=live] .hero .stage>:not(.hero-poster){opacity:var(--hero-copy,1)}
+/* The material heading scrolls in over the bright entry face (hero progress ~.5-.84): a soft
+   graphite halo keeps it legible there; it is invisible on the dark stage. */
+html[data-renderer=webgl][data-chapter="0"] #materia .chapter-copy{text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}
 
 .header{position:fixed;z-index:20;inset:0 0 auto;display:flex;justify-content:space-between;align-items:center;height:100px;padding:0 var(--pad);background:linear-gradient(var(--bg),#0b0e12c9 40%,transparent);gap:30px}
 .brand{display:flex;align-items:baseline;font-size:25px;letter-spacing:-1.2px;font-weight:600;white-space:nowrap;line-height:1}
