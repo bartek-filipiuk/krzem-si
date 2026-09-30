@@ -767,7 +767,7 @@ def export_glb(ob, path):
     bpy.context.view_layer.objects.active = ob
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True,
                               export_image_format="WEBP", export_image_quality=88,
-                              export_tangents=True, export_normals=True, export_texcoords=True,
+                              export_tangents=False, export_normals=True, export_texcoords=True,
                               export_materials="EXPORT", export_yup=True, export_apply=True,
                               export_cameras=False, export_lights=False, export_animations=False,
                               export_extras=False, export_attributes=False)

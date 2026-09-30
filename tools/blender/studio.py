@@ -31,6 +31,10 @@ COMPOSE = HERE / "compose.py"
 BG_HEX = "#0b0e12"
 EXPOSURE_EV = 0.25         # Blender film exposure; Three.js toneMappingExposure = 2 ** EXPOSURE_EV
 VIEW_TRANSFORM = "Khronos PBR Neutral"   # Three.js: THREE.NeutralToneMapping
+# Three.js has no interreflection: the concave scoops only see the dark studio, not the lit lump,
+# so the runtime lifts the environment to match the poster's mean chunk luminance (measured with
+# tests/screens.py handover: 1.0 -> 63.6 vs 75.4, 1.25 -> 71.9, 1.45 -> 77.9). Highlights stay aligned.
+ENV_INTENSITY_THREE = 1.35
 CHUNK_ROTATION_Z = math.radians(180)     # hero pose at progress 0 (= Three.js rotation.y), picked with `poses`
 
 # Softboxes: direction from the chunk (Blender coords, camera sits on -Y), distance, size (w, h),
@@ -297,6 +301,7 @@ def cmd_camera():
         "toneMapping": "NeutralToneMapping",
         "viewTransform": VIEW_TRANSFORM,
         "exposure": round(2 ** EXPOSURE_EV, 4),
+        "environmentIntensity": ENV_INTENSITY_THREE,
         "exposureNote": f"Blender film exposure {EXPOSURE_EV:+.2f} EV = renderer.toneMappingExposure (linear, "
                         "applied before tone mapping in both); Blender 'Khronos PBR Neutral' = THREE.NeutralToneMapping",
         "outputColorSpace": "srgb",
