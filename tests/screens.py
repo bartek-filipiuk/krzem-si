@@ -1,0 +1,265 @@
+"""Hero QA captures from the running site (not from Blender): progress screenshots, comparison
+board, poster handover pixel difference, frame timings, transfer sizes and scroll recordings.
+
+Serve the build first:  npm run build && npm run preview      (http://127.0.0.1:4174/)
+    python tests/screens.py                       # everything on the NVIDIA GPU
+    python tests/screens.py --gpu amd shots perf  # integrated AMD GPU: balanced shots + timings
+Steps: shots, board, handover, perf, transfer, record.  Output: docs/qa/after/
+"""
+from __future__ import annotations
+import argparse
+import json
+import os
+import shutil
+import statistics
+import subprocess
+import tempfile
+from pathlib import Path
+from urllib.parse import urlparse
+from PIL import Image, ImageDraw
+from playwright.sync_api import sync_playwright
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'docs/qa/after'
+URL = os.environ.get('KRZEM_TEST_URL', 'http://127.0.0.1:4174/')
+PROGRESS = [0, .25, .5, .75, 1]
+VIEWPORTS = {
+    'desktop': dict(viewport={'width': 1440, 'height': 1000}, device_scale_factor=1),
+    'mobile': dict(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True),
+}
+INFO = '''()=>{const g=document.querySelector('canvas').getContext('webgl2');const e=g&&g.getExtension('WEBGL_debug_renderer_info');
+  const d=document.documentElement.dataset;return {gl:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):null,dpr:devicePixelRatio,
+  viewport:[innerWidth,innerHeight],quality:d.quality,renderer:d.renderer,ua:navigator.userAgent,gpu:window.krzemDebug?.gpu??null}}'''
+
+
+def launch(p, gpu):
+    args = ['--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist']
+    env = dict(os.environ)
+    if gpu == 'nvidia':
+        env['__EGL_VENDOR_LIBRARY_FILENAMES'] = '/usr/share/glvnd/egl_vendor.d/10_nvidia.json'
+    return p.chromium.launch(headless=True, args=args, env=env)
+
+
+def ready(page, profile):
+    if profile == 'calm':
+        page.wait_for_function("document.documentElement.dataset.motion==='static'", timeout=20000)
+    else:
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.wait_for_timeout(1800)  # entry detail patch + a settled frame
+
+
+def webp(png: Path, dst: Path, quality=82):
+    Image.open(png).convert('RGB').save(dst, 'WEBP', quality=quality, method=6)
+
+
+def shots(browser, gpu, profiles):
+    log = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            for p in PROGRESS:
+                page.goto(f'{URL}?scene=poczatek&progress={p}&quality={profile}&freeze=1', wait_until='networkidle')
+                ready(page, profile)
+                tag = f'hero-{"amd-" if gpu == "amd" else ""}{profile}-{name}-{int(p * 100):03d}'
+                with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
+                    page.screenshot(path=tmp.name)
+                    webp(Path(tmp.name), OUT / f'{tag}.webp')
+                log[tag] = page.evaluate(INFO)
+            page.close()
+    return log
+
+
+def board(gpu):
+    prefix = 'hero-amd-' if gpu == 'amd' else 'hero-'
+    rows = []
+    for profile in (['balanced'] if gpu == 'amd' else ['cinematic', 'balanced', 'calm']):
+        for name in VIEWPORTS:
+            tiles = [Image.open(OUT / f'{prefix}{profile}-{name}-{int(p * 100):03d}.webp') for p in PROGRESS]
+            h = 250
+            rows.append((f'{profile} / {name}', [t.resize((round(t.width * h / t.height), h)) for t in tiles]))
+    width = max(sum(t.width for t in tiles) + 8 * len(tiles) for _, tiles in rows) + 150
+    img = Image.new('RGB', (width, len(rows) * 262 + 30), (11, 14, 18))
+    draw = ImageDraw.Draw(img)
+    for i, p in enumerate(PROGRESS):
+        draw.text((150 + i * 368, 8), f'hero progress {p:.2f}', fill=(200, 200, 200))
+    for r, (label, tiles) in enumerate(rows):
+        y = 30 + r * 262
+        draw.text((8, y + 110), label, fill=(210, 190, 150))
+        x = 150
+        for t in tiles:
+            img.paste(t, (x, y))
+            x += (360 if t.width > 200 else t.width) + 8
+    img.save(OUT / f'{prefix}board.webp', 'WEBP', quality=80, method=6)
+
+
+def handover(browser):
+    """Same frame twice: renderer live, then the poster forced back on top. Mean |diff| per pixel."""
+    import numpy as np
+    result = {}
+    for name, ctx in VIEWPORTS.items():
+        page = browser.new_page(**ctx)
+        page.goto(f'{URL}?scene=poczatek&progress=0&quality=cinematic&freeze=1', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.wait_for_timeout(600)
+        page.add_style_tag(content='.chapter-copy,.element-card,.scene-caption,.chapter-footer,.header,.chapter-nav,.reading-progress{visibility:hidden!important}')
+        page.wait_for_timeout(200)
+        with tempfile.TemporaryDirectory() as tmp:
+            page.screenshot(path=f'{tmp}/canvas.png')
+            page.evaluate("delete document.documentElement.dataset.hero")
+            page.wait_for_timeout(200)
+            page.screenshot(path=f'{tmp}/poster.png')
+            page.add_style_tag(content='.hero-poster,#scene-canvas{visibility:hidden!important}')
+            page.wait_for_timeout(200)
+            page.screenshot(path=f'{tmp}/plate.png')
+            plate = np.asarray(Image.open(f'{tmp}/plate.png').convert('RGB'), dtype=np.float32)
+            a = np.asarray(Image.open(f'{tmp}/canvas.png').convert('RGB'), dtype=np.float32)
+            b = np.asarray(Image.open(f'{tmp}/poster.png').convert('RGB'), dtype=np.float32)
+            webp(Path(f'{tmp}/canvas.png'), OUT / f'handover-{name}-canvas.webp', 90)
+            webp(Path(f'{tmp}/poster.png'), OUT / f'handover-{name}-poster.webp', 90)
+        lum = lambda x: x @ np.array([.2126, .7152, .0722], dtype=np.float32)
+        obj = np.abs(lum(b) - lum(plate)) > 4  # pixels where the poster shows the chunk, not the background
+        diff = np.abs(a - b)
+        h, w = obj.shape
+        samples = {}
+        ys, xs = np.nonzero(obj)
+        for k in range(5):  # five fixed sample points spread over the chunk
+            i = int(len(ys) * (k + .5) / 5)
+            y, x = int(ys[np.argsort(ys * w + xs)][i]), int(xs[np.argsort(ys * w + xs)][i])
+            samples[f'{x},{y}'] = {'canvas': a[y, x].round().tolist(), 'poster': b[y, x].round().tolist()}
+        result[name] = {
+            'mean_abs_diff_all': round(float(diff.mean()), 2),
+            'mean_abs_diff_chunk': round(float(diff[obj].mean()), 2),
+            'mean_luminance_chunk': {'canvas': round(float(lum(a)[obj].mean()), 2), 'poster': round(float(lum(b)[obj].mean()), 2)},
+            'mean_luminance_background': {'canvas': round(float(lum(a)[~obj].mean()), 2), 'poster': round(float(lum(b)[~obj].mean()), 2)},
+            'chunk_pixels': int(obj.sum()), 'samples': samples,
+        }
+        page.close()
+    return result
+
+
+SCROLL = '''async ([segments])=>{const hero=document.getElementById('poczatek'),mat=document.getElementById('materia');
+  const top=hero.getBoundingClientRect().top+scrollY,end=mat.getBoundingClientRect().top+scrollY;
+  for(const [a,b,ms] of segments){const t0=performance.now();
+    await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,top+(end-top)*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
+
+
+def perf(browser, gpu, profiles):
+    out = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            page.goto(f'{URL}?quality={profile}&debug', wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            page.wait_for_timeout(2500)
+            page.evaluate('krzemDebug.reset()')
+            page.wait_for_timeout(4000)  # idle hero: ambient rotation only
+            idle = page.evaluate('krzemDebug.intervals')
+            page.evaluate('krzemDebug.reset()')
+            # hero -> material over 8 s, hold, back halfway, forward again
+            page.evaluate(SCROLL, [[[0, 1, 8000], [1, 1, 1000], [1, .4, 2500], [.4, 1, 2500]]])
+            moving = page.evaluate('krzemDebug.intervals')
+            cpu = page.evaluate('krzemDebug.cpu')
+            info = page.evaluate(INFO)
+
+            def stats(xs):
+                xs = sorted(xs)
+                return {'frames': len(xs), 'median_ms': round(statistics.median(xs), 2) if xs else None,
+                        'p95_ms': round(xs[int(.95 * len(xs))], 2) if xs else None,
+                        'max_ms': round(xs[-1], 1) if xs else None, 'over_50ms': sum(x > 50 for x in xs)}
+            out[f'{profile}/{name}'] = {'idle_hero': stats(idle), 'scroll_entry': stats(moving),
+                                        'cpu_frame_median_ms': round(statistics.median(cpu), 3) if cpu else None,
+                                        'gl': info['gl'], 'buffer': info['gpu']['buffer'] if info['gpu'] else None,
+                                        'pixel_ratio': info['gpu']['pixelRatio'] if info['gpu'] else None}
+            page.close()
+    return out
+
+
+def transfer(browser):
+    """Bytes per request as a static host with precompressed .br serves them (dist/ sizes)."""
+    dist = ROOT / 'dist'
+
+    def size(url):
+        path = dist / urlparse(url).path.lstrip('/')
+        if path.is_dir():
+            path = path / 'index.html'
+        if not path.exists():
+            return 0
+        br = Path(str(path) + '.br')
+        return (br if br.exists() else path).stat().st_size
+    out = {}
+    for name, ctx in VIEWPORTS.items():
+        page = browser.new_page(**ctx)
+        seen: list[str] = []
+        page.on('request', lambda r: seen.append(r.url))
+        page.goto(URL, wait_until='domcontentloaded')
+        page.wait_for_function("document.querySelector('.hero-poster img').complete", timeout=20000)
+        first = [u for u in seen if not any(k in u for k in ('renderer', '.glb', '.hdr'))]
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        live = list(seen)
+        page.wait_for_timeout(5000)
+        later = [u for u in seen if u not in live]
+        kib = lambda urls: round(sum(size(u) for u in set(urls)) / 1024, 1)
+        out[name] = {
+            'first_view_kib': kib(first), 'first_view': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(first)},
+            'hero_interactive_kib': kib(live), 'hero_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(live)},
+            'after_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(later)},
+        }
+        page.close()
+    return out
+
+
+def record(p, gpu):
+    """Desktop ~40 s and mobile ~15 s: hold, parallax, slow entry, fling back, turn mid-move."""
+    browser = launch(p, gpu)
+    plans = {
+        'desktop': (VIEWPORTS['desktop'], [[0, 0, 3000], [0, .6, 9000], [.6, .35, 1500], [.35, 1, 9000], [1, 1, 2500], [1, .1, 1200], [.1, .75, 3000], [.75, 1, 4000], [1, 1, 3000]]),
+        'mobile': (VIEWPORTS['mobile'], [[0, 0, 1500], [0, 1, 7000], [1, .3, 1000], [.3, 1, 3500], [1, 1, 1500]]),
+    }
+    for name, (ctx, segments) in plans.items():
+        with tempfile.TemporaryDirectory() as tmp:
+            size = ctx['viewport']
+            context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=size)
+            page = context.new_page()
+            page.goto(URL, wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            page.wait_for_timeout(1500)
+            if name == 'desktop':
+                for x, y in [(900, 400), (1100, 600), (700, 500), (1000, 450)]:
+                    page.mouse.move(x, y, steps=40)
+                    page.wait_for_timeout(400)
+            page.evaluate(SCROLL, [segments])
+            video = page.video.path()
+            context.close()
+            dst = OUT / f'hero-scroll-{name}.webm'
+            subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                            '-crf', '42', '-row-mt', '1', '-an', str(dst)], check=True)
+    browser.close()
+
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--gpu', default='nvidia', choices=['nvidia', 'amd'])
+    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record'])
+    a = ap.parse_args()
+    OUT.mkdir(parents=True, exist_ok=True)
+    log_path = OUT / f'capture-{a.gpu}.json'
+    log = json.loads(log_path.read_text()) if log_path.exists() else {}
+    profiles = ['balanced'] if a.gpu == 'amd' else ['cinematic', 'balanced', 'calm']
+    with sync_playwright() as p:
+        browser = launch(p, a.gpu)
+        log['browser'] = f'Chromium {browser.version}'
+        if 'shots' in a.steps:
+            log['shots'] = shots(browser, a.gpu, profiles)
+        if 'handover' in a.steps and a.gpu == 'nvidia':
+            log['handover'] = handover(browser)
+        if 'perf' in a.steps:
+            log['perf'] = perf(browser, a.gpu, [x for x in profiles if x != 'calm'])
+        if 'transfer' in a.steps and a.gpu == 'nvidia':
+            log['transfer'] = transfer(browser)
+        browser.close()
+        if 'board' in a.steps or 'shots' in a.steps:
+            board(a.gpu)
+        if 'record' in a.steps and a.gpu == 'nvidia':
+            record(p, a.gpu)
+    log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer')}, indent=1)[:6000])
