@@ -1,0 +1,19 @@
+{
+    admin off
+    auto_https off
+}
+:8080 {
+    root * /srv
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+        Cache-Control "no-cache"
+        -Server
+    }
+    file_server {
+        precompressed br gzip
+    }
+}

@@ -1,0 +1,95 @@
+
+> krzem-si@0.1.0 verify
+> npm run check && npm test && npm run build
+
+
+> krzem-si@0.1.0 check
+> node scripts/check.mjs
+
+Syntax, local references, anchor ids and no-external-request guard: OK.
+
+> krzem-si@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: matrix identity, composition and translation are column-major
+ok 1 - matrix identity, composition and translation are column-major
+  ---
+  duration_ms: 1.476388
+  type: 'test'
+  ...
+# Subtest: clamping and deterministic easing
+ok 2 - clamping and deterministic easing
+  ---
+  duration_ms: 0.132741
+  type: 'test'
+  ...
+# Subtest: chapter progress handles boundaries and short static chapters
+ok 3 - chapter progress handles boundaries and short static chapters
+  ---
+  duration_ms: 0.188605
+  type: 'test'
+  ...
+# Subtest: seeded geometry is reproducible
+ok 4 - seeded geometry is reproducible
+  ---
+  duration_ms: 48.059484
+  type: 'test'
+  ...
+# Subtest: all geometry contains finite interleaved triangles and normalized normals
+ok 5 - all geometry contains finite interleaved triangles and normalized normals
+  ---
+  duration_ms: 54.429729
+  type: 'test'
+  ...
+# Subtest: reduced motion, low resources and Save-Data choose static before GPU import
+ok 6 - reduced motion, low resources and Save-Data choose static before GPU import
+  ---
+  duration_ms: 0.195945
+  type: 'test'
+  ...
+# Subtest: pixel cap respects both retina ceiling and total render budget
+ok 7 - pixel cap respects both retina ceiling and total render budget
+  ---
+  duration_ms: 0.189606
+  type: 'test'
+  ...
+# Subtest: quality drops only after two sustained slow windows
+ok 8 - quality drops only after two sustained slow windows
+  ---
+  duration_ms: 0.260083
+  type: 'test'
+  ...
+# Subtest: static server serves modules, rejects writes and does not expose parent files
+ok 9 - static server serves modules, rejects writes and does not expose parent files
+  ---
+  duration_ms: 30.44107
+  type: 'test'
+  ...
+# Subtest: beveled geometry has finite outward faces and unit normals
+ok 10 - beveled geometry has finite outward faces and unit normals
+  ---
+  duration_ms: 0.5229
+  type: 'test'
+  ...
+# Subtest: sustained very slow frames downgrade without waiting 180 frames
+ok 11 - sustained very slow frames downgrade without waiting 180 frames
+  ---
+  duration_ms: 0.104587
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 245.654552
+
+> krzem-si@0.1.0 build
+> node scripts/build.mjs
+
+Built dist/: 18 source files; 369.8 KiB raw; 21.0 KiB gzipped HTML/CSS/JS.
+Precompressed .br / .gz included. Deploy dist/ to any static host.

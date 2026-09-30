@@ -1,0 +1,296 @@
+{
+  "mode": "offline inlined production source",
+  "browser": "Chromium",
+  "checks": [
+    {
+      "name": "Desktop: real WebGL renderer starts",
+      "passed": true
+    },
+    {
+      "name": "Desktop: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Chapter 0: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 0: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 1: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 1: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 2: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 2: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 3: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 3: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 4: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 4: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 5: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 5: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Chapter 6: scroll changes active scene",
+      "passed": true
+    },
+    {
+      "name": "Chapter 6: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
+      "name": "Transistor switches OFF/ON accessibly",
+      "passed": true
+    },
+    {
+      "name": "Transistor switches back",
+      "passed": true
+    },
+    {
+      "name": "AI example opens/closes without network",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: static mode",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: keeps current chapter",
+      "passed": true
+    },
+    {
+      "name": "Motion ON: renderer returns",
+      "passed": true
+    },
+    {
+      "name": "Anchor navigation works",
+      "passed": true
+    },
+    {
+      "name": "Context loss: readable static fallback",
+      "passed": true
+    },
+    {
+      "name": "mobile: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "mobile: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "mobile/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile/fundament: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "small-phone: starts in static mode",
+      "passed": true
+    },
+    {
+      "name": "small-phone/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "small-phone/fundament: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "tablet: starts WebGL",
+      "passed": true
+    },
+    {
+      "name": "tablet/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "tablet/fundament: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion: starts in static mode",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion/fundament: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript: no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "no-javascript: starts in static mode",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/poczatek: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/materia: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/skala: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/swiat: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/inteligencja: heading visible",
+      "passed": true
+    },
+    {
+      "name": "no-javascript/fundament: heading visible",
+      "passed": true
+    },
+    {
+      "name": "WebGL unavailable: static fallback",
+      "passed": true
+    },
+    {
+      "name": "WebGL unavailable: interaction still enabled",
+      "passed": true
+    },
+    {
+      "name": "No uncaught JavaScript errors",
+      "passed": true
+    }
+  ],
+  "uncaught_errors": [],
+  "note": "Viewport/device emulation is not a physical-device performance benchmark."
+}

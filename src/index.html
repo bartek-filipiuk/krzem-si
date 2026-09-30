@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pl" data-motion="static" data-renderer="static">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090c10">
+  <meta name="description" content="Od materii do możliwości. Interaktywna podróż przez krzem, tranzystory, komputery i sztuczną inteligencję.">
+  <title>Krzem. Fundament cyfrowego świata — krzem.si</title>
+  <link rel="canonical" href="https://krzem.si/">
+  <meta property="og:type" content="website"><meta property="og:locale" content="pl_PL">
+  <meta property="og:title" content="Krzem. Fundament cyfrowego świata.">
+  <meta property="og:description" content="Od Si do SI. Zajrzyj pod powierzchnię cyfrowego świata.">
+  <meta property="og:url" content="https://krzem.si/">
+  <meta property="og:image" content="https://krzem.si/assets/social.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./scripts/app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#opowiesc">Przejdź do opowieści</a>
+<div class="ambient" aria-hidden="true"></div>
+<canvas id="scene-canvas" aria-hidden="true"></canvas>
+<div class="film-grain" aria-hidden="true"></div>
+<header class="header">
+  <a class="brand" href="#poczatek" aria-label="krzem.si — początek">krzem<span>.si</span><i aria-hidden="true">✳</i></a>
+  <nav class="main-nav" aria-label="Główne rozdziały">
+    <a href="#materia">Materia</a><a href="#tranzystor">Technologia</a><a href="#inteligencja">Inteligencja</a>
+  </nav>
+  <div class="header-controls"><span class="edition">OD Si DO SI</span><button id="motion-toggle" class="motion-button" type="button" aria-pressed="false" hidden><span class="motion-icon" aria-hidden="true">Ⅱ</span><span id="motion-label">Ogranicz animacje</span></button></div>
+</header>
+<nav class="chapter-nav" aria-label="Wybierz rozdział">
+  <a href="#poczatek" aria-label="01. Krzem" aria-current="step"><span>01</span><i></i></a>
+  <a href="#materia" aria-label="02. Materia"><span>02</span><i></i></a>
+  <a href="#tranzystor" aria-label="03. Tranzystor"><span>03</span><i></i></a>
+  <a href="#skala" aria-label="04. Skala"><span>04</span><i></i></a>
+  <a href="#swiat" aria-label="05. Świat"><span>05</span><i></i></a>
+  <a href="#inteligencja" aria-label="06. Inteligencja"><span>06</span><i></i></a>
+  <a href="#fundament" aria-label="07. Fundament"><span>07</span><i></i></a>
+</nav>
+<main id="opowiesc">
+  <section class="chapter hero" id="poczatek" data-scene="0" aria-labelledby="hero-title">
+    <div class="stage">
+      <div class="chapter-copy">
+        <p class="eyebrow"><span class="tiny-cross">+</span> PIERWIASTEK ZMIANY <span class="eyebrow-line"></span> 001</p>
+        <h1 id="hero-title">Krzem<span class="period">.</span></h1>
+        <p class="hero-subtitle">Fundament<br>cyfrowego świata.</p>
+        <p class="body-copy">Zanim pojawił się pierwszy piksel.<br>Zanim padło pierwsze pytanie do AI.<br>Była materia.</p>
+        <a class="text-link" href="#materia"><span class="circle-arrow" aria-hidden="true">↓</span> Odkryj to, czego nie widać</a>
+      </div>
+      <img class="scene-poster" src="./assets/scene-0.webp" alt="" width="860" height="850" fetchpriority="high" decoding="async">
+      <aside class="element-card" aria-label="Krzem, liczba atomowa 14, masa atomowa 28,085">
+        <span class="element-number">14</span><strong>Si</strong><span>KRZEM / SILICON</span><span class="element-mass">28,085</span>
+      </aside>
+      <div class="scene-caption"><span class="hairline"></span><p>Niepozorny pierwiastek.<br>Niezwykłe możliwości.</p></div>
+      <div class="chapter-footer"><span><i class="status-dot"></i> <span id="render-status">INTERAKTYWNA OPOWIEŚĆ</span></span><span>PRZEWIŃ, ABY ZEJŚĆ GŁĘBIEJ <b>↓</b></span></div>
+    </div>
+  </section>
+  <section class="chapter" id="materia" data-scene="1" aria-labelledby="material-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">01 / MATERIA</p><h2 id="material-title">Od natury.<br>Do <em>precyzji.</em></h2>
+      <p class="body-copy">W przyrodzie krzem jest związany z innymi pierwiastkami. Elektronika potrzebuje czegoś innego: niezwykle czystego, uporządkowanego materiału.</p>
+      <p class="small-note">Redukcja. Oczyszczanie. Krystalizacja.<br>To proces — nie magia.</p></div>
+      <img class="scene-poster" src="./assets/scene-1.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <ol class="process-strip" aria-label="Etapy przygotowania materiału">
+        <li data-process="0"><span>01</span>Kwarc</li><li data-process="1"><span>02</span>Oczyszczanie</li><li data-process="2"><span>03</span>Monokryształ</li><li data-process="3"><span>04</span>Płytka</li>
+      </ol>
+      <div class="chapter-footer"><span>OD ZWIĄZKÓW KRZEMU DO CZYSTEGO KRYSZTAŁU</span><span>01 — 06</span></div>
+    </div>
+  </section>
+  <section class="chapter" id="tranzystor" data-scene="2" aria-labelledby="transistor-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">02 / PRZEŁĄCZNIK</p><h2 id="transistor-title">Jeden element.<br><em>Dwa stany.</em></h2>
+      <p class="body-copy">Napięcie przyłożone do bramki steruje przewodzeniem kanału. Z takich przełączników budujemy logikę komputerów.</p>
+      <button class="switch-demo" id="transistor-toggle" type="button" aria-pressed="false" disabled><span class="switch-track" aria-hidden="true"><i></i></span><span id="switch-label">Włącz przewodzenie</span><span class="switch-state" aria-hidden="true">0</span></button>
+      <p id="switch-description" class="small-note" aria-live="polite">Kanał nie przewodzi w tym uproszczonym modelu.</p>
+      <noscript><p class="small-note">Włącz JavaScript, aby użyć przełącznika. Opowieść pozostaje dostępna poniżej.</p></noscript></div>
+      <img class="scene-poster" src="./assets/scene-2.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <div class="technical-legend"><span>ŹRÓDŁO</span><span>BRAMKA</span><span>DREN</span></div>
+      <div class="chapter-footer"><span>MODEL POGLĄDOWY MOSFET · NIE W SKALI</span><span>02 — 06</span></div>
+    </div>
+  </section>
+  <section class="chapter" id="skala" data-scene="3" aria-labelledby="scale-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">03 / SKALA</p><h2 id="scale-title">To nie<br>jest <em>miasto.</em></h2><p class="hero-subtitle smaller">To fragment<br>jednego układu.</p>
+      <p class="body-copy">Warstwy struktur. Sieć połączeń.<br>Miliardy tranzystorów mogą pracować w jednym chipie. Ogrom możliwości w mikroskopijnej skali.</p></div>
+      <img class="scene-poster" src="./assets/scene-3.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <div class="scale-marker"><span>MAŁA SKALA</span><i></i><span>WIELKA ZMIANA</span></div>
+      <div class="chapter-footer"><span>ARTYSTYCZNA WIZUALIZACJA STRUKTUR · NIE MIKROFOTOGRAFIA</span><span>03 — 06</span></div>
+    </div>
+  </section>
+  <section class="chapter" id="swiat" data-scene="4" aria-labelledby="world-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">04 / MOŻLIWOŚCI</p><h2 id="world-title">Liczyć.<br>Tworzyć.<br><em>Łączyć.</em></h2>
+      <p class="body-copy">Od komputerów po telefony.<br>Technologia zmieniła sposób, w jaki pracujemy, tworzymy i jesteśmy ze sobą.</p><p class="small-note">Nie chodzi o urządzenia.<br>Chodzi o to, co dzięki nim możemy.</p></div>
+      <img class="scene-poster" src="./assets/scene-4.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <div class="scene-caption"><span class="hairline"></span><p>Ta sama materia.<br>Nowe możliwości.</p></div>
+      <div class="chapter-footer"><span>OD OBLICZEŃ DO CODZIENNOŚCI</span><span>04 — 06</span></div>
+    </div>
+  </section>
+  <section class="chapter ai-chapter" id="inteligencja" data-scene="5" aria-labelledby="ai-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">05 / INTELIGENCJA</p><h2 id="ai-title">Od Si<br>do <em>SI.</em></h2><p class="hero-subtitle smaller">Model jest matematyczny.<br>Obliczenia są fizyczne.</p>
+      <p class="body-copy">Za odpowiedzią modelu stoją liczby i operacje. A pod nimi: układy, energia, dane i praca ludzi.</p>
+      <button class="text-link" id="ai-toggle" type="button" aria-expanded="false" aria-controls="ai-demo" disabled><span class="circle-arrow" aria-hidden="true">↗</span> Zajrzyj pod odpowiedź</button></div>
+      <img class="scene-poster" src="./assets/scene-5.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <div class="ai-interface" id="ai-demo"><div class="ai-interface-top"><i class="status-dot"></i><span>DEMONSTRACJA · BEZ POŁĄCZENIA Z MODELEM</span></div><p class="prompt">Napisz pierwszy wers opowieści.<span aria-hidden="true">↗</span></p><div class="computation" aria-hidden="true"><span>[ 0.14　−0.08　0.91 ]</span><span>　× W　+ b　→　f(x)</span><span>[ 0.62　 0.37　0.28 ]</span></div><p class="ai-answer">„Wszystko zaczęło się od rzeczy,<br>której nikt nie zauważał.”</p></div>
+      <div class="chapter-footer"><span>WIZUALIZACJA OBLICZEŃ, NIE „MYŚLI” MODELU</span><span>05 — 06</span></div>
+    </div>
+  </section>
+  <section class="chapter finale" id="fundament" data-scene="6" aria-labelledby="final-title">
+    <div class="stage">
+      <div class="chapter-copy"><p class="eyebrow">06 / FUNDAMENT</p><h2 id="final-title">Przyszłość<br>ma swój<br><em>fundament.</em></h2>
+      <p class="body-copy">Krzem nie jest całym cyfrowym światem.<br>Ale trudno opowiedzieć ten świat bez niego.</p><a class="text-link" href="#poczatek"><span class="circle-arrow" aria-hidden="true">↺</span> Przeżyj to jeszcze raz</a></div>
+      <img class="scene-poster" src="./assets/scene-6.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
+      <div class="final-wordmark" aria-hidden="true">Si<span>→</span>SI</div>
+      <div class="chapter-footer"><span>KRZEM.SI — OD MATERII DO MOŻLIWOŚCI</span><a href="#zrodla">POZNAJ ŹRÓDŁA ↓</a></div>
+    </div>
+  </section>
+</main>
+<footer class="sources" id="zrodla">
+  <div class="sources-heading"><p class="eyebrow">PO DRUGIEJ STRONIE OBRAZU</p><h2>Piękno.<br><em>Oparte na faktach.</em></h2><p>Obrazy są interpretacją. Nauka za nimi — nie.</p></div>
+  <div class="source-list">
+    <a href="https://periodic-table.rsc.org/element/14/silicon" target="_blank" rel="noopener noreferrer"><span>01</span><div>Royal Society of Chemistry<small>Właściwości, występowanie i zastosowanie krzemu.</small></div><b>↗</b></a>
+    <a href="https://www.asml.com/en/technology/all-about-microchips/microchip-basics" target="_blank" rel="noopener noreferrer"><span>02</span><div>ASML — podstawy mikroelektroniki<small>Tranzystory, układy i ich rola w urządzeniach.</small></div><b>↗</b></a>
+    <a href="https://www.asml.com/en/technology/lithography-principles" target="_blank" rel="noopener noreferrer"><span>03</span><div>ASML — od płytki do układu<small>Litografia i tworzenie struktur warstwa po warstwie.</small></div><b>↗</b></a>
+    <a href="https://blogs.nvidia.com/blog/why-gpus-are-great-for-ai/" target="_blank" rel="noopener noreferrer"><span>04</span><div>NVIDIA — obliczenia dla AI<small>Przetwarzanie równoległe i matematyka modeli.</small></div><b>↗</b></a>
+  </div>
+  <details class="science-note"><summary>Co na stronie jest uproszczeniem?</summary><p>Geometria i ruch są artystycznymi, proceduralnymi wizualizacjami, a nie zdjęciami mikroskopowymi. Etapy wytwarzania materiału są skrócone. Tranzystor pokazuje zasadę sterowania kanałem; oznaczenia 0/1 nie definiują napięć ani logiki konkretnego obwodu. Świetlne akcenty nie są obrazem rzeczywistych elektronów. Demonstracja AI jest wcześniej napisanym przykładem, nie generuje odpowiedzi ani nie pokazuje rozumowania modelu. Krzem jest ważnym podłożem współczesnej elektroniki, ale układy wymagają też innych materiałów, a AI — sprzętu, algorytmów, danych, energii i pracy ludzi.</p></details>
+  <div class="site-footer"><a class="brand" href="#poczatek">krzem<span>.si</span></a><p>Niewidoczny fundament. Widoczna zmiana.</p><span>2026 / EDYCJA 01</span></div>
+</footer>
+<div class="reading-progress" aria-hidden="true"><i id="reading-progress-bar"></i></div>
+</body>
+</html>

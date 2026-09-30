@@ -1,0 +1,12 @@
+# Example for an EXISTING host Caddy installation; adjust the path.
+# Point DNS at the server before enabling the domain. Do not overwrite other sites.
+krzem.si {
+    root * /var/www/krzem-si/dist
+    encode zstd gzip
+    file_server {
+        precompressed br gzip
+    }
+    header X-Content-Type-Options nosniff
+    header Referrer-Policy strict-origin-when-cross-origin
+    header Cache-Control "no-cache"
+}
