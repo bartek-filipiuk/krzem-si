@@ -209,6 +209,41 @@ with sync_playwright() as p:
     check('Keyboard: Enter on a chapter link moves there', attr(keys, 'chapter') == '3')
     keys.close()
 
+    # Attack: fast fling through the entry and back, direction change mid-transition, a hidden tab,
+    # a resize across the mobile breakpoint and a burst of motion toggles.
+    rough = browser.new_page(viewport={'width': 1440, 'height': 1000})
+    load(rough, '?debug')
+    rough.evaluate('''async()=>{const m=document.getElementById('materia').getBoundingClientRect().top+scrollY;
+      const frame=()=>new Promise(r=>requestAnimationFrame(r));
+      for(const y of [0,m*.5,m,m*.2,m*.8,m*.6,m,0,m*.7,m*.75,m*.72]){scrollTo(0,y);await frame();}}''')
+    rough.wait_for_timeout(300)
+    state = rough.evaluate('({hero:krzemDebug.hero,index:krzemDebug.index,dip:getComputedStyle(document.querySelector("canvas")).opacity})')
+    check('Fling: state follows the last scroll position', state['index'] == 0 and abs(state['hero'] - .72) < .02)
+    check('Fling: canvas opacity matches the entry phase', abs(float(state['dip']) - rough.evaluate(
+        '(()=>{const t=krzemDebug.hero;const s=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)};return t<.84?1-s((t-.74)/.1):s((t-.84)/.13)})()')) < .01)
+    rough.evaluate('''()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+      document.dispatchEvent(new Event('visibilitychange'))}''')
+    rough.wait_for_timeout(300)
+    check('Hidden tab: loop stopped', rough.evaluate('krzemDebug.rafActive') is False)
+    frozen = rough.evaluate('krzemDebug.ambient')
+    rough.wait_for_timeout(500)
+    check('Hidden tab: ambient clock paused', rough.evaluate('krzemDebug.ambient') == frozen)
+    rough.evaluate('''()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});
+      document.dispatchEvent(new Event('visibilitychange'))}''')
+    rough.wait_for_timeout(300)
+    check('Tab return: loop resumes in the same state', rough.evaluate('krzemDebug.rafActive') and attr(rough, 'renderer') == 'webgl')
+    rough.set_viewport_size({'width': 390, 'height': 844})
+    rough.wait_for_timeout(300)
+    check('Resize to phone: mobile framing, still WebGL', attr(rough, 'framing') == 'mobile' and attr(rough, 'renderer') == 'webgl')
+    rough.set_viewport_size({'width': 1440, 'height': 1000})
+    for _ in range(6):  # full -> calm -> full ... ends in full
+        rough.locator('#motion-toggle').click()
+    rough.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=20000)
+    rough.wait_for_timeout(500)
+    check('Toggle burst: ends in one live renderer', attr(rough, 'motion') == 'full' and attr(rough, 'renderer') == 'webgl'
+          and gpu_error(rough) == 0)
+    rough.close()
+
     no_gpu = browser.new_page(viewport={'width': 1440, 'height': 1000})
     # Deliberately simulate blocked GPU access; this is not used in production.
     no_gpu.add_init_script('''(()=>{const original=HTMLCanvasElement.prototype.getContext;
