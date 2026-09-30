@@ -3,17 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Krzem — od materii do cyfrowego świata. A dependency-free cinematic web experience.",
+  "description": "Krzem — od materii do cyfrowego świata. A cinematic, static web story.",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "scripts": {
-    "dev": "node scripts/serve.mjs src",
-    "build": "node scripts/build.mjs",
-    "preview": "node scripts/serve.mjs dist",
+    "dev": "vite",
+    "build": "vite build && node scripts/build.mjs",
+    "preview": "vite preview",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",
-    "verify": "npm run check && npm test && npm run build",
-    "standalone": "node scripts/standalone.mjs"
+    "verify": "npm run check && npm test && npm run build"
+  },
+  "devDependencies": {
+    "vite": "8.3.1"
+  },
+  "dependencies": {
+    "three": "0.186.1"
   }
 }
