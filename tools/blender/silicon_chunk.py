@@ -2,12 +2,16 @@
 
   blender -b --factory-startup -P tools/blender/silicon_chunk.py -- [--seed 14] [--preview out.webp]
 
-The shape is an implicit surface: a lumpy ellipsoid ("rod skin") intersected with seeded fracture
-half-spaces whose boundary is curved (conchoidal bowl + concentric ripples), minus a few stepped
-terraces and scalloped edge chips. Smooth-max gives the small edge bevel. A dense icosphere is
-projected onto that surface (high-res bake source). Micro-relief (hackle striations radiating
-from each face's impact point, sparse pits) lives only in the high-res shader and reaches the
-runtime mesh through the baked normal and roughness maps.
+The shape is an implicit surface: a lumpy ellipsoid ("rod skin") intersected with ~50 seeded
+fracture half-spaces cut in sequence against the solid left so far (4 deep, ~17 medium, ~27 corner
+and skin nicks). Every deep/medium face is conchoidal (a shallow bowl or dome), three carry faint
+Wallner arcs whose origin lies outside the face. On top: six terraces (three deep breaks with a
+re-entrant edge, three shallow ledges), 7-9 flake chips, 40 small flat flake scars along edges and
+corners, and 7 hairline cracks (V-grooves 1-4 cm inside a face boundary). Smooth-max gives the small
+edge bevel. A dense icosphere is projected onto that surface (high-res bake source).
+Micro-relief (two octaves of per-grain facet tilt = the crystalline mosaic, hackle striations fanning
+from an origin outside each face, sparse pits) lives only in the high-res shader and reaches the
+runtime mesh through the baked normal, roughness and occlusion (AO x crack mask) maps.
 """
 import argparse
 import json
@@ -26,12 +30,23 @@ import studio  # noqa: E402
 ROOT = studio.ROOT
 MODELS = ROOT / "src/assets/models"
 OUT = HERE / "out"
-EDGE_K = 0.0055          # smooth-max radius = edge bevel (object ~1.0 m)
-BASE_COLOR = (0.228, 0.262, 0.300)   # linear, ~#848b95 sRGB: cool dark grey-blue
-METALLIC = 0.9
+EDGE_K = 0.004           # smooth-max radius = edge bevel (object ~1.0 m)
+FACET_K = 0.0015          # crisper bevel of the small secondary facets
+BASE_COLOR = (0.275, 0.296, 0.314)   # linear, #8f9498 sRGB: mid grey metal, uniform
+METALLIC = 0.95
+ROUGH_FLAT = (0.38, 0.52)            # per-piece base roughness (low-to-medium gloss); striations add +-0.05
+ROUGH_CONCH = (0.36, 0.5)
+ROUGH_GLOSSY = (0.18, 0.23)          # three fresh fracture faces
+ROUGH_CHIP = (0.38, 0.5)
+ROUGH_CRACK = 0.75
+ROUGH_SKIN = 0.55
+CRACK_SLOPE = 0.25                   # crack groove narrows with depth: depth = width / slope
 BUMP_DIST = 0.0009       # metres per unit of the shader height signal
-GRAIN_SCALE = 40.0       # Voronoi cells per metre (~2.5 cm grains)
-GRAIN_TILT = 0.022       # facet tilt of a grain (slope, ~1.3 degrees)
+GRAIN_SCALE = 110.0      # Voronoi cells per metre (~9 mm grains): crystalline micro-facet mosaic
+GRAIN_TILT = 0.035       # facet tilt of a grain (slope, ~2 degrees); no height step, so no cell outlines
+GRAIN2_SCALE = 38.0      # a second, coarser grain octave (~2.6 cm crystals)
+GRAIN2_TILT = 0.05
+CRACK_SCALE = 7.0        # hairline crack network, cells per metre; masked to a few segments
 
 
 def args():
@@ -76,12 +91,12 @@ class Chunk:
     def __init__(self, seed):
         rng = np.random.default_rng(seed)
         self.rng = rng
-        self.R = np.array([0.68, 0.46, 0.39]) * rng.uniform(0.93, 1.07, 3)
+        self.R = np.array([0.70, 0.47, 0.40]) * rng.uniform(0.92, 1.08, 3)   # elongated lump
         self.Rot = rand_rot(rng)
-        self.lump_k = rng.normal(size=(9, 3)) * 9.0
-        self.lump_a = rng.uniform(0.002, 0.005, 9)
+        self.lump_k = rng.normal(size=(9, 3)) * 5.0
+        self.lump_a = rng.uniform(0.006, 0.014, 9)
         self.lump_p = rng.uniform(0, 2 * np.pi, 9)
-        self.pieces = []   # dicts: kind, frame (q,e1,e2,n), rough, id
+        self.steps, self.chips, self.facets, self.cracks = [], [], None, []
         self._planes(rng)
 
     # --- base: lumpy ellipsoid (the original rod skin, only small patches survive the cuts)
@@ -92,74 +107,113 @@ class Chunk:
         d = k0 * (k0 - 1) / np.maximum(k1, 1e-9)
         return d + (np.sin(p @ self.lump_k.T + self.lump_p) * self.lump_a).sum(1)
 
-    def support(self, n):
-        return math.sqrt(float(((self.Rot.T @ n) * self.R) @ ((self.Rot.T @ n) * self.R)))
-
     def _planes(self, rng):
-        N = int(rng.integers(17, 21))
+        """Sequential cuts, each measured against the solid left by the previous ones (point cloud):
+        4 deep cuts set the silhouette, ~12 medium ones break it up, ~14 shallow nicks take corners off."""
+        cloud = unit(rng.normal(size=(120000, 3))) * rng.random((120000, 1)) ** (1 / 3)
+        cloud = (cloud * self.R) @ self.Rot.T
+        n_big, n_mid, n_nick = 4, int(rng.integers(15, 19)), int(rng.integers(24, 30))
+        N = n_big + n_mid
         i = np.arange(N) + 0.5
         phi = np.arccos(1 - 2 * i / N)
         th = np.pi * (1 + 5 ** 0.5) * i
-        dirs = np.stack([np.cos(th) * np.sin(phi), np.sin(th) * np.sin(phi), np.cos(phi)], 1)
-        dirs = unit(dirs @ rand_rot(rng).T + rng.normal(scale=0.22, size=dirs.shape))
-        depth = rng.uniform(0.72, 0.93, N)
-        depth[rng.permutation(N)[:3]] = rng.uniform(0.52, 0.62, 3)   # three large faces
+        fib = np.stack([np.cos(th) * np.sin(phi), np.sin(th) * np.sin(phi), np.cos(phi)], 1)
+        fib = unit(fib @ rand_rot(rng).T + rng.normal(scale=0.25, size=fib.shape))[rng.permutation(N)]
         self.planes = []
-        for n, dep in zip(dirs, depth):
-            s = self.support(n)
-            d = s * dep
-            rad = math.sqrt(max(s * s - d * d, 1e-4))
+        for k in range(N + n_nick):
+            if k < 2:   # two oblique deep cuts taper one end of the long axis (irregular lump, not an egg)
+                side = self.Rot[:, 1 + k] * rng.choice([-1, 1])
+                n = unit(self.Rot[:, 0] + side * rng.uniform(0.7, 1.1) + rng.normal(scale=0.15, size=3))
+                depth = rng.uniform(0.2, 0.28)
+            elif k < N:
+                n = fib[k]
+                depth = rng.uniform(0.13, 0.21) if k < n_big else rng.uniform(0.03, 0.08)
+            else:   # nick: take off a remaining patch of rod skin, or the most protruding corner
+                skin = cloud[self.base(cloud) > -0.012]
+                if len(skin) > 150 and rng.random() < 0.75:
+                    x = skin[rng.integers(len(skin))]
+                    n = unit(unit(self.Rot @ ((self.Rot.T @ x) / self.R ** 2)) + rng.normal(scale=0.25, size=3))
+                    depth = rng.uniform(0.02, 0.055)
+                else:
+                    x = cloud[np.argmax(cloud @ unit(rng.normal(size=3)))]
+                    n = unit(unit(x) + rng.normal(scale=0.35, size=3))
+                    depth = rng.uniform(0.012, 0.04)
+            d = float((cloud @ n).max()) - depth
+            cloud = cloud[cloud @ n <= d]
             e1, e2 = frame(n)
-            a = rng.uniform(0, 2 * np.pi)
-            dirq = math.cos(a) * e1 + math.sin(a) * e2
-            # impact point outside the face: ripples and hackle cross it as arcs and fan lines, never a bullseye
-            q = n * d + dirq * rad * rng.uniform(1.15, 1.5)
-            e1 = unit(-dirq)                                        # theta = 0 points across the face
-            e2 = np.cross(n, e1)
-            flat = rng.random() < 0.35
-            pl = dict(n=n, d=d, q=q, e1=e1, e2=e2, rad=rad,
-                      kappa=(rng.uniform(-0.25, 0.2) if flat else rng.uniform(-1.1, 0.7)),
-                      amp=rng.uniform(0.0001, 0.0004), lam=rng.uniform(0.04, 0.09),
-                      decay=rng.uniform(0.18, 0.4),
-                      wk=unit(rng.normal(size=2)) * rng.uniform(12, 25), wa=rng.uniform(0.001, 0.003),
-                      wp=rng.uniform(0, 2 * np.pi), flat=flat)
-            self.planes.append(pl)
+            conch = k < N                               # every big/medium face is conchoidal (rounded), nicks stay flat
+            self.planes.append(dict(
+                n=n, d=d, e1=e1, e2=e2,
+                c0=n * d + (e1 * rng.normal() + e2 * rng.normal()) * 0.06,   # curvature centre
+                kappa=(rng.choice([-1, 1]) * rng.uniform(0.4, 1.2)) if conch else rng.uniform(-0.2, 0.12),
+                q=n * d, amp=0.0, lam=0.04, decay=0.2, r0=0.0,               # ripples: set in add_details
+                wk=unit(rng.normal(size=2)) * rng.uniform(10, 20), wa=rng.uniform(0.0003, 0.0010),
+                wp=rng.uniform(0, 2 * np.pi), flat=not conch))
 
     def plane_term(self, pl, p):
-        rel = p - pl["q"]
+        rel = p - pl["c0"]
         u, v = rel @ pl["e1"], rel @ pl["e2"]
-        r = np.hypot(u, v)
-        g = (-0.5 * pl["kappa"] * r * r
-             + pl["amp"] * np.sin(2 * np.pi * r / pl["lam"] + 0.9 * np.sin(3 * np.arctan2(v, u) + pl["wp"]))
-             * np.exp(-r / pl["decay"])
-             + pl["wa"] * np.sin(u * pl["wk"][0] + v * pl["wk"][1] + pl["wp"]))
+        g = -0.5 * pl["kappa"] * (u * u + v * v) + pl["wa"] * np.sin(u * pl["wk"][0] + v * pl["wk"][1] + pl["wp"])
+        if pl["amp"]:
+            # Wallner-like arcs: ripples around an origin OUTSIDE the face, so they cross it as shallow arcs
+            rq = p - pl["q"]
+            r = np.hypot(rq @ pl["e1"], rq @ pl["e2"])
+            # spacing drifts along the arc and outward, so the lines never read as a regular fingerprint
+            phase = 2 * np.pi * r / pl["lam"] + 1.6 * np.sin(r * 9.0 + pl["wp"]) + 0.8 * np.sin((rq @ pl["e2"]) * 14.0)
+            g = g + pl["amp"] * np.sin(phase) * np.exp(-np.maximum(r - pl["r0"], 0) / pl["decay"])
         return p @ pl["n"] - pl["d"] - g
 
     def add_details(self):
-        """Steps and chips are placed on the fractured solid, so they need a first surface pass."""
+        """Ripple origins, ledges and chips are placed on the fractured solid, so they need a first surface pass."""
         rng = self.rng
-        dirs = unit(rng.normal(size=(30000, 3)))
+        dirs = unit(rng.normal(size=(40000, 3)))
         pts = self.surface(dirs, with_details=False)
-        vals = np.stack([self.plane_term(pl, pts) for pl in self.planes])
-        order = np.argsort(vals, 0)
-        top2 = np.take_along_axis(vals, order[-2:], 0)
-        on_edge = (np.abs(top2[1] - top2[0]) < 0.004) & (top2[1] > -0.01)
-        edge_pts, fa, fb = pts[on_edge], order[-1][on_edge], order[-2][on_edge]
-        self.steps = []
-        big = sorted(range(len(self.planes)), key=lambda i: -self.planes[i]["rad"])[:4]
-        for i in big:
+        vals = np.stack([self.base(pts)] + [self.plane_term(pl, pts) for pl in self.planes])
+        ids = np.argmax(vals, 0) - 1                      # -1 = skin
+        # every face gets its hackle/ripple origin outside its own outline (never a bullseye)
+        faces = []
+        for i, pl in enumerate(self.planes):
+            fp = pts[ids == i]
+            pl["count"] = len(fp)
+            if len(fp) < 20:
+                pl["q"] = pl["n"] * pl["d"] + pl["e1"] * 0.5
+                continue
+            c = fp.mean(0)
+            ext = float(np.linalg.norm(fp - c, axis=1).max())
+            a = rng.uniform(0, 2 * np.pi)
+            pl["q"] = c + (math.cos(a) * pl["e1"] + math.sin(a) * pl["e2"]) * ext * rng.uniform(1.25, 1.7)
+            pl["centroid"], pl["ext"] = c, ext
+            faces.append(i)
+        big = sorted(faces, key=lambda i: -self.planes[i]["count"])
+        for i in big[:3]:                                 # conchoidal ripples on 3 large faces only
             pl = self.planes[i]
-            m = unit(pl["e1"] * rng.uniform(-0.4, 0.4) + pl["e2"] * rng.choice([-1, 1]))
-            t = float(pl["n"] * pl["d"] @ m) + pl["rad"] * rng.uniform(0.2, 0.45)
-            self.steps.append(dict(plane=i, m=m, t=t, h=rng.uniform(0.014, 0.03)))
-        # Scalloped chips: a flake taken off face A starting at its edge with face B.
-        self.chips = []
-        M = int(rng.integers(9, 13))
+            pl["r0"] = float(np.linalg.norm(pl["q"] - pl["centroid"])) - pl["ext"]
+            pl.update(amp=rng.uniform(0.00007, 0.00014), lam=rng.uniform(0.03, 0.055), decay=rng.uniform(0.25, 0.45))
+        # ledges: a face broken in two levels (terrace + riser) on six of the larger faces; the first
+        # two are deep breaks (a lost corner with a re-entrant edge), the rest shallow ledges
+        for j, i in enumerate(rng.permutation(big[:12])[:6]):
+            pl = self.planes[i]
+            a = rng.uniform(0, 2 * np.pi)
+            deep = j < 3
+            # deep breaks slope outward (a riser parallel to the projection rays gets no vertices)
+            lean = rng.uniform(0.35, 0.7) if deep else rng.uniform(-0.45, 0.2)
+            m = unit(math.cos(a) * pl["e1"] + math.sin(a) * pl["e2"] + pl["n"] * lean)
+            t = float(pl["centroid"] @ m) + pl["ext"] * (rng.uniform(0.25, 0.5) if deep else rng.uniform(-0.15, 0.45))
+            self.steps.append(dict(plane=i, m=m, t=t, h=rng.uniform(0.05, 0.09) if deep else rng.uniform(0.008, 0.028)))
+        # small chips on edges/corners, favouring points where three faces meet
+        top = np.sort(vals, 0)
+        edge = (top[-1] - top[-2] < 0.004) & (top[-1] > -0.01)
+        corner = edge & (top[-1] - top[-3] < 0.012)
+        order = np.argsort(vals, 0)
+        fa, fb = order[-1] - 1, order[-2] - 1
+        cand = np.concatenate([rng.permutation(np.flatnonzero(corner)), rng.permutation(np.flatnonzero(edge))])
         picks = []
-        for k in rng.permutation(len(edge_pts)):
-            c = edge_pts[k]
-            if all(np.linalg.norm(c - o) > 0.16 for o, _, _ in picks):
-                picks.append((c, fa[k], fb[k]))
+        M = int(rng.integers(7, 10))
+        for k in cand:
+            if fa[k] < 0 or fb[k] < 0:
+                continue
+            if all(np.linalg.norm(pts[k] - o) > 0.17 for o, _, _ in picks):
+                picks.append((pts[k], fa[k], fb[k]))
             if len(picks) == M:
                 break
         for c, a, b in picks:
@@ -169,13 +223,62 @@ class Chunk:
             t = unit(np.cross(na, nb))
             n = unit(na + 0.35 * nb)                     # scar plane leans slightly toward the edge
             w = np.cross(n, t)
-            # a few large shallow conchoidal scoops, the rest small edge chips
-            size = rng.uniform(0.2, 0.32) if len(self.chips) < 3 else rng.uniform(0.05, 0.13)
-            wide = rng.uniform(0.45, 0.7) if size > 0.15 else rng.uniform(0.28, 0.4)   # small chips run along the edge
-            radii = np.array([size, size * wide, size * rng.uniform(0.12, 0.2)])
-            centre = c + n * radii[2] * rng.uniform(0.35, 0.6) - w * radii[1] * 0.15 * np.sign(w @ nb)
+            size = rng.uniform(0.035, 0.09)                # shallow flake scars, long along the edge
+            radii = np.array([size, size * rng.uniform(0.35, 0.6), size * rng.uniform(0.09, 0.15)])
+            centre = c + n * radii[2] * rng.uniform(0.3, 0.55) - w * radii[1] * 0.15 * np.sign(w @ nb)
             self.chips.append(dict(c=centre, axes=np.stack([t, w, n]), radii=radii,
-                                   q=c, e1=t, e2=w, n=n))
+                                   q=c - w * size * 1.3 * np.sign(w @ nb), e1=t, e2=w, n=n))
+        for i in rng.permutation(big[2:12])[:3]:          # fresh, glossy fracture faces
+            self.planes[i]["glossy"] = True
+        # secondary faceting: 40 small flat flake scars along edges and at corners, each a plane
+        # bounded along the edge by two planar walls, so it stays local and ends in small angular steps
+        fc = []
+        for k in cand:
+            if fa[k] < 0 or fb[k] < 0:
+                continue
+            if all(np.linalg.norm(pts[k] - o[0]) > 0.06 for o in fc):
+                fc.append((pts[k], fa[k], fb[k]))
+            if len(fc) == 40:
+                break
+        W, O = [], []       # per facet: 3 outward normals (cut, wall 1, wall 2) and offsets
+        for c, a, b in fc:
+            na, nb = self.planes[a]["n"], self.planes[b]["n"]
+            t = unit(np.cross(na, nb))
+            n = unit(unit(na + nb) + t * rng.uniform(-0.3, 0.3) + (na - nb) * rng.uniform(-0.35, 0.35)
+                     + rng.normal(scale=0.1, size=3))
+            m1 = unit(t + rng.normal(scale=0.4, size=3))
+            m2 = unit(-t + rng.normal(scale=0.4, size=3))   # walls 1.5-5 cm either side along the edge
+            W.append([n, -m1, -m2])
+            O.append([float(c @ n) - rng.uniform(0.009, 0.024),
+                      -(float(c @ m1) + rng.uniform(0.012, 0.045)), -(float(c @ m2) + rng.uniform(0.012, 0.045))])
+        self.facets = dict(w=np.array(W).reshape(-1, 3), o=np.array(O).ravel(), n=np.array([w[0] for w in W]))
+        # hairline cracks: V-grooves confined to one large face, running 1-4 cm inside its boundary
+        # with a neighbour (plus two free ones across big faces); wiggle and taper keep them organic
+        pair_n = {}
+        for x, y in zip(fa[edge], fb[edge]):
+            if x >= 0 and y >= 0:
+                pair_n[(x, y)] = pair_n.get((x, y), 0) + 1
+        bigset = set(big[:14])
+        pairs = [pq for pq, cnt in sorted(pair_n.items(), key=lambda kv: -kv[1]) if pq[0] in bigset and cnt > 15]
+        chosen = [pairs[i] for i in rng.permutation(len(pairs))[:5]] + [(i, None) for i in rng.permutation(big[:6])[:2]]
+        epts, efa, efb = pts[edge], fa[edge], fb[edge]
+        self.cracks = []
+        for a, b in chosen:
+            na = self.planes[a]["n"]
+            if b is not None:
+                E = epts[(efa == a) & (efb == b)]
+                c = E[rng.integers(len(E))]
+                u = unit(self.planes[b]["n"] - (self.planes[b]["n"] @ na) * na)
+                ang = rng.uniform(-0.35, 0.35)
+                m = unit(u * math.cos(ang) + np.cross(na, u) * math.sin(ang))
+                c = c - u * rng.uniform(0.012, 0.04)
+            else:
+                F = pts[ids == a]
+                c = F[rng.integers(len(F))]
+                m = unit(np.cross(na, unit(rng.normal(size=3))))
+            self.cracks.append(dict(face=a, m=m, t=float(c @ m), c=c, L=rng.uniform(0.14, 0.32),
+                                    w=rng.uniform(0.0022, 0.004), k=rng.normal(size=(2, 3)) * rng.uniform(15, 35),
+                                    amp=rng.uniform(0.002, 0.005, 2), ph=rng.uniform(0, 6.3, 2)))
 
     def step_parts(self, st, p):
         pl = self.planes[st["plane"]]
@@ -188,19 +291,47 @@ class Chunk:
         k1 = np.linalg.norm(lp / ch["radii"] ** 2, axis=1)
         return -(k0 * (k0 - 1) / np.maximum(k1, 1e-9))
 
+    def facet_parts(self, p, block=100000):
+        """All small facets at once: (value of the strongest one, its index) per point."""
+        fs = self.facets
+        val, idx = np.empty(len(p)), np.empty(len(p), dtype=np.int64)
+        for s0 in range(0, len(p), block):
+            q = p[s0:s0 + block]
+            v = (q @ fs["w"].T - fs["o"]).reshape(len(q), -1, 3).min(2)   # inside the cut AND between the walls
+            idx[s0:s0 + block] = v.argmax(1)
+            val[s0:s0 + block] = np.take_along_axis(v, idx[s0:s0 + block, None], 1)[:, 0]
+        return val, idx
+
+    def crack_parts(self, p):
+        """All cracks: (value of the strongest, its index); positive inside a groove."""
+        vals = []
+        for ck in self.cracks:
+            s_ = p @ ck["m"] - ck["t"] + (np.sin(p @ ck["k"].T + ck["ph"]) * ck["amp"]).sum(1)
+            taper = np.maximum(0, 1 - ((p - ck["c"]) ** 2).sum(1) / ck["L"] ** 2)
+            vals.append(ck["w"] * taper - np.abs(s_) + CRACK_SLOPE * self.plane_term(self.planes[ck["face"]], p))
+        v = np.stack(vals)
+        i = v.argmax(0)
+        return v[i, np.arange(len(p))], i
+
     def terms(self, p, with_details=True):
         out = [self.base(p)] + [self.plane_term(pl, p) for pl in self.planes]
         if with_details:
             out += [np.minimum(*self.step_parts(st, p)) for st in self.steps]
             out += [self.chip_term(ch, p) for ch in self.chips]
+            if self.facets is not None:
+                out.append(self.facet_parts(p)[0])       # second to last (own, crisper bevel)
+                out.append(self.crack_parts(p)[0])       # last (hard max: crisp groove)
         return out
 
     def sdf(self, p, with_details=True):
         ts = self.terms(p, with_details)
+        special = with_details and self.facets is not None
+        crack = ts.pop() if special else None
+        facet = ts.pop() if special else None
         f = ts[0]
         for t in ts[1:]:
             f = smax(f, t, EDGE_K)
-        return f
+        return f if facet is None else np.maximum(smax(f, facet, FACET_K), crack)
 
     def grad(self, p, eps=2e-4):
         g = np.zeros_like(p)
@@ -227,15 +358,21 @@ class Chunk:
     def piece_frames(self):
         """One entry per surface piece: (kind, q, e1, e2, n, roughness). Index = piece id."""
         rng = np.random.default_rng(1000)
-        fr = [("skin", np.zeros(3), np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), np.array([0, 0, 1.0]), 0.55)]
+        fr = [("skin", np.zeros(3), np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), np.array([0, 0, 1.0]), ROUGH_SKIN)]
         for pl in self.planes:
-            rough = rng.uniform(0.2, 0.28) if pl["flat"] else rng.uniform(0.26, 0.42)
+            rough = rng.uniform(*(ROUGH_GLOSSY if pl.get("glossy") else ROUGH_FLAT if pl["flat"] else ROUGH_CONCH))
             fr.append(("fracture", pl["q"], pl["e1"], pl["e2"], pl["n"], rough))
         for st in self.steps:
             pl = self.planes[st["plane"]]
-            fr.append(("riser", pl["q"], st["m"], pl["n"], np.cross(st["m"], pl["n"]), rng.uniform(0.3, 0.45)))
+            fr.append(("riser", pl["q"], st["m"], pl["n"], np.cross(st["m"], pl["n"]), rng.uniform(*ROUGH_CHIP)))
         for ch in self.chips:
-            fr.append(("chip", ch["q"], ch["e1"], ch["e2"], ch["n"], rng.uniform(0.28, 0.4)))
+            fr.append(("chip", ch["q"], ch["e1"], ch["e2"], ch["n"], rng.uniform(*ROUGH_CHIP)))
+        for n in self.facets["n"]:
+            e1, e2 = frame(n)
+            fr.append(("chip", n * 2.0, e1, e2, n, rng.uniform(*ROUGH_CHIP)))
+        for ck in self.cracks:
+            e1, e2 = frame(ck["m"])
+            fr.append(("crack", ck["m"] * 2.0, e1, e2, ck["m"], ROUGH_CRACK))
         return fr
 
     def piece_ids(self, p):
@@ -247,6 +384,10 @@ class Chunk:
             sel = ids == 1 + P + j
             terrace, riser = self.step_parts(st, p[sel])
             ids[sel] = np.where(terrace < riser, 1 + st["plane"], 1 + P + j)
+        F = len(ts) - 2                                    # facet term -> one piece id per facet
+        csel, fsel = ids == F + 1, ids == F
+        ids[fsel] = F + self.facet_parts(p[fsel])[1]
+        ids[csel] = F + len(self.facets["n"]) + self.crack_parts(p[csel])[1]
         return ids
 
 
@@ -271,7 +412,7 @@ def build_highres(chunk, subdiv):
     p = chunk.surface(unit(v))
     p = chunk.project(p, 2)
     deg = np.bincount(e.ravel(), minlength=len(p)).astype(float)
-    for it in range(4):   # tangential relaxation, then back onto the surface
+    for it in range(8):   # tangential relaxation, then back onto the surface
         nb = np.zeros_like(p)
         for a in range(3):
             nb[:, a] = (np.bincount(e[:, 0], p[e[:, 1], a], len(p)) + np.bincount(e[:, 1], p[e[:, 0], a], len(p))) / deg
@@ -297,7 +438,9 @@ def write_attributes(me, chunk, p_src, centre, scale):
     e1 = np.array([f[2] for f in fr])[ids]
     e2 = np.array([f[3] for f in fr])[ids]
     rough = np.array([f[5] for f in fr])[ids]
-    kind = np.array([{"skin": 0.0, "fracture": 1.0, "riser": 1.0, "chip": 1.0}[f[0]] for f in fr])[ids]
+    kind = np.array([{"skin": 0.0, "fracture": 1.0, "riser": 1.0, "chip": 1.0, "crack": 1.0}[f[0]] for f in fr])[ids]
+    crack = np.array([float(f[0] == "crack") for f in fr])[ids]
+    me.attributes.new("crack", "FLOAT", "POINT").data.foreach_set("value", crack)
     rel = p_src - q
     u, v = (rel * e1).sum(1), (rel * e2).sum(1)
     r = np.hypot(u, v) * scale
@@ -340,7 +483,16 @@ def highres_material():
     out = node(nt, "ShaderNodeOutputMaterial", (1400, 0))
     bsdf = node(nt, "ShaderNodeBsdfPrincipled", (1100, 0), Metallic=METALLIC)
     bsdf.inputs["Base Color"].default_value = (*BASE_COLOR, 1)
-    L(bsdf.outputs[0], out.inputs[0])
+    crack_attr = nt.nodes.new("ShaderNodeAttribute")
+    crack_attr.attribute_name, crack_attr.location = "crack", (900, 500)
+    emit = node(nt, "ShaderNodeEmission", (1100, 400), Strength=0.0)
+    emit.name = "crack_emit"                      # lit only for the EMIT bake -> crack mask
+    L(crack_attr.outputs["Fac"], emit.inputs["Color"])
+    add = nt.nodes.new("ShaderNodeAddShader")
+    add.location = (1250, 100)
+    L(bsdf.outputs[0], add.inputs[0])
+    L(emit.outputs[0], add.inputs[1])
+    L(add.outputs[0], out.inputs[0])
 
     attr = nt.nodes.new("ShaderNodeAttribute")
     attr.attribute_name, attr.location = "frac", (-1200, 0)
@@ -364,12 +516,12 @@ def highres_material():
     L(arc.outputs[0], comb.inputs[0])
     L(rad.outputs[0], comb.inputs[1])
     L(seed.outputs[0], comb.inputs[2])
-    hackle = node(nt, "ShaderNodeTexNoise", (-600, 0), Scale=1.0, Detail=3.0, Roughness=0.55)
+    hackle = node(nt, "ShaderNodeTexNoise", (-600, 0), Scale=1.0, Detail=6.0, Roughness=0.62, Distortion=0.6)
     L(comb.outputs[0], hackle.inputs["Vector"])
     # hackle fades in with distance from the impact point (mirror zone near it is smooth)
     fade = node(nt, "ShaderNodeMapRange", (-600, -250))
     fade.inputs["From Min"].default_value, fade.inputs["From Max"].default_value = 0.08, 0.35
-    fade.inputs["To Max"].default_value = 0.45       # hackle amplitude
+    fade.inputs["To Max"].default_value = 0.22       # hackle amplitude
     L(sep.outputs["X"], fade.inputs["Value"])
     hk = math_node(nt, "SUBTRACT", (-400, 0), None, 0.5)
     L(hackle.outputs["Fac"], hk.inputs[0])
@@ -377,26 +529,18 @@ def highres_material():
     L(hk.outputs[0], hkf.inputs[0])
     L(fade.outputs[0], hkf.inputs[1])
 
-    # Wallner-like fine rings around the impact point
-    ring = math_node(nt, "MULTIPLY", (-600, -500), None, 2 * math.pi / 0.0065)
-    L(sep.outputs["X"], ring.inputs[0])
-    rs = math_node(nt, "SINE", (-450, -500))
-    L(ring.outputs[0], rs.inputs[0])
-    rsa = math_node(nt, "MULTIPLY", (-300, -500), None, 0.025)
-    L(rs.outputs[0], rsa.inputs[0])
-
     # sparse pits
     tc = nt.nodes.new("ShaderNodeTexCoord")
     tc.location = (-1200, -700)
     vor = node(nt, "ShaderNodeTexVoronoi", (-900, -700), Scale=22.0)
     L(tc.outputs["Object"], vor.inputs["Vector"])
-    sel = math_node(nt, "LESS_THAN", (-700, -800), None, 0.07)
+    sel = math_node(nt, "LESS_THAN", (-700, -800), None, 0.025)
     colsep = nt.nodes.new("ShaderNodeSeparateColor")
     colsep.location = (-750, -950)
     L(vor.outputs["Color"], colsep.inputs[0])
     L(colsep.outputs[0], sel.inputs[0])
     pitshape = node(nt, "ShaderNodeMapRange", (-700, -600))
-    pitshape.inputs["From Min"].default_value, pitshape.inputs["From Max"].default_value = 0.07, 0.0
+    pitshape.inputs["From Min"].default_value, pitshape.inputs["From Max"].default_value = 0.025, 0.0
     L(vor.outputs["Distance"], pitshape.inputs["Value"])
     pit = math_node(nt, "MULTIPLY", (-500, -700))
     L(pitshape.outputs[0], pit.inputs[0])
@@ -414,24 +558,60 @@ def highres_material():
     gvec.inputs[1].default_value = (2, 2, 2)
     gvec.inputs[2].default_value = (-1, -1, -1)
     L(grain.outputs["Color"], gvec.inputs[0])
+    grain2 = node(nt, "ShaderNodeTexVoronoi", (-900, -1300), Scale=GRAIN2_SCALE)
+    L(tc.outputs["Object"], grain2.inputs["Vector"])
+    gvec2 = nt.nodes.new("ShaderNodeVectorMath")
+    gvec2.operation, gvec2.location = "MULTIPLY_ADD", (-700, -1300)
+    gvec2.inputs[1].default_value = (2 * GRAIN2_TILT / GRAIN_TILT,) * 3
+    gvec2.inputs[2].default_value = (-GRAIN2_TILT / GRAIN_TILT,) * 3
+    L(grain2.outputs["Color"], gvec2.inputs[0])
+    gsum = nt.nodes.new("ShaderNodeVectorMath")
+    gsum.operation, gsum.location = "ADD", (-600, -1200)
+    L(gvec.outputs[0], gsum.inputs[0])
+    L(gvec2.outputs[0], gsum.inputs[1])
     gworld = nt.nodes.new("ShaderNodeVectorTransform")
     gworld.vector_type, gworld.convert_from, gworld.convert_to = "VECTOR", "OBJECT", "WORLD"
     gworld.location = (-500, -1150)
-    L(gvec.outputs[0], gworld.inputs[0])
+    L(gsum.outputs[0], gworld.inputs[0])
 
-    frac_h = math_node(nt, "ADD", (-100, -200))
-    L(hkf.outputs[0], frac_h.inputs[0])
-    L(rsa.outputs[0], frac_h.inputs[1])
     pitneg = math_node(nt, "MULTIPLY", (-300, -700), None, -1.2)
     L(pit.outputs[0], pitneg.inputs[0])
     frac_h2 = math_node(nt, "ADD", (50, -200))
-    L(frac_h.outputs[0], frac_h2.inputs[0])
+    L(hkf.outputs[0], frac_h2.inputs[0])
     L(pitneg.outputs[0], frac_h2.inputs[1])
+    # hairline cracks: edges of a noise-warped Voronoi network, masked down to a few segments
+    warp = node(nt, "ShaderNodeTexNoise", (-1100, -1500), Scale=4.0, Detail=2.0)
+    L(tc.outputs["Object"], warp.inputs["Vector"])
+    wvec = nt.nodes.new("ShaderNodeVectorMath")
+    wvec.operation, wvec.location = "MULTIPLY_ADD", (-900, -1500)
+    wvec.inputs[1].default_value = (0.12, 0.12, 0.12)
+    L(warp.outputs["Color"], wvec.inputs[0])
+    L(tc.outputs["Object"], wvec.inputs[2])
+    cvor = node(nt, "ShaderNodeTexVoronoi", (-700, -1500), Scale=CRACK_SCALE)
+    cvor.feature = "DISTANCE_TO_EDGE"
+    L(wvec.outputs[0], cvor.inputs["Vector"])
+    cline = node(nt, "ShaderNodeMapRange", (-500, -1500))
+    cline.inputs["From Min"].default_value, cline.inputs["From Max"].default_value = 0.0, 0.012
+    cline.inputs["To Min"].default_value, cline.inputs["To Max"].default_value = 1.0, 0.0
+    L(cvor.outputs["Distance"], cline.inputs["Value"])
+    cmask_n = node(nt, "ShaderNodeTexNoise", (-700, -1700), Scale=2.5, Detail=1.0)
+    L(tc.outputs["Object"], cmask_n.inputs["Vector"])
+    cmask = node(nt, "ShaderNodeMapRange", (-500, -1700))
+    cmask.inputs["From Min"].default_value, cmask.inputs["From Max"].default_value = 0.645, 0.675
+    L(cmask_n.outputs["Fac"], cmask.inputs["Value"])
+    crack = math_node(nt, "MULTIPLY", (-300, -1600))
+    L(cline.outputs[0], crack.inputs[0])
+    L(cmask.outputs[0], crack.inputs[1])
+    groove = math_node(nt, "MULTIPLY", (-100, -1600), None, -1.2)
+    L(crack.outputs[0], groove.inputs[0])
+    frac_h3 = math_node(nt, "ADD", (150, -400))
+    L(frac_h2.outputs[0], frac_h3.inputs[0])
+    L(groove.outputs[0], frac_h3.inputs[1])
     height = node(nt, "ShaderNodeMix", (250, 0))
     height.data_type = "FLOAT"
     L(kind_attr.outputs["Fac"], height.inputs["Factor"])
     L(skin.outputs["Fac"], height.inputs["A"])
-    L(frac_h2.outputs[0], height.inputs["B"])
+    L(frac_h3.outputs[0], height.inputs["B"])
     bump = node(nt, "ShaderNodeBump", (600, -200), Strength=1.0, Distance=BUMP_DIST)
     L(height.outputs["Result"], bump.inputs["Height"])
     # tilt the bumped normal per grain (fracture pieces only); no height step -> no boundary lines
@@ -451,7 +631,7 @@ def highres_material():
     L(nnorm.outputs[0], bsdf.inputs["Normal"])
 
     # roughness: per-piece base + streaks + pits
-    rv = math_node(nt, "MULTIPLY", (300, 300), None, 0.3)
+    rv = math_node(nt, "MULTIPLY", (300, 300), None, 0.45)   # striations: +-0.05 roughness
     L(hkf.outputs[0], rv.inputs[0])
     r1 = math_node(nt, "ADD", (500, 300))
     L(rough_attr.outputs["Fac"], r1.inputs[0])
@@ -461,8 +641,13 @@ def highres_material():
     r2 = math_node(nt, "ADD", (700, 300))
     L(r1.outputs[0], r2.inputs[0])
     L(pr.outputs[0], r2.inputs[1])
-    clamp = node(nt, "ShaderNodeClamp", (900, 300), Min=0.18, Max=0.62)
-    L(r2.outputs[0], clamp.inputs[0])
+    cr = math_node(nt, "MULTIPLY", (700, 150), None, 0.45)   # cracks are rough (dark in reflections)
+    L(crack.outputs[0], cr.inputs[0])
+    r3 = math_node(nt, "ADD", (800, 300))
+    L(r2.outputs[0], r3.inputs[0])
+    L(cr.outputs[0], r3.inputs[1])
+    clamp = node(nt, "ShaderNodeClamp", (900, 300), Min=0.12, Max=0.75)
+    L(r3.outputs[0], clamp.inputs[0])
     L(clamp.outputs[0], bsdf.inputs["Roughness"])
     return mat
 
@@ -548,6 +733,15 @@ def bake(low, high, kind, img, samples):
     for o in hidden:
         o.hide_render = False
     return image_array(img)
+
+
+def crack_mask(low, high, res):
+    """Crack grooves from the source mesh as a 0..1 mask (EMIT bake of the `crack` attribute)."""
+    em = high.active_material.node_tree.nodes["crack_emit"]
+    em.inputs["Strength"].default_value = 1.0
+    m = bake(low, high, "EMIT", new_image(f"crack_{res}", res), 4)[..., 0]
+    em.inputs["Strength"].default_value = 0.0
+    return np.clip(m, 0, 1)
 
 
 def blur(a, radius):
@@ -682,7 +876,8 @@ def main():
         n = bake(low, high, "NORMAL", new_image(f"normal_{k}", res), 16)
         r = bake(low, high, "ROUGHNESS", new_image(f"rough_{k}", res), 16)
         ao = blur(bake(low, None, "AO", new_image(f"ao_{k}", res), 128)[..., 0], res // 512)
-        ao_soft = 1 - 0.5 * (1 - ao)            # subtle: only chips and steps darken
+        cm = crack_mask(low, high, res)
+        ao_soft = (1 - 0.5 * (1 - ao)) * (1 - 0.8 * cm)   # subtle AO; cracks read dark
         orm = np.stack([ao_soft, r[..., 0], np.full_like(ao_soft, METALLIC), np.ones_like(ao_soft)], -1)
         low.data.materials.clear()
         low.data.materials.append(runtime_material(f"silicon_{k}", array_image(f"silicon_normal_{k}", n),
@@ -699,7 +894,8 @@ def main():
     patch_low.data.materials.append(bpy.data.materials.new("bake_tmp2"))
     pn = bake(patch_low, high, "NORMAL", new_image("pnormal", 2048), 16)
     pr = bake(patch_low, high, "ROUGHNESS", new_image("prough", 2048), 16)
-    porm = np.stack([np.ones_like(pr[..., 0]), pr[..., 0], np.full_like(pr[..., 0], METALLIC), np.ones_like(pr[..., 0])], -1)
+    pcm = crack_mask(patch_low, high, 2048)
+    porm = np.stack([1 - 0.8 * pcm, pr[..., 0], np.full_like(pr[..., 0], METALLIC), np.ones_like(pr[..., 0])], -1)
     patch_low.data.materials.clear()
     patch_low.data.materials.append(runtime_material("fracture_face", array_image("fracture_normal", pn),
                                                       array_image("fracture_orm", porm)))
@@ -710,29 +906,32 @@ def main():
     (OUT / "chunk-stats.json").write_text(json.dumps(stats, indent=2))
     if a.blend:
         bpy.data.objects.remove(high)
+        (HERE / "src").mkdir(exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(HERE / "src/silicon_chunk.blend"), compress=True)
 
 
-def preview(scene, high, path):
-    """Quick look at the source: 6 angles under the studio HDR, 512 px tiles."""
+def preview(scene, high, path, tile=400):
+    """Look-dev sheet of the source (procedural shader): 6 angles x 2 studio light rotations."""
     import shutil
     import tempfile
     from mathutils import Vector
     tmp = pathlib.Path(tempfile.mkdtemp())
-    studio.setup_cycles(scene, samples=64, res=(512, 512))
-    studio.set_world_hdr(scene)
+    studio.setup_cycles(scene, samples=64, res=(tile, tile))
     cam = bpy.data.objects.new("qa", bpy.data.cameras.new("qa"))
     scene.collection.objects.link(cam)
     cam.data.angle_y = math.radians(30)
     scene.camera = cam
-    tiles = []
-    for yaw, elev in studio.QA_VIEWS:
-        cam.location = studio.orbit(yaw, elev)
-        cam.rotation_euler = (-Vector(cam.location)).to_track_quat("-Z", "Y").to_euler()
-        t = tmp / f"{yaw}_{elev}.png"
-        studio.render(scene, t)
-        tiles.append(t)
-    studio.compose("sheet", path, 3, "|".join(f"yaw{y} el{e}" for y, e in studio.QA_VIEWS), *tiles)
+    tiles, labels = [], []
+    for li in ("studio", "studio-rot"):
+        studio.light_setup(scene, li)
+        for yaw, elev in studio.QA_VIEWS:
+            cam.location = studio.orbit(yaw, elev)
+            cam.rotation_euler = (-Vector(cam.location)).to_track_quat("-Z", "Y").to_euler()
+            t = tmp / f"{li}_{yaw}_{elev}.png"
+            studio.render(scene, t)
+            tiles.append(t)
+            labels.append(f"{li} yaw{yaw} el{elev}")
+    studio.compose("sheet", path, len(studio.QA_VIEWS), "|".join(labels), *tiles)
     shutil.rmtree(tmp)
 
 

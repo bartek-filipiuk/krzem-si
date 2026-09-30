@@ -29,25 +29,26 @@ SHEET_PATH = ROOT / "docs/qa/assets/chunk-turntable.webp"
 COMPOSE = HERE / "compose.py"
 
 BG_HEX = "#0b0e12"
-EXPOSURE_EV = 0.0          # Blender film exposure; Three.js toneMappingExposure = 2 ** EXPOSURE_EV
+EXPOSURE_EV = 0.25         # Blender film exposure; Three.js toneMappingExposure = 2 ** EXPOSURE_EV
 VIEW_TRANSFORM = "Khronos PBR Neutral"   # Three.js: THREE.NeutralToneMapping
-CHUNK_ROTATION_Z = math.radians(-95)     # hero pose at progress 0 (= Three.js rotation.y)
+CHUNK_ROTATION_Z = math.radians(180)     # hero pose at progress 0 (= Three.js rotation.y), picked with `poses`
 
 # Softboxes: direction from the chunk (Blender coords, camera sits on -Y), distance, size (w, h),
 # linear colour, emission radiance. These planes are what studio-1k.hdr captures.
 RIG = [
-    dict(name="key", type="key", dir=(-0.62, -0.45, 0.64), dist=5.0, size=(3.6, 2.6),
-         color=(0.90, 0.95, 1.00), strength=11.0),
+    dict(name="key", type="key", dir=(-0.62, -0.45, 0.64), dist=5.0, size=(5.0, 3.4),
+         color=(0.95, 0.97, 1.00), strength=16.0),
     dict(name="fill", type="fill", dir=(0.95, -0.28, 0.05), dist=5.0, size=(5.0, 5.0),
          color=(0.80, 0.87, 1.00), strength=2.2),
-    dict(name="rim", type="rim", dir=(0.30, 0.95, 0.12), dist=5.0, size=(0.13, 2.2),
-         color=(1.00, 0.58, 0.26), strength=10.0),
+    dict(name="rim", type="rim", dir=(0.80, 0.58, 0.12), dist=5.0, size=(0.13, 2.2),
+         color=(1.00, 0.58, 0.26), strength=6.0),
     dict(name="top", type="key", dir=(0.05, 0.25, 1.0), dist=5.0, size=(5.0, 0.35),
          color=(0.92, 0.96, 1.00), strength=4.0),
     dict(name="kick", type="fill", dir=(-0.85, 0.45, -0.1), dist=5.0, size=(0.4, 4.0),
          color=(0.85, 0.9, 1.00), strength=4.0),
 ]
-WORLD_COLOR = (0.0022, 0.0027, 0.0034)   # graphite surroundings seen in reflections
+WORLD_COLOR = (0.006, 0.007, 0.009)      # graphite surroundings seen in reflections
+WORLD_SKY = 4.0                           # upper hemisphere this many times brighter (dim ceiling)
 
 # Hero framing. fov is vertical. Object right of centre on desktop, low-centre on mobile.
 CAMERAS = {
@@ -110,19 +111,42 @@ def emission_material(name, color, strength):
     out = nt.nodes.new("ShaderNodeOutputMaterial")
     em = nt.nodes.new("ShaderNodeEmission")
     em.inputs["Color"].default_value = (*color, 1.0)
-    em.inputs["Strength"].default_value = strength
     nt.links.new(em.outputs[0], out.inputs["Surface"])
+    # hot centre, dimmer edges (real softbox): the reflection has a shape instead of a flat white card
+    uv = nt.nodes.new("ShaderNodeTexCoord")
+    vec = nt.nodes.new("ShaderNodeVectorMath")
+    vec.operation = "DISTANCE"
+    vec.inputs[1].default_value = (0.5, 0.5, 0.0)
+    nt.links.new(uv.outputs["UV"], vec.inputs[0])
+    fall = nt.nodes.new("ShaderNodeMapRange")
+    fall.inputs["From Min"].default_value, fall.inputs["From Max"].default_value = 0.0, 0.72
+    fall.inputs["To Min"].default_value, fall.inputs["To Max"].default_value = strength * 1.25, strength * 0.35
+    nt.links.new(vec.outputs["Value"], fall.inputs["Value"])
+    nt.links.new(fall.outputs[0], em.inputs["Strength"])
     return mat
 
 
-def set_world_color(scene, color):
+def set_world_color(scene, color, sky=1.0):
+    """Graphite surroundings; `sky` > 1 brightens the upper hemisphere (dim studio ceiling) so faces
+    that miss every softbox still read as dark grey, not a hole."""
     world = bpy.data.worlds.new("studio") if scene.world is None else scene.world
     scene.world = world
     nt = world.node_tree
     nt.nodes.clear()
     out = nt.nodes.new("ShaderNodeOutputWorld")
     bg = nt.nodes.new("ShaderNodeBackground")
-    bg.inputs["Color"].default_value = (*color, 1.0)
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(coord.outputs["Generated"], sep.inputs[0])
+    ramp = nt.nodes.new("ShaderNodeMapRange")
+    ramp.inputs["From Min"].default_value, ramp.inputs["From Max"].default_value = -0.3, 1.0
+    ramp.inputs["To Min"].default_value, ramp.inputs["To Max"].default_value = 1.0, sky
+    nt.links.new(sep.outputs["Z"], ramp.inputs["Value"])
+    mul = nt.nodes.new("ShaderNodeVectorMath")
+    mul.operation = "SCALE"
+    mul.inputs[0].default_value = color
+    nt.links.new(ramp.outputs[0], mul.inputs["Scale"])
+    nt.links.new(mul.outputs[0], bg.inputs["Color"])
     nt.links.new(bg.outputs[0], out.inputs[0])
     return bg
 
@@ -160,7 +184,7 @@ def build_rig(scene):
         ob.data.materials.append(emission_material(ob.name, spec["color"], spec["strength"]))
         ob.visible_camera = False
         objs.append(ob)
-    set_world_color(scene, WORLD_COLOR)
+    set_world_color(scene, WORLD_COLOR, sky=WORLD_SKY)
     return objs
 
 
@@ -271,7 +295,10 @@ def cmd_camera():
         "environment": "src/assets/env/studio-1k.hdr",
         "background": BG_HEX,
         "toneMapping": "NeutralToneMapping",
-        "exposure": 2 ** EXPOSURE_EV,
+        "viewTransform": VIEW_TRANSFORM,
+        "exposure": round(2 ** EXPOSURE_EV, 4),
+        "exposureNote": f"Blender film exposure {EXPOSURE_EV:+.2f} EV = renderer.toneMappingExposure (linear, "
+                        "applied before tone mapping in both); Blender 'Khronos PBR Neutral' = THREE.NeutralToneMapping",
         "outputColorSpace": "srgb",
         "chunkRotationY": round(CHUNK_ROTATION_Z, 5),
         "chunkRotationNote": "radians about the Three.js Y axis, applied to the GLB root at hero progress 0",
