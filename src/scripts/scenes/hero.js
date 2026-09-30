@@ -80,8 +80,10 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
   await renderer.compileAsync(scene, camera);
   signal?.throwIfAborted();
 
-  // The close-up patch is not needed for the first interactive frame (budget), so it loads once
-  // the reader starts scrolling or after ~3 s. Until it arrives the 2K/1K chunk carries the entry.
+  // The close-up patch is not needed for the first interactive frame (budget), so it loads right
+  // after the handover (~20 frames), while the turn is still ramping up from rest and the quality
+  // controller is on hold: its one-off texture upload (~120 ms measured) lands where nothing moves
+  // yet. Scrolling first starts it earlier. Until it arrives the chunk carries the entry.
   let detail = null, frames = 0;
   function loadDetail() {
     detail = assets.acquire(URLS.face, buffer => gltfLoader.parseAsync(buffer, ''), signal).then(async patch => {
@@ -112,7 +114,7 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
     /** state: { hero: hero progress, time: ambient seconds, parallax: [x, y] } */
     render(state) {
       const theta = rest + state.time * 2 * Math.PI / TURN_SECONDS;
-      if (!detail && (state.hero > .02 || ++frames > 180)) loadDetail();
+      if (!detail && (state.hero > .02 || ++frames > 20)) loadDetail();
       const s = entryPhases(state.hero).camera;
       const pose = cameraPose({ s, theta, hero, face, parallax: state.parallax });
       pivot.rotation.y = theta;

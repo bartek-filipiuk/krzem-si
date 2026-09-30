@@ -198,11 +198,17 @@ def transfer(browser):
         live = list(seen)
         page.wait_for_timeout(5000)
         later = [u for u in seen if u not in live]
+        # Lab only (localhost, no throttling): CLS is meaningful, LCP just shows what the LCP element is.
+        vitals = page.evaluate('''()=>new Promise(r=>{let cls=0,lcp=null;
+          new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)cls+=e.value}).observe({type:'layout-shift',buffered:true});
+          new PerformanceObserver(l=>{const e=l.getEntries().at(-1);lcp={ms:Math.round(e.startTime),element:e.element?.tagName+'.'+(e.element?.className||e.element?.parentElement?.className)}}).observe({type:'largest-contentful-paint',buffered:true});
+          setTimeout(()=>r({cls:Math.round(cls*1000)/1000,lcp}),200)})''')
         kib = lambda urls: round(sum(size(u) for u in set(urls)) / 1024, 1)
         out[name] = {
             'first_view_kib': kib(first), 'first_view': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(first)},
             'hero_interactive_kib': kib(live), 'hero_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(live)},
             'after_interactive': {urlparse(u).path: round(size(u) / 1024, 1) for u in set(later)},
+            'lab_vitals': vitals,
         }
         page.close()
     return out
