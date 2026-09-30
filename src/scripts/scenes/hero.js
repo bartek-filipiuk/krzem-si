@@ -22,8 +22,11 @@ const URLS = {
   // High-detail patch of the entry face (A2): same object space, denser UVs and its own maps.
   face: new URL('../../assets/models/fracture-face.glb', import.meta.url).href,
 };
-/** Exposure factor at the end of the approach (see render()). */
-const ENTRY_EXPOSURE = .6;
+/**
+ * Exposure factor at the end of the approach (see render()). The scene is lit by the environment
+ * alone, so exposure x environmentIntensity is what counts: .49 x 1.65 = the reviewed .6 x 1.35.
+ */
+const ENTRY_EXPOSURE = .49;
 /** One turn every 90 s on the ambient clock. */
 export const TURN_SECONDS = 90;
 const TONE = { AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, NoToneMapping };

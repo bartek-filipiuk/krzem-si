@@ -34,7 +34,9 @@ VIEW_TRANSFORM = "Khronos PBR Neutral"   # Three.js: THREE.NeutralToneMapping
 # Three.js has no interreflection: the concave scoops only see the dark studio, not the lit lump,
 # so the runtime lifts the environment to match the poster's mean chunk luminance (measured with
 # tests/screens.py handover: 1.0 -> 63.6 vs 75.4, 1.25 -> 71.9, 1.45 -> 77.9). Highlights stay aligned.
-ENV_INTENSITY_THREE = 1.35
+# Re-measured for the 120 deg pose (A3), desktop canvas vs poster: 1.35 -> 72.8 vs 84.0, 1.6 -> 82.0,
+# 1.8 -> 88.6; mobile 1.35 -> 82.9 vs 93.7, 1.6 -> 92.2, 1.8 -> 98.8.
+ENV_INTENSITY_THREE = 1.65
 CHUNK_ROTATION_Z = math.radians(120)     # hero pose at progress 0 (= Three.js rotation.y), picked with `poses`
 # 120 deg (stage A3): broad grey fracture face with the long crack towards the camera, clear outline.
 # 180 deg showed the elongated end and its thin flake-scar walls (hair-like streaks, docs/qa/assets/NOTES.md).

@@ -152,7 +152,7 @@
   "toneMapping": "NeutralToneMapping",
   "viewTransform": "Khronos PBR Neutral",
   "exposure": 1.1892,
-  "environmentIntensity": 1.35,
+  "environmentIntensity": 1.65,
   "exposureNote": "Blender film exposure +0.25 EV = renderer.toneMappingExposure (linear, applied before tone mapping in both); Blender 'Khronos PBR Neutral' = THREE.NeutralToneMapping",
   "outputColorSpace": "srgb",
   "chunkRotationY": 2.0944,
