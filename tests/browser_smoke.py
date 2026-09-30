@@ -244,6 +244,23 @@ with sync_playwright() as p:
           and gpu_error(rough) == 0)
     rough.close()
 
+    # Slow GPU simulated by a 50 ms busy wait in every frame: the controller must step down one
+    # profile at a time (two slow windows each), keep the reader's place and never climb back.
+    slow = browser.new_page(viewport={'width': 1440, 'height': 1000})
+    slow.add_init_script('''(()=>{const raf=window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame=cb=>raf(t=>{const end=performance.now()+50;while(performance.now()<end);cb(t);});})()''')
+    load(slow, '?debug')
+    trail = slow.evaluate('''()=>new Promise(done=>{const seen=[document.documentElement.dataset.quality];const t0=performance.now();
+      (function poll(){const q=document.documentElement.dataset.quality;if(q!==seen.at(-1))seen.push(q);
+        if(q==='calm'||performance.now()-t0>20000)done({seen,ms:Math.round(performance.now()-t0),mode:document.documentElement.dataset.motion});
+        else setTimeout(poll,100);})();})''')
+    check('Slow frames: cinematic -> balanced -> calm, one step at a time', trail['seen'] == ['cinematic', 'balanced', 'calm'])
+    check('Slow frames: demotion takes seconds, not one bad window', 3000 < trail['ms'] < 20000)
+    check('Slow frames: calm keeps the story readable (static layout, poster)', trail['mode'] == 'static' and poster_shown(slow))
+    slow.wait_for_timeout(3000)
+    check('Slow frames: never promotes back', attr(slow, 'quality') == 'calm')
+    slow.close()
+
     no_gpu = browser.new_page(viewport={'width': 1440, 'height': 1000})
     # Deliberately simulate blocked GPU access; this is not used in production.
     no_gpu.add_init_script('''(()=>{const original=HTMLCanvasElement.prototype.getContext;
