@@ -1,0 +1,249 @@
+{
+ "browser": "Chromium 145.0.7632.6",
+ "perf": {
+  "cinematic/desktop": {
+   "idle_hero": {
+    "frames": 236,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 100,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 842,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 50.1,
+    "over_50ms": 1
+   },
+   "cpu_frame_median_ms": 0.2,
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ],
+   "pixel_ratio": 1
+  },
+  "cinematic/mobile": {
+   "idle_hero": {
+    "frames": 235,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 116.6,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.2,
+    "over_50ms": 0
+   },
+   "cpu_frame_median_ms": 0.2,
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    585,
+    1266
+   ],
+   "pixel_ratio": 1.5
+  },
+  "balanced/desktop": {
+   "idle_hero": {
+    "frames": 233,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 133.4,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 33.3,
+    "over_50ms": 0
+   },
+   "cpu_frame_median_ms": 0.2,
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ],
+   "pixel_ratio": 1
+  },
+  "balanced/mobile": {
+   "idle_hero": {
+    "frames": 233,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 133.3,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 844,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 33.4,
+    "over_50ms": 0
+   },
+   "cpu_frame_median_ms": 0.2,
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    390,
+    844
+   ],
+   "pixel_ratio": 1
+  }
+ },
+ "handover": {
+  "desktop": {
+   "mean_abs_diff_all": 2.21,
+   "mean_abs_diff_chunk": 10.39,
+   "mean_luminance_chunk": {
+    "canvas": 20.82,
+    "poster": 30.59
+   },
+   "mean_luminance_background": {
+    "canvas": 14.61,
+    "poster": 15.02
+   },
+   "chunk_pixels": 244748,
+   "samples": {
+    "993,245": {
+     "canvas": [
+      14.0,
+      26.0,
+      36.0
+     ],
+     "poster": [
+      36.0,
+      48.0,
+      57.0
+     ]
+    },
+    "921,376": {
+     "canvas": [
+      17.0,
+      29.0,
+      39.0
+     ],
+     "poster": [
+      37.0,
+      49.0,
+      59.0
+     ]
+    },
+    "811,474": {
+     "canvas": [
+      31.0,
+      43.0,
+      56.0
+     ],
+     "poster": [
+      37.0,
+      49.0,
+      61.0
+     ]
+    },
+    "1193,569": {
+     "canvas": [
+      1.0,
+      6.0,
+      13.0
+     ],
+     "poster": [
+      1.0,
+      7.0,
+      14.0
+     ]
+    },
+    "1099,673": {
+     "canvas": [
+      1.0,
+      4.0,
+      10.0
+     ],
+     "poster": [
+      1.0,
+      7.0,
+      14.0
+     ]
+    }
+   }
+  },
+  "mobile": {
+   "mean_abs_diff_all": 1.85,
+   "mean_abs_diff_chunk": 5.68,
+   "mean_luminance_chunk": {
+    "canvas": 23.76,
+    "poster": 26.83
+   },
+   "mean_luminance_background": {
+    "canvas": 14.03,
+    "poster": 14.68
+   },
+   "chunk_pixels": 322251,
+   "samples": {
+    "174,905": {
+     "canvas": [
+      15.0,
+      27.0,
+      37.0
+     ],
+     "poster": [
+      26.0,
+      38.0,
+      47.0
+     ]
+    },
+    "428,1025": {
+     "canvas": [
+      3.0,
+      13.0,
+      22.0
+     ],
+     "poster": [
+      6.0,
+      18.0,
+      27.0
+     ]
+    },
+    "183,1141": {
+     "canvas": [
+      49.0,
+      60.0,
+      73.0
+     ],
+     "poster": [
+      48.0,
+      59.0,
+      71.0
+     ]
+    },
+    "152,1243": {
+     "canvas": [
+      47.0,
+      58.0,
+      70.0
+     ],
+     "poster": [
+      37.0,
+      49.0,
+      61.0
+     ]
+    },
+    "251,1357": {
+     "canvas": [
+      1.0,
+      5.0,
+      12.0
+     ],
+     "poster": [
+      1.0,
+      7.0,
+      14.0
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,125 +1,229 @@
-import { chapterAt, clamp } from './math.js';
-import { initialQuality, FrameBudget } from './quality.js';
+/**
+ * Text layer: chapter tracking, navigation state, reading progress, the motion toggle, the
+ * transistor and AI demos, profile selection and the single requestAnimationFrame loop.
+ * Everything here works without the GPU layer, which is imported lazily and never in `calm`.
+ */
+import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
+import { framingFor, isCompact } from './story/camera-rig.js';
+import { QualityController, selectProfile } from './rendering/quality.js';
 
-const root=document.documentElement;
-const canvas=document.querySelector('#scene-canvas');
-const sections=[...document.querySelectorAll('[data-scene]')];
-const links=[...document.querySelectorAll('.chapter-nav a')];
-const status=document.querySelector('#render-status');
-const motionButton=document.querySelector('#motion-toggle');
-const motionLabel=document.querySelector('#motion-label');
-const powerButton=document.querySelector('#transistor-toggle');
-const aiButton=document.querySelector('#ai-toggle');
-const aiPanel=document.querySelector('#ai-demo');
-const progressBar=document.querySelector('#reading-progress-bar');
-const reduce=window.matchMedia('(prefers-reduced-motion: reduce)');
-const connection=navigator.connection;
-const budget=new FrameBudget();
-let renderer=null,raf=0,dirty=true,bounds=[],footerTop=0,pageHeight=1;
-let index=0,progress=0,transition=0,pointer=[0,0],lastFrame=0,clock=0,lastRender=0,warmup=12;
-let manualPower=null,lastPower=null,manualAI=null,previousIndex=-1,generation=0;
-let choice='auto',tier='static',destroyed=false;
-try {if(localStorage.getItem('krzem-motion')==='static')choice='static';} catch { /* Private/storage-blocked mode remains usable. */ }
-const debug=new URLSearchParams(location.search).has('debug');
-function compactViewport(){return (window.innerWidth<760&&window.innerHeight<740)||window.innerHeight<560;}
-function preference(){return choice==='static'||compactViewport()?'static':initialQuality({reduced:reduce.matches,saveData:connection?.saveData,cores:navigator.hardwareConcurrency||8,memory:navigator.deviceMemory||8});}
-function measure(){
-  bounds=sections.map(s=>({top:s.getBoundingClientRect().top+window.scrollY,height:s.getBoundingClientRect().height}));
-  footerTop=document.querySelector('#zrodla').getBoundingClientRect().top+window.scrollY;
-  pageHeight=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);
-  renderer?.resize(tier);dirty=true;schedule();
+const root = document.documentElement;
+const canvas = document.querySelector('#scene-canvas');
+const sections = [...document.querySelectorAll('[data-scene]')];
+const links = [...document.querySelectorAll('.chapter-nav a')];
+const status = document.querySelector('#render-status');
+const motionButton = document.querySelector('#motion-toggle');
+const motionLabel = document.querySelector('#motion-label');
+const powerButton = document.querySelector('#transistor-toggle');
+const aiButton = document.querySelector('#ai-toggle');
+const aiPanel = document.querySelector('#ai-demo');
+const progressBar = document.querySelector('#reading-progress-bar');
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+const reader = createScrollReader(sections, document.querySelector('#zrodla'));
+const controller = new QualityController();
+
+// QA mode: ?scene=<id>&progress=<0..1>&quality=<profile>&freeze=1&seed=<n> (see README).
+const params = new URLSearchParams(location.search);
+const qaIndex = sections.findIndex(s => s.id === params.get('scene'));
+const qa = {
+  index: qaIndex,
+  progress: clamp(Number(params.get('progress')) || 0),
+  quality: params.get('quality'),
+  freeze: params.get('freeze') === '1',
+  // Seeded ambient phase in seconds; 0 (the default) is the poster's pose.
+  phase: ((Math.imul(Number(params.get('seed')) >>> 0, 2654435761) >>> 0) / 2 ** 32) * 90,
+};
+const debug = params.has('debug') || qaIndex >= 0 || params.has('quality');
+
+let choice = null;
+try {
+  const stored = localStorage.getItem('krzem-motion');
+  choice = stored === 'static' || stored === 'calm' ? 'calm' : stored === 'motion' ? 'motion' : null;
+} catch { /* Storage blocked: the page still works, the choice just is not remembered. */ }
+
+let layer = null, profile = 'calm', reason = '', framing = framingFor(innerWidth);
+let raf = 0, dirty = true, destroyed = false, generation = 0, abort = null;
+let story = null, previousIndex = -1, lastFrame = 0, liveAt = 0, ambient = qa.phase;
+let pointer = [0, 0], parallax = [0, 0], manualPower = null, lastPower = null, manualAI = null;
+const intervals = [], logged = new Set();
+
+function warnOnce(kind, error) {
+  if (logged.has(kind)) return;
+  logged.add(kind);
+  console.warn(`[krzem.si] ${kind}:`, error);
 }
-function setPower(power){
-  if(lastPower===power)return;lastPower=power;
-  powerButton.setAttribute('aria-pressed',String(power));root.dataset.power=power?'on':'off';
-  document.querySelector('#switch-label').textContent=power?'Wyłącz przewodzenie':'Włącz przewodzenie';
-  powerButton.querySelector('.switch-state').textContent=power?'1':'0';
-  document.querySelector('#switch-description').textContent=power?'Kanał przewodzi. Napięcie bramki zmieniło jego stan.':'Kanał nie przewodzi w tym uproszczonym modelu.';
+function persist(value) { try { localStorage.setItem('krzem-motion', value); } catch { /* see above */ } }
+function motionFull() { return root.dataset.motion === 'full'; }
+
+function measure() {
+  reader.measure();
+  layer?.resize(innerWidth, innerHeight, { framing });
+  dirty = true; schedule();
 }
-function update(){
-  if(!bounds.length)return;
-  const state=chapterAt(window.scrollY,bounds,window.innerHeight);index=state.index;progress=state.progress;
-  const active=bounds[index];transition=root.dataset.motion==='full'?clamp((window.scrollY-active.top-active.height+window.innerHeight)/window.innerHeight):0;
-  if(index!==previousIndex){
-    links.forEach((a,i)=>{if(i===index)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current');});
-    root.dataset.chapter=String(index);previousIndex=index;budget.reset();warmup=12;
+
+function setPower(power) {
+  if (lastPower === power) return;
+  lastPower = power;
+  powerButton.setAttribute('aria-pressed', String(power)); root.dataset.power = power ? 'on' : 'off';
+  document.querySelector('#switch-label').textContent = power ? 'Wyłącz przewodzenie' : 'Włącz przewodzenie';
+  powerButton.querySelector('.switch-state').textContent = power ? '1' : '0';
+  document.querySelector('#switch-description').textContent = power ? 'Kanał przewodzi. Napięcie bramki zmieniło jego stan.' : 'Kanał nie przewodzi w tym uproszczonym modelu.';
+}
+
+function update() {
+  if (!reader.bounds.length) return;
+  story = reader.read(window.scrollY, innerHeight, motionFull());
+  const { index, progress } = story;
+  if (index !== previousIndex) {
+    links.forEach((a, i) => { if (i === index) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
+    root.dataset.chapter = String(index); previousIndex = index;
+    controller.hold(performance.now(), 500); // first frames of a chapter upload its meshes
   }
-  progressBar.style.transform=`scaleX(${clamp(window.scrollY/pageHeight)})`;
-  if(index===1){const step=Math.min(3,Math.floor(progress*4));document.querySelectorAll('[data-process]').forEach((li,i)=>li.dataset.active=String(i<=step));}
-  if(index===2)setPower(manualPower??(progress>.35));
-  if(index===5){const open=manualAI??(progress>.23&&progress<.66);aiPanel.classList.toggle('is-open',open);aiButton.setAttribute('aria-expanded',String(open));}
-  dirty=false;
+  progressBar.style.transform = `scaleX(${story.reading})`;
+  if (index === 1) { const step = Math.min(3, Math.floor(progress * 4)); document.querySelectorAll('[data-process]').forEach((li, i) => li.dataset.active = String(i <= step)); }
+  if (index === 2) setPower(manualPower ?? (progress > .35));
+  if (index === 5) { const open = manualAI ?? (progress > .23 && progress < .66); aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open)); }
+  if (motionFull()) {
+    const phases = entryPhases(story.hero);
+    root.style.setProperty('--hero-copy', phases.copy.toFixed(3));
+    root.style.setProperty('--dip', (index === 0 ? phases.canvas : 1).toFixed(3));
+  }
+  dirty = false;
 }
-function schedule(){if(!raf&&!destroyed&&!document.hidden)raf=requestAnimationFrame(tick);}
-function tick(now){
-  raf=0;if(destroyed||document.hidden)return;
-  if(dirty)update();
-  if(renderer&&window.scrollY<footerTop){
-    const dt=lastFrame?now-lastFrame:16.7;lastFrame=now;
-    clock+=Math.min(dt,64)/1000;
-    if(warmup>0)warmup--;else{
-      const next=budget.sample(dt,tier);
-      if(next!==tier){
-        tier=next;
-        if(tier==='static'){stop('Tryb lekki · dla płynności');return;}
-        renderer.resize(tier);root.dataset.quality=tier;status.textContent='TRYB OSZCZĘDNY · ANIMACJE 3D';
-      }
-    }
-    const interval=tier==='low'?1000/30:1000/60;
-    if(now-lastRender>=interval-1){
-      try {renderer.render({index,progress,transition,time:clock,pointer,power:lastPower??false});root.dataset.renderer='webgl';}
-      catch(error){console.warn('[krzem.si] Renderer fallback:',error);stop('Tryb lekki · 3D niedostępne');return;}
-      lastRender=now;
-    }
-    schedule();
-  }else{lastFrame=0;}
+
+function schedule() { if (!raf && !destroyed && !document.hidden) raf = requestAnimationFrame(tick); }
+
+function tick(now) {
+  raf = 0;
+  if (destroyed || document.hidden) return;
+  const wasDirty = dirty;
+  if (dirty) update();
+  if (!layer || !story?.visible) { lastFrame = 0; return; }
+  const dt = lastFrame ? now - lastFrame : 0;
+  lastFrame = now;
+  if (liveAt && !qa.freeze) {
+    // The chunk starts from the poster's pose and eases into its 90 s turn after the handover,
+    // and comes to rest while the camera commits to the entry face (the ambient clock may
+    // depend on the story; the camera pose itself stays a pure function of scroll and angle).
+    const entering = story.index === 0 ? smoothstep(0, .3, entryPhases(story.hero).camera) : 0;
+    ambient += Math.min(dt, 64) / 1000 * Math.min(1, (now - liveAt) / 2000) * (1 - entering);
+    const k = 1 - Math.exp(-Math.min(dt, 64) / 400);
+    parallax = parallax.map((v, i) => v + (pointer[i] - v) * k);
+  }
+  let cpu = 0;
+  try {
+    cpu = layer.frame({ ...story, time: ambient, parallax, power: lastPower ?? false });
+  } catch (error) { fail('Render error', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE'); return; }
+  if (!liveAt) {
+    liveAt = now;
+    root.dataset.renderer = 'webgl'; root.dataset.hero = 'live';
+    controller.hold(now, 1000);
+  } else if (dt) {
+    if (debug) { intervals.push([dt, cpu]); if (intervals.length > 3000) intervals.shift(); }
+    if (!qa.freeze && reason !== 'qa') demote(controller.sample(dt, now, profile));
+  }
+  // Ambient motion needs every frame; a frozen QA frame only redraws on scroll or resize.
+  if (!qa.freeze || wasDirty) schedule();
 }
-function stop(message='TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ'){
-  const restoreIndex=index,wasFull=root.dataset.motion==='full';
-  generation++;if(raf){cancelAnimationFrame(raf);raf=0;}
-  renderer?.dispose();renderer=null;tier='static';root.dataset.motion='static';root.dataset.renderer='static';root.dataset.quality='static';
-  status.textContent=message;motionLabel.textContent='Włącz animacje';motionButton.setAttribute('aria-pressed','true');
-  budget.reset();requestAnimationFrame(()=>{measure();if(wasFull&&restoreIndex>0)window.scrollTo(0,bounds[restoreIndex].top);});
+
+function demote(next) {
+  if (!layer || next === profile) return;
+  if (next === 'calm') { stop('TRYB SPOKOJNY · DLA PŁYNNOŚCI'); return; }
+  profile = next; root.dataset.quality = profile;
+  layer.resize(innerWidth, innerHeight, { profile });
+  status.textContent = 'TRYB OSZCZĘDNY · ANIMACJE 3D';
 }
-async function start(forced=false){
-  const requested=forced?'high':preference();
-  if(requested==='static'){stop();return;}
-  const token=++generation;
-  const restoreIndex=index;root.dataset.motion='full';root.dataset.renderer='static';root.dataset.quality=requested;
-  motionLabel.textContent='Ogranicz animacje';motionButton.setAttribute('aria-pressed','false');
-  // The static story has already painted. GPU code is a separate, optional module.
-  try{
-    const {createRenderer}=await import('./renderer.js');
-    if(token!==generation||destroyed)return;
-    renderer?.dispose();renderer=createRenderer(canvas);tier=requested;
-    lastFrame=0;lastRender=0;warmup=12;budget.reset();
-    status.textContent=tier==='high'?'INTERAKTYWNA OPOWIEŚĆ · 3D':'TRYB OSZCZĘDNY · ANIMACJE 3D';
-    measure();if(restoreIndex>0)window.scrollTo(0,bounds[restoreIndex].top);
-  }catch(error){if(token===generation){console.warn('[krzem.si] Static fallback:',error);stop('TRYB LEKKI · 3D NIEDOSTĘPNE');}}
+
+/** Switch between the pinned (full) and flowing (static) layouts without losing the reader's place. */
+function relayout(mode) {
+  if (root.dataset.motion === mode) return;
+  reader.measure();
+  const at = reader.bounds.length ? reader.read(window.scrollY, innerHeight, false).index : 0;
+  root.dataset.motion = mode;
+  reader.measure();
+  if (at > 0) window.scrollTo(0, reader.bounds[at].top);
 }
-powerButton.disabled=false;aiButton.disabled=false;motionButton.hidden=compactViewport();
-powerButton.addEventListener('click',()=>{manualPower=!(lastPower??false);setPower(manualPower);dirty=true;schedule();});
-aiButton.addEventListener('click',()=>{manualAI=!aiPanel.classList.contains('is-open');aiPanel.classList.toggle('is-open',manualAI);aiButton.setAttribute('aria-expanded',String(manualAI));});
-motionButton.addEventListener('click',()=>{
-  if(root.dataset.motion==='static'){choice='auto';try{localStorage.removeItem('krzem-motion');}catch{}start(true);}
-  else {choice='static';try{localStorage.setItem('krzem-motion','static');}catch{}stop();}
+
+function stop(message = 'TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ') {
+  generation++; abort?.abort(); abort = null;
+  if (raf) { cancelAnimationFrame(raf); raf = 0; }
+  layer?.dispose(); layer = null; liveAt = 0; lastFrame = 0; profile = 'calm';
+  root.dataset.renderer = 'static'; root.dataset.quality = 'calm'; delete root.dataset.hero;
+  root.style.removeProperty('--hero-copy'); root.style.removeProperty('--dip');
+  status.textContent = message; motionLabel.textContent = 'Włącz animacje'; motionButton.setAttribute('aria-pressed', 'true');
+  relayout('static');
+  measure();
+}
+
+function fail(kind, error, message) { warnOnce(kind, error); stop(message); }
+
+async function start(next) {
+  const token = ++generation;
+  abort?.abort(); abort = new AbortController();
+  profile = next;
+  root.dataset.quality = profile; root.dataset.framing = framing;
+  motionLabel.textContent = 'Ogranicz animacje'; motionButton.setAttribute('aria-pressed', 'false');
+  status.textContent = profile === 'cinematic' ? 'INTERAKTYWNA OPOWIEŚĆ · 3D' : 'TRYB OSZCZĘDNY · ANIMACJE 3D';
+  relayout('full');
+  measure();
+  try {
+    // The text layer and the posters have painted already. GPU code is a separate chunk.
+    const { createGpuLayer } = await import('./rendering/renderer.js');
+    if (token !== generation) return;
+    const created = await createGpuLayer({ canvas, profile, framing, signal: abort.signal, invalidate: () => { dirty = true; schedule(); } });
+    if (token !== generation || destroyed) { created.dispose(); return; }
+    layer = created; liveAt = 0; lastFrame = 0;
+    layer.resize(innerWidth, innerHeight, { profile, framing });
+    dirty = true; schedule();
+  } catch (error) {
+    if (token === generation && error?.name !== 'AbortError') fail('3D unavailable, posters shown', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE');
+  }
+}
+
+function begin() {
+  ({ profile, reason } = selectProfile({ qa: qa.quality, choice, reduced: reduce.matches, saveData: navigator.connection?.saveData }));
+  if (profile === 'calm') { stop(); return; }
+  relayout('full');
+  if ('requestIdleCallback' in window) requestIdleCallback(() => start(profile), { timeout: 600 });
+  else setTimeout(() => start(profile), 100);
+}
+
+powerButton.disabled = false; aiButton.disabled = false; motionButton.hidden = false;
+powerButton.addEventListener('click', () => { manualPower = !(lastPower ?? false); setPower(manualPower); dirty = true; schedule(); });
+aiButton.addEventListener('click', () => { manualAI = !aiPanel.classList.contains('is-open'); aiPanel.classList.toggle('is-open', manualAI); aiButton.setAttribute('aria-expanded', String(manualAI)); });
+motionButton.addEventListener('click', () => {
+  if (root.dataset.motion === 'static') { choice = 'motion'; persist('motion'); reason = 'user'; start('cinematic'); }
+  else { choice = 'calm'; persist('calm'); stop(); }
 });
-window.addEventListener('scroll',()=>{dirty=true;schedule();},{passive:true});
-window.addEventListener('resize',()=>{motionButton.hidden=compactViewport();if(compactViewport()&&renderer)stop('TRYB LEKKI · MAŁY EKRAN');measure();},{passive:true});
-window.addEventListener('pointermove',event=>{if(event.pointerType==='mouse')pointer=[event.clientX/window.innerWidth-.5,event.clientY/window.innerHeight-.5];},{passive:true});
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;}
-  else{budget.reset();lastFrame=0;dirty=true;schedule();}
+window.addEventListener('scroll', () => { dirty = true; schedule(); }, { passive: true });
+window.addEventListener('resize', () => {
+  const next = framingFor(innerWidth);
+  if (next !== framing) { framing = next; root.dataset.framing = framing; }
+  root.dataset.compact = String(isCompact(innerWidth, innerHeight));
+  measure();
+}, { passive: true });
+window.addEventListener('pointermove', event => {
+  if (event.pointerType === 'mouse' && !qa.freeze) pointer = [event.clientX / innerWidth - .5, event.clientY / innerHeight - .5];
+}, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; lastFrame = 0; return; }
+  controller.hold(performance.now(), 1000); lastFrame = 0; dirty = true; schedule();
 });
-canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();stop('TRYB LEKKI · KONTEKST GRAFIKI UTRACONY');});
-canvas.addEventListener('webglcontextrestored',()=>{if(choice!=='static'&&!reduce.matches)start();});
-reduce.addEventListener('change',()=>{if(reduce.matches)stop();else if(choice!=='static')start();});
-if('ResizeObserver'in window){const observer=new ResizeObserver(measure);observer.observe(document.querySelector('main'));observer.observe(document.querySelector('#zrodla'));}
-window.addEventListener('pagehide',event=>{if(raf)cancelAnimationFrame(raf);raf=0;if(!event.persisted){destroyed=true;generation++;renderer?.dispose();renderer=null;}});
-window.addEventListener('pageshow',()=>{if(!destroyed){lastFrame=0;measure();}});
-if(debug)Object.defineProperty(window,'krzemDebug',{get:()=>({index,progress,tier,mode:root.dataset.motion,rafActive:!!raf,renderer:renderer?.diagnostics??null})});
+canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); if (layer || abort) fail('WebGL context lost', event.type, 'TRYB LEKKI · KONTEKST GRAFIKI UTRACONY'); });
+canvas.addEventListener('webglcontextrestored', () => { if (choice !== 'calm' && (choice === 'motion' || !reduce.matches)) start('balanced'); });
+reduce.addEventListener('change', () => { if (choice) return; if (reduce.matches) stop(); else begin(); });
+if ('ResizeObserver' in window) { const observer = new ResizeObserver(measure); observer.observe(document.querySelector('main')); observer.observe(document.querySelector('#zrodla')); }
+window.addEventListener('pagehide', event => { if (raf) cancelAnimationFrame(raf); raf = 0; if (!event.persisted) { destroyed = true; generation++; abort?.abort(); layer?.dispose(); layer = null; } });
+window.addEventListener('pageshow', () => { if (!destroyed) { lastFrame = 0; controller.hold(performance.now(), 1000); measure(); } });
+
+if (debug) Object.defineProperty(window, 'krzemDebug', { get: () => ({
+  ...story, profile, reason, framing, mode: root.dataset.motion, rafActive: !!raf, live: !!liveAt, ambient, parallax,
+  window: controller.last, intervals: intervals.map(([dt]) => dt), cpu: intervals.map(([, c]) => c),
+  reset() { intervals.length = 0; }, gpu: layer?.diagnostics ?? null,
+}) });
+
+root.dataset.framing = framing; root.dataset.compact = String(isCompact(innerWidth, innerHeight));
+begin();
 measure();
-// Respect accessibility/data-saving preferences before importing any GPU code.
-if(preference()==='static')stop();
-else if('requestIdleCallback'in window)window.requestIdleCallback(()=>start(),{timeout:600});
-else setTimeout(()=>start(),100);
+if (qa.index >= 0) window.scrollTo(0, reader.positionOf(qa.index, qa.progress));
+else if (location.hash && motionFull()) document.getElementById(location.hash.slice(1))?.scrollIntoView();

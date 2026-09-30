@@ -1,6 +1,10 @@
-import { model, lookAt, multiply, perspective, lerp, smoothstep, clamp } from './math.js';
-import { pixelRatio } from './quality.js';
-import * as geometry from './geometry.js';
+/**
+ * v0.1 procedural scenes for chapters 1-6, kept until stages B/C replace them. They draw into the
+ * same WebGL 2 context as Three.js (GLSL ES 1.00 shaders are valid there); the caller resets
+ * Three's state cache around render(). Chapter 0 is the Three.js hero now.
+ */
+import { model, lookAt, multiply, perspective, lerp, smoothstep } from './legacy-math.js';
+import * as geometry from './legacy-geometry.js';
 
 const vertex=`
 attribute vec3 aPosition;
@@ -81,10 +85,8 @@ void main(){
  gl_FragColor=vec4(color,uOpacity);
 }`;
 
-/** One context, one program, lazily uploaded merged meshes. Return a disposable renderer. */
-export function createRenderer(canvas) {
-  const gl=canvas.getContext('webgl',{alpha:true,antialias:true,depth:true,stencil:false,powerPreference:'low-power',preserveDrawingBuffer:false});
-  if(!gl) throw new Error('WebGL unavailable');
+/** One program, lazily uploaded merged meshes, drawing into a context owned by the caller. */
+export function createLegacyScenes(gl) {
   const shaders=[];
   function compile(type,source){
     const s=gl.createShader(type); if(!s) throw new Error('Could not create shader');
@@ -96,12 +98,10 @@ export function createRenderer(canvas) {
   try {gl.attachShader(program,compile(gl.VERTEX_SHADER,vertex));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program)||'Program link failed');
   } catch(error) {shaders.forEach(s=>gl.deleteShader(s));gl.deleteProgram(program);throw error;}
-  gl.useProgram(program);
   shaders.forEach(s=>{gl.detachShader(program,s);gl.deleteShader(s);});
   const attributes=['aPosition','aNormal','aColor'].map(n=>gl.getAttribLocation(program,n));
   const uniforms=Object.fromEntries(['uModel','uViewProjection','uEye','uTime','uKind','uOpacity','uPower'].map(n=>[n,gl.getUniformLocation(program,n)]));
-  gl.enable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-  const meshes=new Map(); let width=1,height=1,disposed=false,quality='high',sceneAlpha=1;
+  const meshes=new Map(); let width=1,height=1,disposed=false,quality='high',sceneAlpha=1,viewProjection=null;
   const eye=[0,0,7.8];
   function upload(name,data){
     const buffer=gl.createBuffer();if(!buffer)throw new Error('Could not allocate geometry');
@@ -127,28 +127,27 @@ export function createRenderer(canvas) {
     gl.uniform1f(uniforms.uKind,kind);gl.uniform1f(uniforms.uOpacity,opacity);gl.uniform1f(uniforms.uPower,power);
     gl.depthMask(opacity>.98);gl.drawArrays(gl.TRIANGLES,0,item.count);gl.depthMask(true);
   }
-  function resize(tier=quality){
+  /** CSS size of the canvas; the drawing buffer size belongs to Three.js. lod: 'high' | 'low'. */
+  function resize(cssWidth,cssHeight,lod=quality){
     if(disposed)return;
-    quality=tier;const r=canvas.getBoundingClientRect();width=Math.max(1,r.width);height=Math.max(1,r.height);
-    const ratio=pixelRatio(tier,window.devicePixelRatio,width,height);
-    const w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
-    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-    gl.viewport(0,0,w,h);
-    const vp=multiply(perspective(42*Math.PI/180,width/height),lookAt(eye));
-    gl.uniformMatrix4fv(uniforms.uViewProjection,false,vp);gl.uniform3fv(uniforms.uEye,eye);
+    quality=lod;width=Math.max(1,cssWidth);height=Math.max(1,cssHeight);
+    viewProjection=multiply(perspective(42*Math.PI/180,width/height),lookAt(eye));
   }
   function render({index,progress:p,transition=0,time:t,pointer=[0,0],power=false}){
     if(disposed)return;
+    // Three.js leaves its own state behind: set everything this program relies on.
+    gl.bindVertexArray?.(null);gl.useProgram(program);
+    gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);
+    gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniformMatrix4fv(uniforms.uViewProjection,false,viewProjection);gl.uniform3fv(uniforms.uEye,eye);
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.uniform1f(uniforms.uTime,t);
     const mobile=width<760, x=mobile?0:1.67, y=mobile?-1.05:-.05;
     const s=mobile?.61:1.30;
     const px=mobile?0:pointer[0]*.07,py=mobile?0:pointer[1]*.06;
     function compose(index,p){
-    if(index===0){
-      draw('rock',model(x,y,0,.1+py,t*.035+px,-.14,s*(1+p*.22)),5);
-      draw('rock',model(x+1.02*s,y-.88*s,-.18,.8,t*.055,-.5,s*.10),5,.7);
-    }else if(index===1){
+    if(index===1){
       const crystalFade=1-smoothstep(.18,.34,p),ingotFade=smoothstep(.17,.32,p)*(1-smoothstep(.57,.73,p)),waferFade=smoothstep(.56,.75,p);
       draw('rock',model(x,y,0,.13,t*.03+p*.5,-.15,s*.9),4,crystalFade);
       draw('ingot',model(x,y,0,.25+p*.8,.5,-.8,s*.9),0,ingotFade);
@@ -183,6 +182,5 @@ export function createRenderer(canvas) {
     sceneAlpha=1;
   }
   function dispose(){if(disposed)return;disposed=true;meshes.forEach(m=>gl.deleteBuffer(m.buffer));meshes.clear();gl.deleteProgram(program);}
-  resize();
-  return {render,resize,dispose,get diagnostics(){return {meshes:meshes.size,width:canvas.width,height:canvas.height,quality};}};
+  return {render,resize,dispose,get diagnostics(){return {meshes:meshes.size,quality};}};
 }

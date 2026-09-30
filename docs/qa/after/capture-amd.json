@@ -1,0 +1,51 @@
+{
+ "browser": "Chromium 145.0.7632.6",
+ "perf": {
+  "balanced/desktop": {
+   "idle_hero": {
+    "frames": 233,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 133.3,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 33.2,
+    "over_50ms": 0
+   },
+   "cpu_frame_median_ms": 0.3,
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ],
+   "pixel_ratio": 1
+  },
+  "balanced/mobile": {
+   "idle_hero": {
+    "frames": 235,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 116.6,
+    "over_50ms": 1
+   },
+   "scroll_entry": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.4,
+    "over_50ms": 0
+   },
+   "cpu_frame_median_ms": 0.3,
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    390,
+    844
+   ],
+   "pixel_ratio": 1
+  }
+ }
+}

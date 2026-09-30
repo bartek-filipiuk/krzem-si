@@ -19,6 +19,7 @@ jobs:
           node-version: '22'
           package-manager-cache: false
       - uses: actions/configure-pages@v5
+      - run: npm ci
       - run: npm run verify
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://krzem.si/' }}

@@ -1,27 +1,72 @@
-# Kierunek kolejnej iteracji
+# Kierunek wizualny
 
-Celem jest filmowa opowieść, a nie seria modułów SaaS. Ciemny grafit, złamana biel, srebrzysty krzem i oszczędny bursztyn. Typografia i czarna przestrzeń nadają rytm; siła przekazu wynika ze skali materii, nie ze świecących robotów.
+Muzealne studio, nie efekty. Głęboki grafit `#0b0e12`, złamana biel tekstu, chłodne srebrne
+refleksy, jeden bursztynowy rim. Obraz ma się bronić na zatrzymanej klatce: kształt, materiał
+i światło, bez bloomu, mgły i grainu (nakładkę `film-grain` z v0.1 usunięto).
 
-## Obecna wersja a cel wizualny
+Źródło prawdy o świetle i kadrze to pipeline Blendera (`tools/blender/`, etap A2):
+`hero-camera.json` (kamera desktop/mobile, obrót bryłki, ekspozycja, tone mapping, ściana wejścia)
+i `studio-1k.hdr` (cztery softboxy studia wypalone w HDR). Runtime niczego tu nie zgaduje, tylko
+czyta te pliki; poster i pierwsza klatka WebGL pochodzą z tej samej kamery.
 
-Obecne proceduralne sceny pozwalają sprawdzić flow, sterowanie i wydajność. Są uproszczonymi ilustracjami. Nie należy przedstawiać screenshotów jako finalnego odpowiednika wygenerowanej makiety.
+## 00 hero
 
-Kolejny największy przyrost jakości da dopracowanie bryłki krzemu: bardziej nieregularne płaszczyzny przełamu, subtelne rysy, poprawne odbicia studia, model offline o małej liczbie trójkątów oraz osobne tekstury o ograniczonej rozdzielczości. Krzem nie powinien przypominać przezroczystego kwarcu.
+- **Desktop:** bryłka po prawej od środka, duży szeryfowy nagłówek po lewej, karta „14 / Si” jako
+  cienka adnotacja. Kamera z JSON-u (`desktop`, FOV 42° w pionie), lekko z góry.
+- **Mobile:** osobny kadr (`mobile`, FOV 50°): bryłka nisko i centralnie, górne ~45% ekranu
+  zostaje na H1 i tekst.
+- **Krótki ekran** (`data-compact`): ten sam kadr kamery co poster, ciaśniejsza typografia.
+  Wysokość ekranu wybiera układ, nigdy profil jakości.
+- **Ruch:** jeden obrót na 90 s na zegarze ambientu, startuje od pozy posteru i rozpędza się przez
+  2 s po przejęciu obrazu. Paralaksa kursora do 2° z wygaszaniem (stała 400 ms), tylko mysz.
+- **Przejęcie posteru:** poster jest pierwszą klatką. Canvas rysuje tę samą klatkę pod nim, potem
+  poster znika w 300 ms. Poświata tła z posteru (radialna, `#5a7896`, alfa 0,16) jest odtworzona
+  w CSS za przezroczystym canvasem, więc tło się nie zmienia.
 
-Scenę skali trzeba zmienić z ogólnego pola struktur w świadomie wyreżyserowany przelot nad warstwami mikroelektroniki. Należy zachować czytelność tekstu i uniknąć dosłownych wieżowców. Wersja produkcyjna powinna mieć merytorycznie sprawdzony przekrój tranzystora i oznaczone warstwy materiałów.
+## Wejście w materię (hero → 01)
 
-## Docelowy rytm
+Postęp hero liczymy od góry hero (0) do przypięcia rozdziału materii (1). Fazy (`story/timeline.js`):
 
-Hero powolny, refleksy dyskretne. Przejście do materiału przybliża powierzchnię, potem przedstawia rozdzielone etapy przemysłowe. Tranzystor zatrzymuje akcję na chwilę eksperymentu. Skala przyspiesza oddalenie. Historia urządzeń przekłada technologię na możliwości człowieka. AI odsłania liczby pod interfejsem. Finał zamyka pętlę: urządzenie z widoczną stroną → bryłka → Si/SI/krzem.si.
+| Postęp hero | Co się dzieje |
+|---|---|
+| 0–0,20 | kadr hero, obrót i paralaksa |
+| 0,20–0,35 | tekst hero wygasa, poświata hero przechodzi w ambient rozdziałów |
+| 0,20–0,70 | kamera jedzie do ściany wejścia; obrót bryłki zwalnia do zera |
+| 0,70–0,74 | ściana przełamu wypełnia kadr |
+| 0,74–0,84 | obraz gaśnie do tła strony (nie do czerni) |
+| 0,84 | cięcie: scena materii (na razie proceduralna scena v0.1 rozdziału 01) |
+| 0,84–0,97 | scena materii się pojawia; od 1,0 rozdział 01 jest przypięty |
 
-Nie wymagamy żadnego kliku do kontynuacji. Scroll do przodu i do tyłu jest natywny. Na słabych urządzeniach opowieść ma zachować znaczenie nawet bez zmian kamery.
+- **Kadr wejścia:** kadr hero przy postępie 0,2, identyczny z posterem, jeśli czytelnik nie
+  poruszał myszą.
+- **Ruch:** kamera jest liczona w układzie bryłki (orbita + dolly, `story/camera-rig.js`):
+  kierunek widzenia przechodzi od kierunku kamery hero do kierunku ściany, środek orbity przesuwa
+  się ze środka bryłki na środek ściany, odległość maleje z 1,8 m do 0,26 m głównie w drugiej
+  połowie ruchu. Gdy ściana jest akurat odwrócona od widza, kamera przechodzi górą nad bryłką
+  (nie przez nią). Pozycja kamery zależy tylko od postępu i kąta bryłki, więc cofanie scrolla
+  odtwarza te same klatki.
+- **Obiekt prowadzący:** ściana przełamu wskazana przez A2 (`entryFace`). Kamera kończy lekko
+  skośnie, w połowie drogi między normalną ściany a odbiciem kluczowego softboxu, żeby ściana
+  niosła miękki refleks zamiast odbijać ciemne studio za kamerą. W ostatniej fazie studio obraca
+  się razem z bryłką, więc zbliżenie wygląda tak samo niezależnie od tego, dokąd doszedł obrót.
+  Od chwili, gdy czytelnik zaczyna scrollować, dociąga się łatka `fracture-face.glb` o gęstszych
+  UV (ta sama przestrzeń obiektu, przesunięcie głębi zamiast z-fightingu).
+- **Kadr wyjścia:** ziarna polikrystalicznej ściany i prążki przełamu na całym ekranie, potem
+  wygaszenie do grafitu i cięcie do pierwszej klatki rozdziału materii. Nagłówek „Od natury. Do
+  precyzji.” wjeżdża od dołu razem ze sceną 01.
 
-## Rozbudowa renderera
+Przenikania dwóch obiektów nie ma: między bryłką a sceną materii jest świadome cięcie w tle
+strony.
 
-Aktualny renderer nie wczytuje glTF ani plików HDR. Są dwie uczciwe ścieżki: eksport nowych siatek do istniejącego formatu buforów i poszerzenie shadera albo osobny, lazy-loaded renderer oparty o Three.js. Nie należy dokładać biblioteki do krytycznego pierwszego renderu bez pomiaru. Aktualna warstwa HTML i tryb zapasowy powinny zostać niezależne.
+## Profile
 
-Prerenderowane filmy mogą zastąpić najbardziej wymagające ujęcia. Najpierw trzeba przetestować płynność seekowania na Safari/iOS i pamięć, a nie od razu pobierać setki klatek do canvasu. Rozdział ładuje najwyżej bieżące zasoby i niewielki zapas następnych. Poster jest widoczny od pierwszego renderu.
+- **cinematic:** tekstury 2K (1K przy kadrze mobile), MSAA, anizotropia 8, DPR do 1,5.
+- **balanced:** tekstury 1K, bez MSAA i anizotropii, DPR do 1,0 z budżetem pikseli. Ten sam ruch.
+- **calm:** postery, pełna treść i interakcje DOM, brak przelotów, brak ambientu, brak importu
+  Three.js. Układ płynący zamiast przypiętych scen.
 
-## Warunki przed publikacją wersji premium
+## Czego nie robimy
 
-Test fizycznego iPhone'a w Safari, telefonu z Androidem o małej wydajności, Windowsa z integrą i Chrome/Firefox. Profilowanie czasu klatki, czasu do treści i zużycia pamięci. Przegląd czytnikiem ekranu, klawiaturą i przy powiększeniu 200%. Kontrola claimów naukowych. Dopiero potem opcjonalny dźwięk, uruchamiany świadomie przez użytkownika.
+Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
+chrom. Krzem nie jest kwarcem, diamentem ani folią. Rozdziały 02–06 wciąż korzystają ze
+scen v0.1 i czekają na etapy B i C.

@@ -1,15 +1,46 @@
-import { readdir, readFile, access } from 'node:fs/promises';
-import { resolve } from 'node:path';
+/** Cheap source checks before the build: syntax, references, anchors, and layer separation. */
+import { readdir, readFile, access, stat } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
-const root=resolve(import.meta.dirname,'..');
-for(const folder of ['src/scripts','scripts','tests'])for(const name of await readdir(resolve(root,folder)))if(/\.m?js$/.test(name))execFileSync(process.execPath,['--check',resolve(root,folder,name)],{stdio:'inherit'});
-const html=await readFile(resolve(root,'src/index.html'),'utf8');
-const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
-if(new Set(ids).size!==ids.length)throw new Error('Duplicate HTML ids');
-for(const [,ref] of html.matchAll(/(?:src|href)="([^"]+)"/g)){
-  if(ref.startsWith('#')&&!ids.includes(ref.slice(1)))throw new Error(`Broken anchor: ${ref}`);
-  if(ref.startsWith('./'))await access(resolve(root,'src',ref));
+
+const root = resolve(import.meta.dirname, '..');
+async function walk(dir, out = []) {
+  for (const name of await readdir(dir)) {
+    const p = resolve(dir, name);
+    if ((await stat(p)).isDirectory()) await walk(p, out); else if (/\.m?js$/.test(name)) out.push(p);
+  }
+  return out;
 }
-await access(resolve(root,'src/assets/social.webp'));
-if(/https?:\/\//.test(await readFile(resolve(root,'src/scripts/app.js'),'utf8')))throw new Error('Unexpected external request in app.js');
-console.log('Syntax, local references, anchor ids and no-external-request guard: OK.');
+const scripts = await walk(resolve(root, 'src/scripts'));
+for (const file of [...scripts, ...await walk(resolve(root, 'scripts')), ...await walk(resolve(root, 'tests'))])
+  execFileSync(process.execPath, ['--check', file], { stdio: 'inherit' });
+
+const html = await readFile(resolve(root, 'src/index.html'), 'utf8');
+const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+if (new Set(ids).size !== ids.length) throw new Error('Duplicate HTML ids');
+for (const [, ref] of html.matchAll(/(?:src|href|srcset)="([^"]+)"/g)) {
+  if (ref.startsWith('#') && !ids.includes(ref.slice(1))) throw new Error(`Broken anchor: ${ref}`);
+  if (ref.startsWith('./')) await access(resolve(root, 'src', ref));
+}
+await access(resolve(root, 'src/assets/social.webp'));
+
+for (const file of scripts) {
+  const code = await readFile(file, 'utf8');
+  if (/https?:\/\//.test(code)) throw new Error(`Unexpected external URL in ${file}`);
+  // Runtime asset URLs and JSON imports must point at files that exist.
+  for (const [, ref] of code.matchAll(/new URL\('([^']+)', import\.meta\.url\)/g)) await access(resolve(dirname(file), ref));
+  for (const [, ref] of code.matchAll(/from '(\.[^']+\.json)'/g)) await access(resolve(dirname(file), ref));
+}
+
+// The text layer must never statically reach Three.js: calm and no-GPU visits do not load it.
+const seen = new Set();
+async function reachesThree(file) {
+  if (seen.has(file)) return false;
+  seen.add(file);
+  const code = await readFile(file, 'utf8');
+  if (/^\s*import[^()]*from\s*'three/m.test(code)) return true;
+  for (const [, spec] of code.matchAll(/^\s*import[^()]*from\s*'(\.[^']+\.js)'/gm)) if (await reachesThree(resolve(dirname(file), spec))) return true;
+  return false;
+}
+if (await reachesThree(resolve(root, 'src/scripts/app.js'))) throw new Error('app.js statically imports Three.js');
+console.log('Syntax, local references, asset paths, anchor ids, no external URLs, text layer free of Three.js: OK.');

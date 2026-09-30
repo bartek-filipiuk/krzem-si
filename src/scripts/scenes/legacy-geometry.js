@@ -1,4 +1,4 @@
-import { cross, normalize, seeded } from './math.js';
+import { cross, normalize, seeded } from './legacy-math.js';
 /** Interleaved position / flat normal / vertex colour; merged meshes keep draw calls low. */
 export function triangle(out,a,b,c,color=[.46,.51,.59]) {
   const n=normalize(cross(b.map((v,i)=>v-a[i]),c.map((v,i)=>v-a[i])));
