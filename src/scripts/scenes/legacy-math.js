@@ -1,4 +1,4 @@
-/** Small column-major matrix helpers. No browser APIs: tested with node:test. */
+/** v0.1 matrix helpers for the legacy chapter scenes (1-6) until stages B/C replace them. */
 export const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -33,11 +33,4 @@ export function model(x=0,y=0,z=0,rx=0,ry=0,rz=0,s=1) {
 export function seeded(seed = 14028) {
   let a = seed >>> 0;
   return () => { a += 0x6D2B79F5; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
-}
-/** Select the active chapter using cached document offsets, never DOM reads in the GPU loop. */
-export function chapterAt(y, bounds, height) {
-  let index=0;
-  for(let i=0;i<bounds.length;i++) if(y>=bounds[i].top) index=i;
-  const b=bounds[index];
-  return {index, progress:clamp((y-b.top)/Math.max(1,b.height-height))};
 }
