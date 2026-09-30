@@ -9,8 +9,8 @@ Wallner arcs whose origin lies outside the face. On top: six terraces (three dee
 re-entrant edge, three shallow ledges), 7-9 flake chips, 40 small flat flake scars along edges and
 corners, and 7 hairline cracks (V-grooves 1-4 cm inside a face boundary). Smooth-max gives the small
 edge bevel. A dense icosphere is projected onto that surface (high-res bake source).
-Micro-relief (two octaves of per-grain facet tilt = the crystalline mosaic, hackle striations fanning
-from an origin outside each face, sparse pits) lives only in the high-res shader and reaches the
+Micro-relief (a fine, even per-grain facet tilt and roughness jitter = the crystalline texture, faint
+hackle striations fanning from an origin outside each face) lives only in the high-res shader and reaches the
 runtime mesh through the baked normal, roughness and occlusion (AO x crack mask) maps.
 """
 import argparse
@@ -42,10 +42,9 @@ ROUGH_CRACK = 0.75
 ROUGH_SKIN = 0.55
 CRACK_SLOPE = 0.25                   # crack groove narrows with depth: depth = width / slope
 BUMP_DIST = 0.0009       # metres per unit of the shader height signal
-GRAIN_SCALE = 110.0      # Voronoi cells per metre (~9 mm grains): crystalline micro-facet mosaic
-GRAIN_TILT = 0.035       # facet tilt of a grain (slope, ~2 degrees); no height step, so no cell outlines
-GRAIN2_SCALE = 38.0      # a second, coarser grain octave (~2.6 cm crystals)
-GRAIN2_TILT = 0.05
+GRAIN_SCALE = 160.0      # Voronoi cells per metre (~6 mm grains, 1-2 % of a face): even micro-facet texture
+GRAIN_TILT = 0.025       # facet tilt of a grain (slope, ~1.4 degrees); no height step, so no cell outlines
+GRAIN_ROUGH = 0.04       # per-grain roughness jitter (+-)
 CRACK_SCALE = 7.0        # hairline crack network, cells per metre; masked to a few segments
 
 
@@ -91,7 +90,7 @@ class Chunk:
     def __init__(self, seed):
         rng = np.random.default_rng(seed)
         self.rng = rng
-        self.R = np.array([0.70, 0.47, 0.40]) * rng.uniform(0.92, 1.08, 3)   # elongated lump
+        self.R = np.array([0.76, 0.47, 0.38]) * rng.uniform(0.92, 1.08, 3)   # elongated lump
         self.Rot = rand_rot(rng)
         self.lump_k = rng.normal(size=(9, 3)) * 5.0
         self.lump_a = rng.uniform(0.006, 0.014, 9)
@@ -112,7 +111,7 @@ class Chunk:
         4 deep cuts set the silhouette, ~12 medium ones break it up, ~14 shallow nicks take corners off."""
         cloud = unit(rng.normal(size=(120000, 3))) * rng.random((120000, 1)) ** (1 / 3)
         cloud = (cloud * self.R) @ self.Rot.T
-        n_big, n_mid, n_nick = 4, int(rng.integers(15, 19)), int(rng.integers(24, 30))
+        n_big, n_mid, n_nick = 4, int(rng.integers(15, 19)), int(rng.integers(16, 21))
         N = n_big + n_mid
         i = np.arange(N) + 0.5
         phi = np.arccos(1 - 2 * i / N)
@@ -127,7 +126,7 @@ class Chunk:
                 depth = rng.uniform(0.2, 0.28)
             elif k < N:
                 n = fib[k]
-                depth = rng.uniform(0.13, 0.21) if k < n_big else rng.uniform(0.03, 0.08)
+                depth = rng.uniform(0.1, 0.24) if k < n_big else rng.uniform(0.02, 0.1)
             else:   # nick: take off a remaining patch of rod skin, or the most protruding corner
                 skin = cloud[self.base(cloud) > -0.012]
                 if len(skin) > 150 and rng.random() < 0.75:
@@ -137,15 +136,17 @@ class Chunk:
                 else:
                     x = cloud[np.argmax(cloud @ unit(rng.normal(size=3)))]
                     n = unit(unit(x) + rng.normal(scale=0.35, size=3))
-                    depth = rng.uniform(0.012, 0.04)
+                    depth = rng.uniform(0.008, 0.025)       # shallow: corners stay protruding
             d = float((cloud @ n).max()) - depth
             cloud = cloud[cloud @ n <= d]
             e1, e2 = frame(n)
-            conch = k < N                               # every big/medium face is conchoidal (rounded), nicks stay flat
+            conch = k < N                               # big/medium faces conchoidal; nicks stay flat
             self.planes.append(dict(
                 n=n, d=d, e1=e1, e2=e2,
                 c0=n * d + (e1 * rng.normal() + e2 * rng.normal()) * 0.06,   # curvature centre
-                kappa=(rng.choice([-1, 1]) * rng.uniform(0.4, 1.2)) if conch else rng.uniform(-0.2, 0.12),
+                # the two free deep cuts become big shallow scoops; the rest gently curved (no domes)
+                kappa=(rng.uniform(-1.4, -0.9) if k in (2, 3) else rng.uniform(-0.55, 0.25)) if conch
+                else rng.uniform(-0.2, 0.12),
                 q=n * d, amp=0.0, lam=0.04, decay=0.2, r0=0.0,               # ripples: set in add_details
                 wk=unit(rng.normal(size=2)) * rng.uniform(10, 20), wa=rng.uniform(0.0003, 0.0010),
                 wp=rng.uniform(0, 2 * np.pi), flat=not conch))
@@ -516,12 +517,12 @@ def highres_material():
     L(arc.outputs[0], comb.inputs[0])
     L(rad.outputs[0], comb.inputs[1])
     L(seed.outputs[0], comb.inputs[2])
-    hackle = node(nt, "ShaderNodeTexNoise", (-600, 0), Scale=1.0, Detail=6.0, Roughness=0.62, Distortion=0.6)
+    hackle = node(nt, "ShaderNodeTexNoise", (-600, 0), Scale=1.0, Detail=3.0, Roughness=0.5)
     L(comb.outputs[0], hackle.inputs["Vector"])
     # hackle fades in with distance from the impact point (mirror zone near it is smooth)
     fade = node(nt, "ShaderNodeMapRange", (-600, -250))
     fade.inputs["From Min"].default_value, fade.inputs["From Max"].default_value = 0.08, 0.35
-    fade.inputs["To Max"].default_value = 0.22       # hackle amplitude
+    fade.inputs["To Max"].default_value = 0.08       # hackle amplitude (faint)
     L(sep.outputs["X"], fade.inputs["Value"])
     hk = math_node(nt, "SUBTRACT", (-400, 0), None, 0.5)
     L(hackle.outputs["Fac"], hk.inputs[0])
@@ -529,22 +530,8 @@ def highres_material():
     L(hk.outputs[0], hkf.inputs[0])
     L(fade.outputs[0], hkf.inputs[1])
 
-    # sparse pits
     tc = nt.nodes.new("ShaderNodeTexCoord")
     tc.location = (-1200, -700)
-    vor = node(nt, "ShaderNodeTexVoronoi", (-900, -700), Scale=22.0)
-    L(tc.outputs["Object"], vor.inputs["Vector"])
-    sel = math_node(nt, "LESS_THAN", (-700, -800), None, 0.025)
-    colsep = nt.nodes.new("ShaderNodeSeparateColor")
-    colsep.location = (-750, -950)
-    L(vor.outputs["Color"], colsep.inputs[0])
-    L(colsep.outputs[0], sel.inputs[0])
-    pitshape = node(nt, "ShaderNodeMapRange", (-700, -600))
-    pitshape.inputs["From Min"].default_value, pitshape.inputs["From Max"].default_value = 0.025, 0.0
-    L(vor.outputs["Distance"], pitshape.inputs["Value"])
-    pit = math_node(nt, "MULTIPLY", (-500, -700))
-    L(pitshape.outputs[0], pit.inputs[0])
-    L(sel.outputs[0], pit.inputs[1])
 
     # skin (rod surface): cauliflower bumps
     skin = node(nt, "ShaderNodeTexNoise", (-600, 400), Scale=55.0, Detail=4.0, Roughness=0.6)
@@ -558,27 +545,11 @@ def highres_material():
     gvec.inputs[1].default_value = (2, 2, 2)
     gvec.inputs[2].default_value = (-1, -1, -1)
     L(grain.outputs["Color"], gvec.inputs[0])
-    grain2 = node(nt, "ShaderNodeTexVoronoi", (-900, -1300), Scale=GRAIN2_SCALE)
-    L(tc.outputs["Object"], grain2.inputs["Vector"])
-    gvec2 = nt.nodes.new("ShaderNodeVectorMath")
-    gvec2.operation, gvec2.location = "MULTIPLY_ADD", (-700, -1300)
-    gvec2.inputs[1].default_value = (2 * GRAIN2_TILT / GRAIN_TILT,) * 3
-    gvec2.inputs[2].default_value = (-GRAIN2_TILT / GRAIN_TILT,) * 3
-    L(grain2.outputs["Color"], gvec2.inputs[0])
-    gsum = nt.nodes.new("ShaderNodeVectorMath")
-    gsum.operation, gsum.location = "ADD", (-600, -1200)
-    L(gvec.outputs[0], gsum.inputs[0])
-    L(gvec2.outputs[0], gsum.inputs[1])
     gworld = nt.nodes.new("ShaderNodeVectorTransform")
     gworld.vector_type, gworld.convert_from, gworld.convert_to = "VECTOR", "OBJECT", "WORLD"
     gworld.location = (-500, -1150)
-    L(gsum.outputs[0], gworld.inputs[0])
+    L(gvec.outputs[0], gworld.inputs[0])
 
-    pitneg = math_node(nt, "MULTIPLY", (-300, -700), None, -1.2)
-    L(pit.outputs[0], pitneg.inputs[0])
-    frac_h2 = math_node(nt, "ADD", (50, -200))
-    L(hkf.outputs[0], frac_h2.inputs[0])
-    L(pitneg.outputs[0], frac_h2.inputs[1])
     # hairline cracks: edges of a noise-warped Voronoi network, masked down to a few segments
     warp = node(nt, "ShaderNodeTexNoise", (-1100, -1500), Scale=4.0, Detail=2.0)
     L(tc.outputs["Object"], warp.inputs["Vector"])
@@ -605,7 +576,7 @@ def highres_material():
     groove = math_node(nt, "MULTIPLY", (-100, -1600), None, -1.2)
     L(crack.outputs[0], groove.inputs[0])
     frac_h3 = math_node(nt, "ADD", (150, -400))
-    L(frac_h2.outputs[0], frac_h3.inputs[0])
+    L(hkf.outputs[0], frac_h3.inputs[0])
     L(groove.outputs[0], frac_h3.inputs[1])
     height = node(nt, "ShaderNodeMix", (250, 0))
     height.data_type = "FLOAT"
@@ -630,14 +601,18 @@ def highres_material():
     L(nadd.outputs[0], nnorm.inputs[0])
     L(nnorm.outputs[0], bsdf.inputs["Normal"])
 
-    # roughness: per-piece base + streaks + pits
-    rv = math_node(nt, "MULTIPLY", (300, 300), None, 0.45)   # striations: +-0.05 roughness
+    # roughness: per-piece base + faint streaks + per-grain jitter (fine, even, low contrast)
+    rv = math_node(nt, "MULTIPLY", (300, 300), None, 0.3)
     L(hkf.outputs[0], rv.inputs[0])
     r1 = math_node(nt, "ADD", (500, 300))
     L(rough_attr.outputs["Fac"], r1.inputs[0])
     L(rv.outputs[0], r1.inputs[1])
-    pr = math_node(nt, "MULTIPLY", (500, 150), None, 0.25)
-    L(pit.outputs[0], pr.inputs[0])
+    gsep = nt.nodes.new("ShaderNodeSeparateColor")
+    gsep.location = (300, 150)
+    L(grain.outputs["Color"], gsep.inputs[0])
+    pr = node(nt, "ShaderNodeMapRange", (500, 150))
+    pr.inputs["To Min"].default_value, pr.inputs["To Max"].default_value = -GRAIN_ROUGH, GRAIN_ROUGH
+    L(gsep.outputs[0], pr.inputs["Value"])
     r2 = math_node(nt, "ADD", (700, 300))
     L(r1.outputs[0], r2.inputs[0])
     L(pr.outputs[0], r2.inputs[1])
