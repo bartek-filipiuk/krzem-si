@@ -2064,10 +2064,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 26,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.353206997084548
    }
   },
   "scale-amd-balanced-desktop-060": {
@@ -2097,10 +2097,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 29,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-amd-balanced-desktop-075": {
@@ -2361,10 +2361,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 26,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.3521177369973332
    }
   },
   "scale-amd-balanced-mobile-060": {
@@ -2394,10 +2394,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 35,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-amd-balanced-mobile-075": {

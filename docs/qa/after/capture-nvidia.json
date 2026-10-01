@@ -4541,7 +4541,7 @@
     "geometries": 34,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.353206997084548
    }
   },
   "scale-cinematic-desktop-060": {
@@ -4574,7 +4574,7 @@
     "geometries": 34,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-cinematic-desktop-075": {
@@ -4838,7 +4838,7 @@
     "geometries": 34,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.3521177369973332
    }
   },
   "scale-cinematic-mobile-060": {
@@ -4868,10 +4868,10 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 35,
+    "geometries": 34,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-cinematic-mobile-075": {
@@ -5132,10 +5132,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 26,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.353206997084548
    }
   },
   "scale-balanced-desktop-060": {
@@ -5165,10 +5165,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 29,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-balanced-desktop-075": {
@@ -5429,10 +5429,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 34,
+    "geometries": 26,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.3521177369973332
    }
   },
   "scale-balanced-mobile-060": {
@@ -5462,10 +5462,10 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 35,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 1.05
+    "exposure": 1.55
    }
   },
   "scale-balanced-mobile-075": {
@@ -5934,10 +5934,10 @@
   "max_ms": 33.4,
   "over_50ms": 0,
   "gpu_time": {
-   "frames": 2345,
-   "median_ms": 2.83,
-   "p95_ms": 13.81,
-   "max_ms": 18.4,
+   "frames": 2344,
+   "median_ms": 2.86,
+   "p95_ms": 12.24,
+   "max_ms": 18.5,
    "over_50ms": 0
   },
   "seconds": 38.9

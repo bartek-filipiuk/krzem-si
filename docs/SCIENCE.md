@@ -58,7 +58,7 @@ Uproszczenia:
 
 W modelu (test w `tests/core.test.mjs`): 11 poziomów, rozstawy 52, 52, 52, 80, 80, 160, 160 nm z procesu 14 nm (źródła 12–13), kierunek ścieżek zmienia się z poziomu na poziom, rozstaw rośnie ku górze, przelotki tylko tam, gdzie oba sąsiednie poziomy mają metal. Podziałka pod sceną jest liczona z kamery dla płaszczyzny ostrości, od dziesiątek nanometrów do milimetrów.
 
-NIEZWERYFIKOWANE / założone: rozstawy powyżej 160 nm (320, 640, 1280, 4000 nm), wszystkie grubości (stosunek grubości do szerokości 1,5–2), wysokości przelotek, długości odcinków i przerw, gęstość przelotek, zajętość torów na trzech najwyższych poziomach (co drugi tor, na najwyższym co trzeci i bez przerw), wymiary chipu (4 × 3 mm, umowne), jego plan (bloki logiki i pamięci, pierścień padów) i grubość (0,3 mm).
+NIEZWERYFIKOWANE / założone: rozstawy powyżej 160 nm (320, 640, 1280, 4000 nm), wszystkie grubości (stosunek grubości do szerokości 1,5–2), wysokości przelotek, długości odcinków i przerw, gęstość przelotek, zajętość torów na trzech najwyższych poziomach (co drugi tor, na najwyższym co trzeci i bez przerw), wymiary chipu (4 × 3 mm, umowne), jego plan (bloki logiki, pamięci i analogowe/IO, pierścień padów, siatka zasilania co 100 µm) i grubość (0,3 mm). Tekstura logiki to routing ze sceny w zmniejszeniu, nie prawdziwy układ komórek; połysk bloków pamięci jest umowny.
 
 Uproszczenia:
 - Dielektryk wypełniający przestrzeń między ścieżkami jest usunięty (jak na zdjęciach SEM wytrawionych połączeń), bariery i nasadki pokazane tylko jako cienkie krawędzie i inny połysk wierzchu.
