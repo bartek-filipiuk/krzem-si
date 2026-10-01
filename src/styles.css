@@ -385,3 +385,4 @@ html[data-renderer=webgl][data-motion=full] #skala .chapter-copy{opacity:var(--s
   background:linear-gradient(#0b0e12f2 0,#0b0e12cc 45%,#0b0e1200 100%)}
 }
 html[data-renderer=webgl] #skala .lattice-legend{text-shadow:0 0 6px #0b0e12,0 0 2px #0b0e12,0 1px 14px #0b0e12}
+.part-label[hidden]{display:none}

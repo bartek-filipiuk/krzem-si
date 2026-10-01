@@ -111,32 +111,21 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 
 ## 02 przełącznik: FinFET (`scenes/transistor.js`, `scenes/transistor-math.js`)
 
-- **Obraz:** jeden tranzystor FinFET jako jeden obiekt na płycie podłoża: trzy żebra biegną z
-  lewej na prawo, po obu stronach wypukłe obszary źródła i drenu (symetryczne), w środku jedna
-  bramka okrakiem na żebrach, nad nimi kontakty. Sąsiednie bramki i poziomy metalu są pominięte,
-  żeby nic nie zasłaniało głównej myśli. Żebra w skali procesu 14 nm (`docs/SCIENCE.md`).
-- **Cięcie:** pionowa płaszczyzna pod 45° przez bramkę, przechodząca przez przednie żebro w środku
-  bramki: przekrój patrzy w kamerę i pokazuje bramkę (złoty TiN, jasny dielektryk, szare
-  wypełnienie) obejmującą żebro z trzech stron. Przednie połowy źródła i drenu przedniego żebra
-  są ścięte, więc żebro widać na całej długości. Przekroje są matowe, z cienkimi liniami na
-  granicach warstw.
-- **Powierzchnie:** drobne kierunkowe ziarno na materiał (wzdłuż osi, wzdłuż której powierzchnia
-  rosła lub była polerowana), lekkie wytarcie krawędzi, zaokrąglenia w normalnych, analityczne
-  cienie kontaktowe. Płyta podłoża biegnie w tył i gaśnie w tle (horyzont, nie winieta).
-- **Światło i optyka:** HDR studia (obrócony do osi Z sceny), chłodne światło z góry, jedno niskie
-  ciepłe z boku drenu. Głębia ostrości w jednym przebiegu, ostra płaszczyzna na przednim żebrze
-  przy bramce (tej samej, dla której prawdziwa jest podziałka). Liczba próbek i MSAA idą za
-  profilem, także po automatycznym obniżeniu.
-- **Stany:** OFF: brak kanału, nośniki (jasne kulki) stłoczone w źródle tuż przed bramką. ON:
-  bursztynowy kanał w żebrze pod bramką, słaba poświata, nośniki płyną ze źródła przez kanał do
-  drenu; tam, gdzie zasłania je materiał, widać ich słabe odbicie. Różnicę niosą kształt i ruch
-  oraz tekst statusu, nie sam kolor. Przełączenie trwa ok. 0,4 s.
-- **Kamera:** z przodu i z góry, wolny obrót i lekki odjazd do końca rozdziału (miejsce na odjazd
-  do wielu tranzystorów w rozdziale 03). Mobile: dalej, obiekt pod tekstem i przełącznikiem.
-- **Podpisy części:** prawdziwy tekst HTML z cienkimi liniami, pozycje z tej samej kamery co scena;
-  na desktopie sześć (Źródło, Bramka, Dren, Żebro (kanał), Izolator, Kontakt), na telefonie
-  cztery najważniejsze. Bez JS i w trybie spokojnym te same pozycje leżą na posterach OFF/ON.
-- **Przejścia:** 01 → 02 i 02 → 03 przez tło.
+- **Bohater to kanał, nie obudowa:** bramka, jej warstwy (złoty TiN, jasny dielektryk), dystanse,
+  nasadka i kontakty są przydymionym szkłem z jasnymi krawędziami i widoczną grubością; przez nie
+  widać lite, krystaliczne żebra (zwężone, z zaokrąglonym wierzchem, w zbliżeniu z delikatnym wzorem
+  sieci krzemu) i fasetowaną, półprzezroczystą epitaksję źródła i drenu. Żadnych czarnych bloków.
+- **Nośniki:** wiele małych jasnych punktów ze smugami po obu ścianach i wierzchu każdego żebra
+  (to istota tranzystora z żebrem). OFF: strumień dochodzi do krawędzi bramki i staje.
+- **Przełączenie (ok. 1,4 s, przerywalne):** ON: impuls w kontakcie bramki, bramka i jej
+  dielektryk lekko świecą, kanał zapala się na powierzchniach żeber od źródła do drenu, strumień
+  przebija się do drenu. OFF: bramka gaśnie, kanał zanika od strony drenu, strumień się piętrzy.
+  Przerwana sekwencja odtwarza się wstecz (bez skoków). Raz automatycznie przy scrollu, potem
+  przycisk i klawiatura; w trybie spokojnym postery zmieniają się od razu.
+- **Kamera:** cały element na początku, w połowie rozdziału bliski widok trzy czwarte na wejście
+  przedniego żebra w bramkę (tu pokaz), na końcu odjazd do kadru wejścia rozdziału 03. Podpisy: sześć
+  na desktopie, cztery na telefonie; podpis, który by się zderzył z tekstem albo wyszedł z kadru, znika.
+- **Przejścia:** 01 → 02 przez tło, 02 → 03 przenikaniem w tę samą kamerę.
 
 ## 03 skala: połączenia (`scenes/scale.js`, `scenes/scale-math.js`)
 

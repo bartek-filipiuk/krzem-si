@@ -1,5 +1,5 @@
 /**
- * Chapter 02: a cut-away FinFET, pure data and math (no Three.js, node-tested). Lengths in nm,
+ * Chapter 02: a FinFET seen through its ghosted gate stack, pure data and math (node-tested). Lengths in nm,
  * x along the fins (source -> drain), y across the fins, z up; the top of the isolation oxide is
  * z = 0. Sources and what is assumed: docs/SCIENCE.md.
  *
@@ -12,64 +12,73 @@ import { clamp, smoothstep } from '../story/timeline.js';
 
 export const DIM = { finPitch: 42, finHeight: 42, finWidth: 8, gatePitch: 70, gateLength: 20 };
 const FINS = [-1, 0, 1].map(i => i * DIM.finPitch);
-/**
- * The cut-away. Two cuts, each applied only to the solids flagged with it:
- *  - CUT_GATE: a diagonal cut (x + y < GATE_CUT_K, a vertical plane at 45 degrees) through the
- *    gate stack (gate, dielectric, TiN, cap, spacers) that passes through the front fin at the
- *    middle of the gate: the cut face looks at the camera and shows the gate wrapping the front
- *    fin on three sides, and the fin runs on bare out of the gate on the source side;
- *  - CUT_EPI: the front halves of the front fin's raised source and drain (y < FRONT_FIN), so the
- *    fin is exposed along its whole length.
- * Nothing else is cut; the fins, contacts and the isolation are whole.
- */
 export const FRONT_FIN = FINS[0];
-export const GATE_CUT_K = FINS[0];
-export const CUT_GATE = 1, CUT_EPI = 2;
+export const FIN_LENGTH = 220;
 
 /**
- * Components as boxes: centre, half size, optional rotation about x (rad), edge radius, priority,
- * cut flag. Nested solids (fin inside its gate dielectric inside the gate) are drawn so that the
- * higher priority wins on the section faces.
+ * Fin cross-section used for the drawn fin (nm, y across, z up): tapered from 10 nm at the base to
+ * 6 nm under a rounded top, 8 nm (the sourced width) at mid-height. halfWidth(z) for 0 <= z <= H.
+ */
+export function finHalfWidth(z) { return 5 - 2 * clamp(z / DIM.finHeight); }
+
+/**
+ * Components as boxes: centre, half size, edge radius, and how they are drawn: `ghost` parts (the
+ * gate stack, spacers, cap, contacts) are smoked glass with lit edges so the fins and the channel
+ * are seen through them; `shape` parts (fins, epi) get their own geometry in transistor.js (the box
+ * here keeps their sourced extent for tests and anchors).
  */
 export function components() {
   const out = [], L = DIM.gateLength / 2, H = DIM.finHeight, W = DIM.finWidth / 2;
-  const box = (kind, center, half, opts = {}) => out.push({ kind, center, half, angle: 0, round: 1.5, priority: 0, cut: 0, ...opts });
+  const box = (kind, center, half, opts = {}) => out.push({ kind, center, half, angle: 0, round: 1.5, priority: 0, ghost: false, ...opts });
   // The wafer under the device: isolation oxide on silicon, a clean front edge, running far back.
-  box('silicon', [0, 115, -56], [260, 205, 16], { priority: 0, round: 1 });
-  box('oxide', [0, 115, -20], [260, 205, 20], { priority: 1, round: 1 });
+  box('silicon', [0, 115, -56], [260, 205, 16], { round: 1 });
+  box('oxide', [0, 115, -20], [260, 205, 20], { round: 1 });
   for (const y of FINS) {
-    box('silicon', [0, y, H / 2], [110, W, H / 2], { priority: 8, round: 3, fin: true });
-    box('silicon', [0, y, -20], [110, W + 2, 20], { priority: 8, round: 0 });
+    box('silicon', [0, y, H / 2], [FIN_LENGTH / 2, W, H / 2], { fin: true, shape: 'fin' });
+    box('silicon', [0, y, -20], [FIN_LENGTH / 2, W + 2, 20], { round: 0 });
   }
   // One gate (real layouts repeat gates every 70 nm; the neighbours are left out so the device
-  // reads as one object: source, gate, drain).
-  for (const gx of [0]) {
-    const cut = CUT_GATE;
-    // Gate stack around each fin: high-k dielectric, then a work-function metal (TiN), then the
-    // fill metal; a nitride cap on top; nitride spacers on both sides.
-    for (const y of FINS) {
-      box('dielectric', [gx, y, H / 2 + 1], [L, W + 2, H / 2 + 2], { priority: 6, round: 1, cut });
-      box('tin', [gx, y, H / 2 + 2], [L, W + 3.5, H / 2 + 3.5], { priority: 5, round: 2, cut });
-    }
-    box('dielectric', [gx, 0, 1], [L, 76, 1], { priority: 6, round: 0, cut });
-    box('tin', [gx, 0, 2.75], [L, 76, .75], { priority: 5, round: 0, cut });
-    box('gate', [gx, 0, 37], [L, 76, 37], { priority: 4, round: 2, cut, gate: gx === 0 });
-    box('nitride', [gx, 0, 79], [L, 76, 5], { priority: 3, round: 1.5, cut });
-    for (const s of [-1, 1]) box('nitride', [gx + s * (L + 4), 0, 42], [4, 76, 42], { priority: 3, round: 1.5, cut });
+  // reads as one object: source, gate, drain). Around each fin: high-k dielectric, then the
+  // work-function metal (TiN), then the fill metal; a nitride cap on top; nitride spacers.
+  for (const y of FINS) {
+    box('dielectric', [0, y, H / 2 + 1], [L, W + 2, H / 2 + 2], { round: 2, ghost: true });
+    box('tin', [0, y, H / 2 + 2], [L, W + 3.5, H / 2 + 3.5], { round: 3, ghost: true });
   }
-  // Raised source/drain: faceted epitaxy around each fin between the spacers (a box turned 45
-  // degrees about x reads as the diamond cross-section of real epi).
-  for (const sx of [-1, 1]) for (const y of FINS) {
-    box('epi', [sx * 35, y, 36], [17, 9, 9], { angle: Math.PI / 4, priority: 7, round: 1.5, cut: y === FRONT_FIN ? CUT_EPI : 0 });
-  }
-  // Trench contacts on the source and drain of the back two fins, and the gate contact.
+  box('dielectric', [0, 0, 1], [L, 76, 1], { round: 0, ghost: true });
+  box('tin', [0, 0, 2.75], [L, 76, .75], { round: 0, ghost: true });
+  box('gate', [0, 0, 37], [L, 76, 37], { round: 4, ghost: true, gate: true });
+  box('nitride', [0, 0, 79], [L, 76, 5], { round: 2, ghost: true });
+  for (const s of [-1, 1]) box('nitride', [s * (L + 4), 0, 42], [4, 76, 42], { round: 2, ghost: true });
+  // Raised source/drain: faceted (diamond-profile) epitaxy around each fin between the spacers.
+  for (const sx of [-1, 1]) for (const y of FINS) box('epi', [sx * 35, y, 36], [17, 9, 9], { angle: Math.PI / 4, shape: 'epi' });
+  // Trench contacts on the source and drain, with a liner, and the gate contact.
   for (const sx of [-1, 1]) {
-    box('liner', [sx * 35, 16, 72], [13.2, 51.2, 25.2], { priority: 2, round: 2 });
-    box('tungsten', [sx * 35, 16, 72], [12, 50, 24], { priority: 2.2, round: 2 });
+    box('liner', [sx * 35, 16, 72], [13.2, 51.2, 25.2], { round: 3, ghost: true });
+    box('tungsten', [sx * 35, 16, 72], [12, 50, 24], { round: 3, ghost: true });
   }
-  box('liner', [0, 40, 95], [8.2, 7.2, 11.2], { priority: 9, round: 1.5 });
-  box('tungsten', [0, 40, 95], [7, 6, 10], { priority: 9.2, round: 1.5 });
+  box('liner', [0, 40, 95], [8.2, 7.2, 11.2], { round: 2, ghost: true });
+  box('tungsten', [0, 40, 95], [7, 6, 10], { round: 2, ghost: true, gateContact: true });
   return out;
+}
+
+/**
+ * The switch as a sequence (pure): on = target state, s = 0..1 progress of its sequence (about
+ * 1.4 s; s = 1 is the settled state). ON: a pulse runs down the gate contact, the gate and its
+ * dielectric wrap light up, the channel ignites along the fin surfaces from the source side to the
+ * drain side, then the stream breaks through. OFF: the gate dims, the channel pinches off from the
+ * drain side, the stream dams up. channel: [from, to] in units of the gate length (-.5 .. .5).
+ * Each sequence starts exactly where the opposite settled state is, so an interrupted sequence is
+ * simply played backwards: no jumps, fully reversible.
+ */
+export const SWITCH_MS = 1400;
+export function switchState(on, s) {
+  s = clamp(s);
+  if (on) {
+    const front = smoothstep(.36, .78, s);
+    return { pulse: s > 0 && s < .32 ? s / .32 : -1, gate: smoothstep(.2, .46, s), channel: [-.5, -.5 + front], stream: smoothstep(.62, 1, s) };
+  }
+  const pinch = smoothstep(.2, .62, s);
+  return { pulse: -1, gate: 1 - smoothstep(0, .34, s), channel: [-.5, .5 - pinch], stream: 1 - smoothstep(.3, .75, s) };
 }
 
 // ---- vectors ---------------------------------------------------------------------------------
@@ -80,30 +89,41 @@ const normalize = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / 
 
 /** Points the labels and the carriers refer to. */
 export const ANCHORS = {
-  source: [-36, FRONT_FIN - 4, 30],
-  gate: [6, -60, 84],
-  drain: [36, FRONT_FIN - 4, 30],
-  fin: [-14, FRONT_FIN - 4, 20],
-  oxide: [-60, -80, 0],
-  contact: [35, 30, 96],
+  source: [-30, FRONT_FIN - 9, 40],
+  gate: [4, -62, 70],
+  drain: [30, FRONT_FIN - 9, 40],
+  fin: [-14, FRONT_FIN - 5, 22],
+  oxide: [-30, -66, 0],
+  contact: [-35, -30, 92],
 };
 
 /**
- * Camera for chapter progress p in [0, 1]: from the front and above the source side, a slow
- * orbit and a slight pull-back (room for the pull-out to many transistors in chapter 03).
- * drift: ambient phase (rad).
+ * Camera for chapter progress p: the whole device (0), a close three-quarter view of the front fin
+ * entering the gate around the middle, where the switch is demonstrated (.38-.62 holds there), and
+ * a lift-off to the chapter 03 entry frame (1). drift: ambient phase (rad).
  */
+const CAMERA_KEYS = {
+  desktop: [
+    { az: .4, el: .68, d: 760, target: [0, -46, 22], fov: 22, shift: [.3, -.06] },
+    { az: .72, el: .62, d: 330, target: [-2, -42, 30], fov: 22, shift: [.32, -.02] },
+    { az: .52, el: .68, d: 820.8, target: [0, -46, 22], fov: 22, shift: [.3, -.06] },
+  ],
+  mobile: [
+    { az: .4, el: .68, d: 1480, target: [0, -46, 22], fov: 24, shift: [.02, -.5] },
+    { az: .72, el: .62, d: 600, target: [-2, -42, 30], fov: 24, shift: [.02, -.48] },
+    { az: .52, el: .68, d: 1598.4, target: [0, -46, 22], fov: 24, shift: [.02, -.5] },
+  ],
+};
 export function transistorCamera(p = 0, framing = 'desktop', drift = 0) {
   p = clamp(p);
-  const mobile = framing === 'mobile';
-  const azimuth = .46 + .12 * (smoothstep(0, 1, p) - .5) + Math.sin(drift) * .01;
-  const pitch = .68 + Math.sin(drift * .7) * .005;
-  const dist = (mobile ? 1480 : 760) * (1 + .08 * smoothstep(.6, 1, p));
-  // Focus on the front fin where it enters the gate: the sharp plane of the depth of field.
-  const target = mobile ? [0, -46, 22] : [0, -46, 22];
+  const [a, b, c] = CAMERA_KEYS[framing === 'mobile' ? 'mobile' : 'desktop'];
+  const k1 = smoothstep(0, .38, p), k2 = smoothstep(.62, 1, p);
+  const lerp = (f) => { const x = f(a) + (f(b) - f(a)) * k1; return x + (f(c) - f(b)) * k2; };
+  const d = Math.exp(lerp(k => Math.log(k.d)));
+  const azimuth = lerp(k => k.az) + Math.sin(drift) * .01, pitch = lerp(k => k.el) + Math.sin(drift * .7) * .005;
+  const target = [0, 1, 2].map(i => lerp(k => k.target[i]));
   const dir = [-Math.sin(azimuth) * Math.cos(pitch), -Math.cos(azimuth) * Math.cos(pitch), Math.sin(pitch)];
-  const position = target.map((v, i) => v + dir[i] * dist);
-  return { position, target, up: [0, 0, 1], fov: mobile ? 24 : 22, shift: mobile ? [.02, -.5] : [.3, -.06] };
+  return { position: target.map((v, i) => v + dir[i] * d), target, up: [0, 0, 1], fov: lerp(k => k.fov), shift: [lerp(k => k.shift[0]), lerp(k => k.shift[1])] };
 }
 
 /** Screen position (fractions of width/height from the top left) of a point; null behind the camera. */

@@ -6,7 +6,7 @@ import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
-import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
+import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera, switchState, finHalfWidth } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
 import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows } from '../src/scripts/scenes/scale-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
@@ -314,6 +314,26 @@ test('FinFET model keeps the sourced proportions and cuts through the front fin'
   assert.deepEqual(epi.slice(0, 3).map(x => -x), epi.slice(3));
   assert.equal(FRONT_FIN, -DIM.finPitch);
   assert.ok(components().every(c => [...c.center, ...c.half].every(Number.isFinite) && c.half.every(v => v > 0)));
+});
+
+test('switch sequence: settled states, order of events, interruptions without jumps', () => {
+  const on = switchState(true, 1), off = switchState(false, 1);
+  assert.deepEqual([on.gate, on.channel, on.stream], [1, [-.5, .5], 1]);
+  assert.deepEqual([off.gate, off.stream], [0, 0]); assert.ok(off.channel[1] <= off.channel[0]);
+  // ON: the pulse comes first, then the gate, the channel from the source side, the stream last.
+  const firstAt = (f) => { for (let i = 0; i <= 100; i++) if (f(switchState(true, i / 100))) return i / 100; return 1; };
+  assert.ok(firstAt(s => s.pulse > 0) < firstAt(s => s.gate > .5) && firstAt(s => s.gate > .5) < firstAt(s => s.channel[1] > 0) && firstAt(s => s.channel[1] > 0) < firstAt(s => s.stream > .5));
+  for (let i = 0; i <= 100; i++) assert.equal(switchState(true, i / 100).channel[0], -.5, 'the channel grows from the source side');
+  // OFF pinches off from the drain side: the drain end recedes, the source end stays.
+  assert.ok(switchState(false, .4).channel[1] < .5 && switchState(false, .4).channel[0] === -.5);
+  // Each sequence starts at the opposite settled state, so an interrupted one plays backwards cleanly.
+  const same = (x, y) => Math.abs(x.gate - y.gate) + Math.abs((x.channel[1] - x.channel[0]) - (y.channel[1] - y.channel[0])) + Math.abs(x.stream - y.stream) < 1e-9;
+  assert.ok(same(switchState(true, 0), { gate: 0, channel: [-.5, -.5], stream: 0 }) && same(switchState(false, 0), on));
+  for (const target of [true, false]) for (let i = 0; i < 1000; i++) {
+    const a = switchState(target, i / 1000), b = switchState(target, (i + 1) / 1000);
+    assert.ok(Math.abs(a.gate - b.gate) < .02 && Math.abs(a.stream - b.stream) < .02, `sequence jumps at ${i / 1000}`);
+  }
+  assert.ok(finHalfWidth(DIM.finHeight / 2) * 2 === DIM.finWidth, 'drawn fin is 8 nm wide at mid-height');
 });
 
 test('projection, cover crop and label layout: labels never overlap, static markup matches the poster', () => {

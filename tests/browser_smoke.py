@@ -92,7 +92,10 @@ def labels_ok(page) -> bool:
     w, h = page.viewport_size['width'], page.viewport_size['height']
     labels = [l for l in page.evaluate(LABEL_RECTS) if l['visible']]
     copy = page.evaluate(COPY_RECTS)
-    return (len(labels) == (4 if w < 760 else 6)
+    # Six on a full desktop, the four that matter on a phone; in between a label may give way
+    # (hidden rather than colliding) when the camera is close.
+    expected = len(labels) == 4 if w < 760 else len(labels) == 6 if w >= 1280 else len(labels) >= 4
+    return (expected
             and all(0 <= l['x'] and l['x'] + l['w'] <= w and 0 <= l['y'] and l['y'] + l['h'] <= h for l in labels)
             and not any(overlaps(a, b) for i, a in enumerate(labels) for b in labels[i + 1:])
             and not any(overlaps(a, c) for a in labels for c in copy))
@@ -168,6 +171,10 @@ with sync_playwright() as p:
     check('Transistor: manual state survives a small scroll', switch.get_attribute('aria-pressed') != before)
     switch.click()
     check('Transistor switches back', switch.get_attribute('aria-pressed') == before)
+    # The animation lasts ~1.4 s but the state is right at once; a rapid double toggle ends where it began
+    # and the scene reverses (the running sequence is never settled the other way).
+    switch.click(); switch.click()
+    check('Transistor: rapid double toggle ends in the starting state', switch.get_attribute('aria-pressed') == before)
     switch.focus()
     desktop.keyboard.press('Space')
     check('Transistor: Space toggles it', switch.get_attribute('aria-pressed') != before)
@@ -315,6 +322,22 @@ with sync_playwright() as p:
     # a resize across the mobile breakpoint and a burst of motion toggles.
     rough = browser.new_page(viewport={'width': 1440, 'height': 1000})
     load(rough, '?debug')
+    rough.evaluate('''async()=>{const m=document.getElementById('materia').getBoundingClientRect().top+scrollY;
+      const frame=()=>new Promise(r=>requestAnimationFrame(r));
+      for(const y of [0,m*.5,m,m*.2,m*.8,m*.6,m,0,m*.7,m*.75,m*.72]){scrollTo(0,y);await frame();}}''')
+    rough.wait_for_timeout(300)
+    # Chapter 02: a double press mid-sequence plays the running sequence back; the scene ends on the
+    # button's state.
+    goto_chapter(rough, 'tranzystor', .5)
+    rough.wait_for_timeout(1700)
+    toggle = rough.locator('#transistor-toggle')
+    pressed = toggle.get_attribute('aria-pressed') == 'true'
+    toggle.click(); rough.wait_for_timeout(300); toggle.click()
+    check('Transistor: state attribute is right at once after a double press', (toggle.get_attribute('aria-pressed') == 'true') == pressed)
+    rough.wait_for_timeout(1700)
+    view = rough.evaluate('krzemDebug.switch')
+    check('Transistor: after the sequence the scene shows the button state',
+          (view['on'] == pressed and view['s'] >= 1) or (view['on'] != pressed and view['s'] <= 0))
     rough.evaluate('''async()=>{const m=document.getElementById('materia').getBoundingClientRect().top+scrollY;
       const frame=()=>new Promise(r=>requestAnimationFrame(r));
       for(const y of [0,m*.5,m,m*.2,m*.8,m*.6,m,0,m*.7,m*.75,m*.72]){scrollTo(0,y);await frame();}}''')

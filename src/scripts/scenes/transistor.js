@@ -1,237 +1,271 @@
 /**
- * Chapter 02: a cut-away FinFET generated in code (transistor-math.js holds the dimensions).
- * Every part is a box; a fragment shader on patched MeshStandardMaterials does the rest:
- *  - targeted cuts (only flagged solids): the source half of the gate in front is removed so the
- *    front fin is seen entering a gate that wraps it on three sides, and the front halves of the
- *    front fin's source and drain are removed so the fin is exposed along its length. A back face
- *    seen through a cut is drawn as the section of its solid at the cut plane (depth written at
- *    the cut, nested solids resolved by priority), with thin interface lines like a polished
- *    cross-section;
- *  - rounded edges from the rounded-box distance field (normals only, silhouettes stay crisp), a
- *    slight edge wear, directional fine grain per material, analytic contact shadows;
- *  - the ON channel: a glowing layer at the fin surface under the gate.
- * Carriers are soft points along the front fin (umowna wizualizacja); where material hides them
- * they show as a faint ghost, so the path source -> channel -> drain stays readable.
- * The device sits on a wafer slab that falls off into the background; depth of field in one pass.
+ * Chapter 02: a FinFET generated in code (transistor-math.js holds the dimensions and the switch
+ * sequence). The channel is the hero, not the packaging:
+ *  - fins: solid crystalline silicon, tapered with rounded tops (extruded profile), a faint lattice
+ *    on their surface up close; the channel lights up on their top and both side walls under the
+ *    gate, igniting from the source side;
+ *  - source/drain: faceted (diamond-profile) epitaxy, translucent crystal so the flow inside shows;
+ *  - gate stack, spacers, cap, contacts: smoked glass (ghosts) with crisp lit edges and visible
+ *    thickness, so the gate wrapping the fins is seen through them; the gate contact carries the
+ *    switching pulse, the gate metal and its dielectric glow while the gate is on;
+ *  - carriers: many small bright particles with short trails following the fin surfaces
+ *    (umowna wizualizacja), stopping at the gate edge when off.
+ * Lit by the studio HDR, a cool key and a low warm light; depth of field from rendering/dof.js.
  */
 import {
-  AdditiveBlending, NormalBlending, BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, DoubleSide, Mesh, Matrix4, PointLight, MeshStandardMaterial, PerspectiveCamera, Points, Scene, ShaderMaterial, Vector2, Vector3,
+  AdditiveBlending, BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, DoubleSide, ExtrudeGeometry,
+  Mesh, MeshStandardMaterial, PerspectiveCamera, Points, Scene, ShaderMaterial, Shape, Vector2, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { components, transistorCamera, CUT_EPI, CUT_GATE, FRONT_FIN, GATE_CUT_K, DIM } from './transistor-math.js';
-import { scaleBar } from './lattice-math.js';
+import { components, finHalfWidth, switchState, transistorCamera, DIM, FIN_LENGTH } from './transistor-math.js';
+import { scaleBar, A } from './lattice-math.js';
 
 const AMBER = new Color('#e09a50');
 /** Depth of field: blur radius as a share of the frame height per unit of |z - focus| / z. */
-const APERTURE = .06;
-// Base PBR values; grain: scale of the fine directional variation (stretched along the axis a
-// real surface was polished or grown along).
-const MATERIALS = {
-  silicon: { color: '#8a939c', metalness: .65, roughness: .36, grain: [.03, .35, .35] },
-  oxide: { color: '#34414e', metalness: 0, roughness: .1, grain: [.12, .12, .12] },
-  dielectric: { color: '#dfe5ec', metalness: 0, roughness: .4, grain: [.25, .25, .25] },
-  gate: { color: '#a59d92', metalness: .9, roughness: .3, grain: [.35, .03, .35] },
-  nitride: { color: '#5d646b', metalness: 0, roughness: .62, grain: [.35, .03, .35] },
-  epi: { color: '#9aa3ac', metalness: .55, roughness: .34, grain: [.03, .35, .35] },
-  tungsten: { color: '#aeb4ba', metalness: .45, roughness: .5, grain: [.35, .35, .03] },
-  liner: { color: '#55585e', metalness: .9, roughness: .38, grain: [.25, .25, .25] },
-  tin: { color: '#b39869', metalness: .85, roughness: .38, grain: [.25, .25, .25] },
+const APERTURE = .05;
+const SOLIDS = {
+  silicon: { color: '#8a939c', metalness: .65, roughness: .36 },
+  oxide: { color: '#1b232c', metalness: 0, roughness: .18 },
 };
+// Ghost tint, base opacity, edge strength, glow when the gate is on.
+const GHOSTS = {
+  gate: { tint: '#5d5a56', alpha: .05, edge: .55, glow: .2 },
+  tin: { tint: '#a4834f', alpha: .06, edge: .6, glow: .6 },
+  dielectric: { tint: '#c9d3dc', alpha: .05, edge: .7, glow: 1 },
+  nitride: { tint: '#4a5157', alpha: .04, edge: .35, glow: 0 },
+  tungsten: { tint: '#8d949b', alpha: .06, edge: .65, glow: 0 },
+  liner: { tint: '#555a61', alpha: .03, edge: .4, glow: 0 },
+};
+const L = DIM.gateLength / 2, H = DIM.finHeight;
 
-const COMMON_FRAGMENT = /* glsl */`
-varying vec3 vWorld; varying vec3 vCenter; varying vec3 vHalf; varying float vRound; varying float vAngle; varying float vPrio; varying float vFin; varying float vCut;
-uniform float uPower, uGateHalf;
-uniform mat4 uViewProjection;
-uniform vec3 uAmber, uGrain;
-vec3 rotX(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x, c * v.y - s * v.z, s * v.y + c * v.z); }
-float hash3(vec3 p) { p = fract(p * .1031); p += dot(p, p.yzx + 33.33); return fract((p.x + p.y) * p.z); }
-float vnoise(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(hash3(i), hash3(i + vec3(1, 0, 0)), f.x), mix(hash3(i + vec3(0, 1, 0)), hash3(i + vec3(1, 1, 0)), f.x), f.y),
-             mix(mix(hash3(i + vec3(0, 0, 1)), hash3(i + vec3(1, 0, 1)), f.x), mix(hash3(i + vec3(0, 1, 1)), hash3(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
+// ---- shared shader pieces ----------------------------------------------------------------------
+const BOX_VERTEX_HEAD = 'attribute vec3 aCenter; attribute vec3 aHalf; attribute vec4 aShape;\nvarying vec3 vWorld; varying vec3 vCenter; varying vec3 vHalf; varying float vRound;';
+const BOX_VERTEX = 'vWorld = (modelMatrix * vec4(transformed, 1.0)).xyz; vCenter = aCenter; vHalf = aHalf; vRound = aShape.x;';
+const BOX_FRAGMENT = /* glsl */`
+varying vec3 vWorld; varying vec3 vCenter; varying vec3 vHalf; varying float vRound;
+// Rounded-box normal and the distance to the nearest edge (for lit edges and wear).
+vec3 boxNormal(out float edge) {
+  vec3 local = vWorld - vCenter;
+  vec3 q = max(abs(local) - (vHalf - vRound), 0.0);
+  vec3 n = sign(local) * q;
+  if (dot(n, n) < 1e-8) { vec3 a = abs(local) / vHalf; n = a.x > a.y && a.x > a.z ? vec3(sign(local.x), 0, 0) : a.y > a.z ? vec3(0, sign(local.y), 0) : vec3(0, 0, sign(local.z)); }
+  vec3 d = vHalf - abs(local);
+  edge = d.x + d.y + d.z - min(d.x, min(d.y, d.z)) - max(d.x, max(d.y, d.z));
+  return normalize(n);
+}
 `;
 
-// Runs first in main(): the cuts, the section faces, the normal and the depth.
-const CUT = /* glsl */`
-  // Varyings are interpolated: compare with a tolerance, never with ==.
-  bool gateCut = abs(vCut - ${CUT_GATE.toFixed(1)}) < .5, epiCut = abs(vCut - ${CUT_EPI.toFixed(1)}) < .5;
-  if ((gateCut && vWorld.x + vWorld.y < ${GATE_CUT_K.toFixed(1)}) || (epiCut && vWorld.y < ${FRONT_FIN.toFixed(1)})) discard;
-  bool cap = false;
-  vec3 hit = vWorld, nWorld;
-  float sd = 0.0;
-  if (!gl_FrontFacing) {
-    if (!gateCut && !epiCut) discard;
-    // Where the view ray leaves the removed region (the camera is inside it): the section face
-    // this pixel shows.
-    vec3 ray = normalize(vWorld - cameraPosition);
-    float rs = ray.x + ray.y;
-    float t = gateCut ? (rs > 0.0 ? (${GATE_CUT_K.toFixed(1)} - cameraPosition.x - cameraPosition.y) / rs : 1e9)
-                      : (ray.y > 0.0 ? (${FRONT_FIN.toFixed(1)} - cameraPosition.y) / ray.y : 1e9);
-    hit = cameraPosition + ray * t;
-    // Inside this solid at the cut? Rounded-box distance, so sections keep the rounded corners.
-    vec3 local = rotX(hit - vCenter, -vAngle);
-    vec3 qb = abs(local) - (vHalf - vRound);
-    sd = length(max(qb, 0.0)) + min(max(qb.x, max(qb.y, qb.z)), 0.0) - vRound;
-    if (t > 1e8 || sd > 1e-3) discard;
-    cap = true;
-    nWorld = gateCut ? vec3(-.70710678, -.70710678, 0.0) : vec3(0.0, -1.0, 0.0);
-    vec4 clip = uViewProjection * vec4(hit, 1.0);
-    gl_FragDepth = (clip.z / clip.w) * .5 + .5 - vPrio * 2e-6;
-  } else {
-    // Rounded-box normal: the box's flat faces bend over a radius vRound at the edges.
-    vec3 local = rotX(vWorld - vCenter, -vAngle);
-    vec3 q = max(abs(local) - (vHalf - vRound), 0.0);
-    vec3 n = sign(local) * q;
-    if (dot(n, n) < 1e-8) { vec3 a = abs(local) / vHalf; n = a.x > a.y && a.x > a.z ? vec3(sign(local.x), 0, 0) : a.y > a.z ? vec3(0, sign(local.y), 0) : vec3(0, 0, sign(local.z)); }
-    nWorld = rotX(normalize(n), vAngle);
-    // Edge wear: the second-nearest face distance is the distance to the nearest edge.
-    vec3 d = vHalf - abs(local);
-    float lo = min(d.x, min(d.y, d.z)), hi = max(d.x, max(d.y, d.z));
-    sd = -(d.x + d.y + d.z - lo - hi);
-    gl_FragDepth = gl_FragCoord.z;
-  }
-  // The ON channel: the surface layer of the fin under the gate (its front half is cut away to
-  // show it), glowing; plus the fin's section, if any, near its surface.
-  float channel = vFin > .5 ? uPower * (1.0 - smoothstep(uGateHalf - 1.0, uGateHalf + .5, abs(hit.x))) * step(0.0, hit.z) : 0.0;
-  // Analytic contact shadows: near the isolation floor and in the gaps between fins and gates.
-  float ao = 1.0;
-  if (hit.z > 0.0) ao *= 1.0 - .45 * exp(-hit.z / 7.0) * (1.0 - abs(nWorld.z));
-  if (nWorld.z > .5 && hit.z < 2.5) {
-    float df = min(min(abs(hit.y + ${DIM.finPitch.toFixed(1)}), abs(hit.y)), abs(hit.y - ${DIM.finPitch.toFixed(1)})) - ${(DIM.finWidth / 2 + 2).toFixed(1)};
-    float dg = min(min(abs(hit.x + ${DIM.gatePitch.toFixed(1)}), abs(hit.x)), abs(hit.x - ${DIM.gatePitch.toFixed(1)})) - uGateHalf - 8.0;
-    ao *= (1.0 - .5 * exp(-max(df, 0.0) / 6.0)) * (1.0 - .45 * exp(-max(dg, 0.0) / 8.0));
-  }
-  float grain = vnoise(hit * uGrain) - .5;
-  // Interfaces on a section face read as thin dark lines (only on parts thicker than a layer);
-  // a slight lighter wear on outside edges.
-  float line = cap ? (1.0 - smoothstep(.0, .7, -sd)) * step(2.5, min(vHalf.x, min(vHalf.y, vHalf.z))) : 0.0;
-  float wear = cap ? 0.0 : 1.0 - smoothstep(0.0, 1.4, -sd);
-  // Heavily doped source/drain in the silicon: a slightly darker tone (schematic profile).
-  float doped = vFin > .5 ? smoothstep(10.0, 22.0, abs(hit.x)) * smoothstep(-6.0, 14.0, hit.z) : 0.0;
-`;
-
-function patch(material, uniforms) {
-  material.onBeforeCompile = shader => {
-    Object.assign(shader.uniforms, uniforms);
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', `#include <common>
-attribute vec3 aCenter; attribute vec3 aHalf; attribute vec4 aShape; attribute float aCut;
-varying vec3 vWorld; varying vec3 vCenter; varying vec3 vHalf; varying float vRound; varying float vAngle; varying float vPrio; varying float vFin; varying float vCut;`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>
-vWorld = (modelMatrix * vec4(transformed, 1.0)).xyz; vCenter = aCenter; vHalf = aHalf;
-vRound = aShape.x; vAngle = aShape.y; vPrio = aShape.z; vFin = aShape.w; vCut = aCut;`);
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\n${COMMON_FRAGMENT}`)
-      .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>\n${CUT}`)
-      .replace('#include <color_fragment>', '#include <color_fragment>\nif (cap) diffuseColor.rgb *= .8 * (1.0 - .22 * doped) * (1.0 - .5 * line); diffuseColor.rgb *= (1.0 + grain * .06) * (1.0 + .14 * wear);')
-      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nroughnessFactor = clamp(roughnessFactor * (1.0 + grain * .25) + (cap ? .3 : 0.0), .04, 1.0);\nif (cap) metalnessFactor *= .25; // a section is read by its own colour, not by mirrored studio light')
-      .replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize((viewMatrix * vec4(nWorld, 0.0)).xyz);\nvec3 nonPerturbedNormal = normal;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAmber * channel * 2.0;')
-      .replace('#include <fog_fragment>', '// The wafer slab runs back and falls off into the background (a horizon, not a vignette).\ngl_FragColor *= 1.0 - smoothstep(160.0, 330.0, length(vWorld.xy - vec2(0.0, -20.0)));')
-      .replace('#include <aomap_fragment>', '#include <aomap_fragment>\nreflectedLight.indirectDiffuse *= ao; reflectedLight.indirectSpecular *= mix(1.0, ao, .8); reflectedLight.directDiffuse *= ao;');
+/** Solid boxes (substrate, oxide, fin roots): rounded normals, contact shadow near the oxide. */
+function solidMaterial(params) {
+  const m = new MeshStandardMaterial({ ...params });
+  m.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\n${BOX_VERTEX_HEAD}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\n${BOX_VERTEX}`);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\n${BOX_FRAGMENT}`)
+      .replace('#include <normal_fragment_begin>', `float edgeD; vec3 nW = boxNormal(edgeD);
+float faceDirection = 1.0; vec3 normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz); vec3 nonPerturbedNormal = normal;`)
+      .replace('#include <aomap_fragment>', `#include <aomap_fragment>
+// Contact shadows on the oxide next to the fins.
+float df = min(min(abs(vWorld.y + ${DIM.finPitch.toFixed(1)}), abs(vWorld.y)), abs(vWorld.y - ${DIM.finPitch.toFixed(1)})) - 5.0;
+float ao = vWorld.z > -.5 && nW.z > .5 ? 1.0 - .5 * exp(-max(df, 0.0) / 5.0) : 1.0;
+reflectedLight.indirectDiffuse *= ao; reflectedLight.directDiffuse *= ao;`);
   };
-  return material;
+  m.customProgramCacheKey = () => 'finfet-solid';
+  return m;
 }
 
-/** One merged geometry per material, with each box's frame as vertex attributes. */
-function buildGeometries() {
-  const groups = {};
-  for (const c of components()) {
-    const g = new BoxGeometry(c.half[0] * 2, c.half[1] * 2, c.half[2] * 2).toNonIndexed();
-    g.rotateX(c.angle);
+/**
+ * Smoked glass: a faint body, fresnel at grazing angles and bright lit edges (both the front and
+ * the back faces are drawn, so the thickness of each part shows). Glow: the gate's state.
+ */
+function ghostMaterial({ tint, alpha, edge, glow }, uniforms) {
+  const m = new MeshStandardMaterial({ color: tint, metalness: .3, roughness: .25, transparent: true, depthWrite: false, side: DoubleSide, envMapIntensity: .45 });
+  m.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, uniforms, { uAlpha: { value: alpha }, uEdge: { value: edge }, uGlowK: { value: glow } });
+    shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\n${BOX_VERTEX_HEAD}\nattribute float aContact; varying float vContact;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\n${BOX_VERTEX}\nvContact = aContact;`);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\n${BOX_FRAGMENT}
+uniform float uAlpha, uEdge, uGlowK, uGate, uPulse; uniform vec3 uAmber; varying float vContact;`)
+      .replace('#include <normal_fragment_begin>', `float edgeD; vec3 nW = boxNormal(edgeD);
+float faceDirection = gl_FrontFacing ? 1.0 : -1.0;
+vec3 normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz) * faceDirection; vec3 nonPerturbedNormal = normal;`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+float lineW = fwidth(edgeD) * 1.2 + .25;
+float edgeLine = 1.0 - smoothstep(0.0, lineW, edgeD);
+// The gate's state: a soft glow in the metal and its dielectric wrap; the pulse runs down the contact.
+float pulse = vContact > .5 && uPulse >= 0.0 ? exp(-pow((vWorld.z - mix(105.0, 85.0, uPulse)) / 2.5, 2.0)) : 0.0;
+totalEmissiveRadiance += uAmber * (uGlowK * uGate * (.35 + edgeLine) * .6 + pulse * 3.0);`)
+      .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+float fres = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 3.0);
+gl_FragColor.a = clamp(uAlpha + .2 * fres + uEdge * edgeLine + uGlowK * uGate * .12 + pulse, 0.0, 1.0);`);
+  };
+  m.customProgramCacheKey = () => 'finfet-ghost';
+  return m;
+}
+
+/** Boxes of one kind merged, with each box's frame as vertex attributes. */
+function mergedBoxes(list) {
+  return mergeGeometries(list.map(c => {
+    const g = new BoxGeometry(c.half[0] * 2, c.half[1] * 2, c.half[2] * 2, 1, 1, 1).toNonIndexed();
     g.translate(...c.center);
     const n = g.getAttribute('position').count;
     const fill = (size, values) => new BufferAttribute(Float32Array.from({ length: n * size }, (_, i) => values[i % size]), size);
     g.setAttribute('aCenter', fill(3, c.center));
     g.setAttribute('aHalf', fill(3, c.half));
-    g.setAttribute('aShape', fill(4, [Math.min(c.round, ...c.half), c.angle, c.priority, c.fin ? 1 : 0]));
-    g.setAttribute('aCut', fill(1, [c.cut]));
+    g.setAttribute('aShape', fill(4, [Math.min(c.round, ...c.half), 0, 0, 0]));
+    g.setAttribute('aContact', fill(1, [c.gateContact ? 1 : 0]));
     g.deleteAttribute('uv');
-    (groups[c.kind] ??= []).push(g);
+    return g;
+  }));
+}
+
+/** Extrude a (y, z) profile along x from x0 to x1. */
+function extrudeX(points, x0, x1, y0) {
+  const shape = new Shape(points.map(([y, z]) => new Vector2(y, z)));
+  const g = new ExtrudeGeometry(shape, { depth: x1 - x0, bevelEnabled: false, curveSegments: 6 });
+  // Shape (u, v) = (y, z), extruded along +w: map w -> x.
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    const u = pos.getX(i), v = pos.getY(i), w = pos.getZ(i);
+    pos.setXYZ(i, x0 + w, y0 + u, v);
   }
-  return Object.fromEntries(Object.entries(groups).map(([kind, list]) => [kind, mergeGeometries(list)]));
+  g.deleteAttribute('normal');
+  g.deleteAttribute('uv');
+  const flat = g.index ? g.toNonIndexed() : g;
+  flat.computeVertexNormals();
+  return flat;
+}
+
+/** Tapered fin profile with a rounded top (finHalfWidth), around y = 0. */
+function finProfile() {
+  const pts = [];
+  const top = H - 3;
+  for (let i = 0; i <= 6; i++) { const z = top * i / 6; pts.push([-finHalfWidth(z), z]); }
+  for (let i = 1; i < 12; i++) { const a = Math.PI - Math.PI * i / 12; const r = finHalfWidth(H); pts.push([Math.cos(a) * r, top + Math.sin(a) * 3]); }
+  for (let i = 6; i >= 0; i--) { const z = top * i / 6; pts.push([finHalfWidth(z), z]); }
+  return pts;
+}
+
+/** Diamond-profile epitaxy around a fin (110 facets), flat bottom on the fin's shoulders. */
+function epiProfile() {
+  return [[-6, 24], [-12, 33], [-12, 39], [-6, 47], [0, 50], [6, 47], [12, 39], [12, 33], [6, 24]];
+}
+
+/** Fin material: crystalline silicon, the channel on its surface under the gate, a faint lattice. */
+function finMaterial(uniforms) {
+  const m = new MeshStandardMaterial({ color: '#68727c', metalness: .5, roughness: .3, envMapIntensity: .5 });
+  m.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWorldF;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorldF = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vWorldF; uniform vec2 uChannel; uniform vec3 uAmber; uniform float uStream;`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+// Lattice planes of silicon (a = ${A.toFixed(4)} nm) as a faint relief, only where they resolve.
+float la = ${A.toFixed(4)};
+vec2 lp = vec2(vWorldF.x, vWorldF.z) / la;
+float lat = (.5 + .5 * cos(6.2831 * lp.x)) * (.5 + .5 * cos(6.2831 * lp.y));
+float resolve = 1.0 - smoothstep(.12, .3, fwidth(lp.x));
+diffuseColor.rgb *= 1.0 - .28 * lat * resolve;
+// Doped source/drain regions read slightly darker than the channel.
+diffuseColor.rgb *= 1.0 - .18 * smoothstep(${(L + 2).toFixed(1)}, ${(L + 10).toFixed(1)}, abs(vWorldF.x));`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+// The channel: a sheet at the fin surface under the gate between uChannel.x and uChannel.y.
+float cx = vWorldF.x / ${DIM.gateLength.toFixed(1)};
+float sheet = smoothstep(uChannel.x - .02, uChannel.x + .02, cx) * (1.0 - smoothstep(uChannel.y - .06, uChannel.y + .02, cx));
+sheet *= step(.5, vWorldF.z) * step(uChannel.x + .001, uChannel.y);
+// The channel front glows brighter while it travels.
+float front = exp(-pow((cx - uChannel.y) / .08, 2.0)) * step(uChannel.y, .49) * step(uChannel.x + .001, uChannel.y);
+// Carriers entering/leaving: a faint warm wash along the fin outside the gate while it conducts.
+float wash = uStream * .12 * (1.0 - smoothstep(${L.toFixed(1)}, 55.0, abs(vWorldF.x))) * step(${L.toFixed(1)}, abs(vWorldF.x));
+totalEmissiveRadiance += uAmber * (sheet * 1.6 + front * 1.4 + wash);`);
+  };
+  m.customProgramCacheKey = () => 'finfet-fin';
+  return m;
 }
 
 /**
- * Carriers along the front fin's exposed face. OFF: piled up in the source against the gate.
- * ON: the whole path source -> channel -> drain. ghost: the copy drawn without depth test, faint,
- * so carriers inside the gate and under the drain contact stay visible.
+ * Carriers: particles on the fin surfaces (both side walls and the top) of the three fins. ON they
+ * stream from source to drain through the channel; OFF they dam up at the gate edge, a few
+ * hovering. Trails: the same particles drawn at earlier times with less alpha.
  */
-function buildCarriers(ghost, count = 46) {
+function buildCarriers(lag, count) {
   const g = new BufferGeometry();
   const rand = i => ((Math.sin(i * 12.9898 + 4.1) * 43758.5453) % 1 + 1) % 1;
   g.setAttribute('position', new BufferAttribute(new Float32Array(count * 3), 3));
-  g.setAttribute('aSeed', new BufferAttribute(Float32Array.from({ length: count * 2 }, (_, i) => rand(i)), 2));
+  g.setAttribute('aSeed', new BufferAttribute(Float32Array.from({ length: count * 4 }, (_, i) => rand(i + 7)), 4));
   const points = new Points(g, new ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 1 } },
-    defines: { GHOST: ghost ? 1 : 0, FIN_FACE: (FRONT_FIN - DIM.finWidth / 2 - .9).toFixed(1) },
-    transparent: ghost, depthWrite: !ghost, depthTest: !ghost, blending: ghost ? AdditiveBlending : NormalBlending,
+    uniforms: { uTime: { value: 0 }, uStream: { value: 0 }, uScale: { value: 1 }, uLag: { value: lag }, uFade: { value: 1 } },
+    transparent: true, depthWrite: false, blending: AdditiveBlending,
     vertexShader: /* glsl */`
-      attribute vec2 aSeed; uniform float uTime, uPower, uScale; varying float vAlpha;
+      attribute vec4 aSeed; uniform float uTime, uStream, uScale, uLag; varying float vAlpha;
+      float halfWidth(float z) { return 5.0 - 2.0 * clamp(z / ${H.toFixed(1)}, 0.0, 1.0); }
       void main() {
-        float lane = aSeed.y;
-        // OFF: piled up in the source just before the gate's spacer, densest at the barrier.
-        float pile = 1.0 - pow(aSeed.x, 1.8);
-        vec3 off = vec3(-52.0 + pile * 31.0, FIN_FACE, 6.0 + lane * 34.0);
-        off += vec3(sin(uTime * 1.7 + aSeed.x * 40.0) * .8, 0.0, cos(uTime * 1.3 + lane * 30.0) * .8);
-        // ON: from the source through the channel into the drain, and on.
-        float s = fract(aSeed.x + uTime * .22);
-        vec3 on = vec3(-52.0 + s * 104.0, FIN_FACE, 6.0 + lane * 34.0);
-        vec3 p = mix(off, on, uPower);
-        vAlpha = smoothstep(0.0, 5.0, p.x + 54.0) * (1.0 - smoothstep(-5.0, 0.0, p.x - 54.0)) * (GHOST == 1 ? .28 : 1.0);
+        float fin = floor(aSeed.x * 2.999) - 1.0;
+        float q = aSeed.y; // around the fin: left wall, top, right wall
+        float t = uTime - uLag;
+        float speed = .2 + .08 * aSeed.w;
+        float xon = -60.0 + fract(aSeed.z + t * speed) * 120.0;
+        // OFF: piled up before the gate (spacer edge), denser near it, jittering; a few hover.
+        float pile = pow(aSeed.z, .6);
+        float xoff = -${(L + 8.5).toFixed(1)} - pile * pile * 22.0 + sin(t * 2.3 + aSeed.w * 40.0) * .6;
+        float x = mix(xoff, xon, uStream);
+        float z, y, off = .7;
+        if (q < .4) { z = 2.0 + q / .4 * ${(H - 5).toFixed(1)}; y = -halfWidth(z) - off; }
+        else if (q < .6) { float a = (q - .4) / .2; z = ${(H + .7).toFixed(1)} - 1.6 * pow(2.0 * a - 1.0, 2.0); y = mix(-halfWidth(${H.toFixed(1)}), halfWidth(${H.toFixed(1)}), a); }
+        else { z = 2.0 + (1.0 - q) / .4 * ${(H - 5).toFixed(1)}; y = halfWidth(z) + off; }
+        vec3 p = vec3(x, fin * ${DIM.finPitch.toFixed(1)} + y, z);
+        vAlpha = smoothstep(-60.0, -54.0, x) * (1.0 - smoothstep(54.0, 60.0, x)) * exp(-uLag * 9.0);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = 3.6 * uScale / -mv.z;
+        gl_PointSize = max(1.5, 1.1 * uScale / -mv.z);
       }`,
     fragmentShader: /* glsl */`
-      varying float vAlpha;
-      void main() {
-        float r = length(gl_PointCoord - .5) * 2.0;
-        #if GHOST == 1
-          float a = (1.0 - smoothstep(.2, 1.0, r)) * vAlpha;
-          gl_FragColor = vec4(vec3(.78, .9, 1.0) * a, a);
-        #else
-          // A solid bead (it writes depth, so the depth of field treats it like an object).
-          if (r > 1.0 || vAlpha < .02) discard;
-          gl_FragColor = vec4(vec3(.62, .82, 1.0) * (2.2 - 1.2 * r * r) * vAlpha, 1.0);
-        #endif
-      }`,
+      varying float vAlpha; uniform float uFade;
+      void main() { float r = length(gl_PointCoord - .5) * 2.0; float a = (1.0 - smoothstep(.1, 1.0, r)) * vAlpha * uFade;
+        gl_FragColor = vec4(vec3(.75, .9, 1.0) * a * 1.6, a); }`,
   }));
   points.frustumCulled = false;
-  points.renderOrder = ghost ? 30 : 29;
+  points.renderOrder = 30;
   return points;
 }
 
-export async function createTransistor({ renderer, environment, dof }) {
+export async function createTransistor({ renderer, environment, dof, trails = 4 }) {
   const scene = new Scene();
   scene.environment = environment;
   scene.environmentIntensity = 1.4;
-  // The studio HDR is Y-up, this scene is Z-up (z = height above the isolation): turn the studio
-  // so its softboxes hang above the specimen.
+  // The studio HDR is Y-up, this scene is Z-up: turn the studio so its softboxes hang above.
   scene.environmentRotation.set(Math.PI / 2, 0, -.6);
-  const uniforms = { uViewProjection: { value: new Matrix4() }, uPower: { value: 0 }, uGateHalf: { value: DIM.gateLength / 2 }, uAmber: { value: AMBER } };
-  const geometries = buildGeometries();
-  const materials = [];
-  for (const [kind, geometry] of Object.entries(geometries)) {
-    const { grain, ...pbr } = MATERIALS[kind];
-    const material = patch(new MeshStandardMaterial({ ...pbr, side: DoubleSide }), { ...uniforms, uGrain: { value: new Vector3(...grain) } });
-    material.customProgramCacheKey = () => 'finfet';
-    materials.push(material);
+  const uniforms = { uGate: { value: 0 }, uPulse: { value: -1 }, uChannel: { value: new Vector2(-.5, -.5) }, uStream: { value: 0 }, uAmber: { value: AMBER } };
+  const parts = components();
+  const disposables = [];
+  const add = (geometry, material, order = 0) => {
     const mesh = new Mesh(geometry, material);
-    mesh.frustumCulled = false;
-    scene.add(mesh);
-  }
-  // A cool key from above the source side gives the faces their contrast; one low warm light
-  // from the drain side is the sparse amber accent on edges.
-  const key = new DirectionalLight('#e6eef8', .75);
+    mesh.frustumCulled = false; mesh.renderOrder = order;
+    scene.add(mesh); disposables.push(geometry, material);
+  };
+  for (const kind of Object.keys(SOLIDS)) add(mergedBoxes(parts.filter(c => c.kind === kind && !c.shape)), solidMaterial(SOLIDS[kind]));
+  // Fins and epitaxy (their own geometry).
+  const fins = parts.filter(c => c.shape === 'fin'), epis = parts.filter(c => c.shape === 'epi');
+  add(mergeGeometries(fins.map(f => extrudeX(finProfile(), -FIN_LENGTH / 2, FIN_LENGTH / 2, f.center[1]))), finMaterial(uniforms));
+  const epiMat = new MeshStandardMaterial({ color: '#8d98a3', metalness: .5, roughness: .22, transparent: true, opacity: .5, depthWrite: false, flatShading: true, envMapIntensity: .7 });
+  add(mergeGeometries(epis.map(e => extrudeX(epiProfile(), e.center[0] - e.half[0], e.center[0] + e.half[0], e.center[1]))), epiMat, 5);
+  // Ghosts, inner first so the outer glass composites over them.
+  ['dielectric', 'tin', 'gate', 'nitride', 'liner', 'tungsten'].forEach((kind, i) =>
+    add(mergedBoxes(parts.filter(c => c.kind === kind)), ghostMaterial(GHOSTS[kind], uniforms), 10 + i));
+
+  const key = new DirectionalLight('#e6eef8', .9);
   key.position.set(-160, -60, 300);
-  const warm = new DirectionalLight('#ffb070', .45);
+  const warm = new DirectionalLight('#ffb070', .5);
   warm.position.set(300, 120, 40);
-  // ON: the channel's glow spills onto the gate stack around it (a small warm point light).
-  const glow = new PointLight('#ffa860', 0, 34, 2);
-  glow.position.set(-5, FRONT_FIN - 10, 30);
-  scene.add(key, warm, glow);
-  const carriers = [buildCarriers(false), buildCarriers(true)];
-  scene.add(...carriers);
+  scene.add(key, warm);
+  let carriers = [];
+  const setTrails = n => {
+    for (const c of carriers) { scene.remove(c); c.geometry.dispose(); c.material.dispose(); }
+    carriers = Array.from({ length: 1 + n }, (_, k) => buildCarriers(k * .07, 700));
+    scene.add(...carriers);
+  };
+  setTrails(trails);
 
   const camera = new PerspectiveCamera(30, 1, 5, 4000);
   camera.up.set(0, 0, 1);
@@ -240,38 +274,37 @@ export async function createTransistor({ renderer, environment, dof }) {
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
+    /** Fewer trail copies on a weaker profile (fill rate). */
+    setTrails(n) { if (n !== carriers.length - 1) setTrails(n); },
     /**
-     * state: { progress, time (ambient s), power (0..1), fade (0..1, 1 = fully visible: drawn
-     * with that opacity over what the canvas holds) }.
-     * Returns the scale bar for the focal plane (the camera target), or null when faded out.
+     * state: { progress, time (ambient s), power: { on, s } (target state and the progress of its
+     * switching sequence), fade (opacity over what the canvas holds) }.
      */
     render({ progress, time, power, fade = 1 }) {
       const cam = transistorCamera(progress, framing, time * 2 * Math.PI / 80);
       const focus = Math.hypot(...cam.position.map((v, i) => v - cam.target[i]));
       camera.fov = cam.fov; camera.aspect = size[0] / size[1];
-      camera.near = focus * .4; camera.far = focus * 2;
+      camera.near = focus * .3; camera.far = focus * 3;
       camera.updateProjectionMatrix();
       camera.projectionMatrix.elements[8] = -cam.shift[0];
       camera.projectionMatrix.elements[9] = -cam.shift[1];
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       camera.position.set(...cam.position);
       camera.lookAt(...cam.target);
-      camera.updateMatrixWorld();
-      uniforms.uViewProjection.value.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-      uniforms.uPower.value = power;
-      glow.intensity = 900 * power;
+      const st = switchState(power.on, power.s);
+      uniforms.uGate.value = st.gate; uniforms.uPulse.value = st.pulse;
+      uniforms.uChannel.value.set(...st.channel); uniforms.uStream.value = st.stream;
       const height = renderer.getDrawingBufferSize(new Vector2()).y;
       for (const c of carriers) {
         const cu = c.material.uniforms;
-        cu.uTime.value = time; cu.uPower.value = power; cu.uScale.value = height / 2 / Math.tan(cam.fov * Math.PI / 360);
+        cu.uTime.value = time; cu.uStream.value = st.stream; cu.uScale.value = height / 2 / Math.tan(cam.fov * Math.PI / 360);
       }
-      renderer.toneMappingExposure = .85;
+      renderer.toneMappingExposure = .9;
       dof.render(scene, camera, { focus, aperture: APERTURE, opacity: fade });
       return fade > .6 ? { ...scaleBar(size[1], cam.fov, focus, 90), scene: 'transistor' } : null;
     },
     dispose() {
-      for (const g of Object.values(geometries)) g.dispose();
-      for (const m of materials) m.dispose();
+      for (const d of disposables) d.dispose();
       for (const c of carriers) { c.geometry.dispose(); c.material.dispose(); }
     },
   };

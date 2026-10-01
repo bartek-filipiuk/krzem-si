@@ -48,6 +48,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
     transistor.resize(width, height, current.framing);
+    transistor.setTrails(p.antialias ? 4 : 2);
     scaleScene.resize(width, height, current.framing);
     scaleScene.setShadows(p.antialias);
     dof.configure(dofSettings(p));

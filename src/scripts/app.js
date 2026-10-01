@@ -6,7 +6,7 @@
 import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
-import { ANCHORS, MOBILE_LABELS, POSTER, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
+import { ANCHORS, MOBILE_LABELS, POSTER, SWITCH_MS, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
 const canvas = document.querySelector('#scene-canvas');
@@ -50,7 +50,10 @@ try {
 let layer = null, profile = 'calm', reason = '', framing = framingFor(innerWidth);
 let raf = 0, dirty = true, destroyed = false, generation = 0, abort = null;
 let story = null, previousIndex = -1, lastFrame = 0, liveAt = 0, ambient = qa.phase;
-let pointer = [0, 0], parallax = [0, 0], manualPower = qa.power, lastPower = null, manualAI = null, powerLevel = 0;
+let pointer = [0, 0], parallax = [0, 0], manualPower = qa.power, lastPower = null, manualAI = null;
+// The switch sequence (towards seqOn), at progress seqFrom when it (re)started at switchAt, running
+// forwards (dir 1) or, when interrupted, backwards to where it began (dir -1): no jumps.
+let switchAt = -Infinity, switchFrom = 1, seqOn = false, seqDir = 1;
 const intervals = [], logged = new Set();
 
 function warnOnce(kind, error) {
@@ -63,12 +66,25 @@ function motionFull() { return root.dataset.motion === 'full'; }
 
 function measure() {
   reader.measure();
+  copyCache = null;
   layer?.resize(innerWidth, innerHeight, { framing });
   dirty = true; schedule();
 }
 
+function switchProgress(now) { return clamp(switchFrom + seqDir * (now - switchAt) / SWITCH_MS); }
+/** What the scene shows: { on, s } of the running sequence; a frozen QA frame shows the settled state. */
+function switchView(now) { return qa.freeze ? { on: !!lastPower, s: 1 } : { on: seqOn, s: switchProgress(now) }; }
 function setPower(power) {
   if (lastPower === power) return;
+  const now = performance.now();
+  if (lastPower === null) { seqOn = power; switchFrom = 1; seqDir = 1; }
+  else {
+    const s = switchProgress(now);
+    const settled = seqDir > 0 ? s >= 1 : s <= 0;
+    if (settled) { seqOn = power; switchFrom = 0; seqDir = 1; }
+    else { switchFrom = s; seqDir = power === seqOn ? 1 : -1; }
+    switchAt = now;
+  }
   lastPower = power;
   powerButton.setAttribute('aria-pressed', String(power)); root.dataset.power = power ? 'on' : 'off';
   document.querySelector('#switch-label').textContent = power ? 'Wyłącz przewodzenie' : 'Włącz przewodzenie';
@@ -82,7 +98,7 @@ function update() {
   const { index, progress } = story;
   if (index !== previousIndex) {
     links.forEach((a, i) => { if (i === index) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
-    root.dataset.chapter = String(index); previousIndex = index;
+    root.dataset.chapter = String(index); previousIndex = index; copyCache = null;
     controller.hold(performance.now(), 500); // first frames of a chapter upload its meshes
   }
   progressBar.style.transform = `scaleX(${story.reading})`;
@@ -118,10 +134,8 @@ function tick(now) {
   }
   let cpu = 0;
   try {
-    // The switch eases over ~0.4 s (real time); a frozen QA frame shows the end state at once.
-    const target = lastPower ? 1 : 0;
-    powerLevel = qa.freeze || !dt ? target : powerLevel + (target - powerLevel) * (1 - Math.exp(-Math.min(dt, 64) / 130));
-    cpu = layer.frame({ ...story, time: ambient, parallax, power: powerLevel });
+    // The switch plays its sequence in real time; a frozen QA frame shows the settled state.
+    cpu = layer.frame({ ...story, time: ambient, parallax, power: switchView(now) });
   } catch (error) { fail('Render error', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE'); return; }
   showScale(layer.scale);
   placeLabels();
@@ -152,17 +166,41 @@ function placeLabels() {
   const anchors = {};
   for (const [key, point] of Object.entries(ANCHORS)) {
     if (framing === 'mobile' && !MOBILE_LABELS.includes(key)) continue;
-    const [fx, fy] = project(point, cam, W / H) ?? [-1, -1];
+    // A part out of the frame (the camera moves in close mid-chapter) loses its label.
+    const fp = project(point, cam, W / H);
+    if (!fp || fp[0] < .03 || fp[0] > .97 || fp[1] < .1 || fp[1] > .9) continue;
+    const [fx, fy] = fp;
     anchors[key] = [(fx * W + (box[0] - W) / 2) / box[0] * 100, (fy * H + (box[1] - H) / 2) / box[1] * 100];
   }
   const layout = labelLayout(anchors, box, framing);
   for (const li of labelItems) {
     const l = layout[li.dataset.part];
+    li.hidden = !l;
     if (!l) continue;
     li.style.setProperty('--px', l.x.toFixed(2)); li.style.setProperty('--py', l.y.toFixed(2));
     li.style.setProperty('--pax', l.ax.toFixed(2)); li.style.setProperty('--pay', l.ay.toFixed(2));
     li.dataset.side = l.side; li.dataset.sideMobile = l.side;
   }
+  // A label that would land on the chapter copy (the camera's close view) is hidden instead.
+  const copy = copyRects();
+  for (const li of labelItems) {
+    if (li.hidden) continue;
+    const r = li.querySelector('span').getBoundingClientRect();
+    li.hidden = copy.some(c => r.left < c.right + 8 && c.left < r.right + 8 && r.top < c.bottom + 4 && c.top < r.bottom + 4)
+      || r.left < 4 || r.right > W - 4;
+  }
+}
+
+/** Ink boxes of chapter 02's copy (text ranges, the button as a box), cached until the next measure. */
+let copyCache = null;
+function copyRects() {
+  if (copyCache) return copyCache;
+  const range = document.createRange();
+  copyCache = [...document.querySelectorAll('#tranzystor .chapter-copy > *, #tranzystor .lattice-legend > *')].map(e => {
+    if (e.tagName === 'BUTTON') return e.getBoundingClientRect();
+    range.selectNodeContents(e); return range.getBoundingClientRect();
+  }).filter(r => r.width > 0);
+  return copyCache;
 }
 
 /** Scale bar under the lattice: only drawn from a live camera, so it never shows a stale value. */
@@ -271,7 +309,7 @@ window.addEventListener('pagehide', event => { if (raf) cancelAnimationFrame(raf
 window.addEventListener('pageshow', () => { if (!destroyed) { lastFrame = 0; controller.hold(performance.now(), 1000); measure(); } });
 
 if (debug) Object.defineProperty(window, 'krzemDebug', { get: () => ({
-  ...story, profile, reason, framing, mode: root.dataset.motion, rafActive: !!raf, live: !!liveAt, ambient, parallax,
+  ...story, profile, reason, framing, switch: switchView(performance.now()), mode: root.dataset.motion, rafActive: !!raf, live: !!liveAt, ambient, parallax,
   window: controller.last, intervals: intervals.map(([dt]) => dt), cpu: intervals.map(([, c]) => c),
   gpuMs: layer?.gpuTimes ? [...layer.gpuTimes] : null,
   reset() { intervals.length = 0; if (layer?.gpuTimes) layer.gpuTimes.length = 0; }, gpu: layer?.diagnostics ?? null,

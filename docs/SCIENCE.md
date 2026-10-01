@@ -41,10 +41,12 @@ W skali modelu (nm, test w `tests/core.test.mjs`): szerokość żebra 8, wysoko�
 NIEZWERYFIKOWANE: długość bramki 20 nm (podana w streszczeniu artykułu IEDM 2014, Natarajan i in., „A 14nm logic technology featuring 2nd-generation FinFET…”, którego tekstu nie udało się otworzyć). Założone, bez źródła: grubość dielektryka bramki (2 nm) i warstwy TiN (1,5 nm), szerokość dystansów (8 nm), wysokość bramki i jej nasadki, kształt i wymiary epitaksjalnych obszarów źródła i drenu, wymiary kontaktów, głębokość izolacji (40 nm), położenie obszarów źródła i drenu (35 nm od środka bramki).
 
 Uproszczenia:
-- Wszystkie części to prostopadłościany (obszary źródła i drenu obrócone o 45°, by przypominały fasetowaną epitaksję). Prawdziwe żebra są lekko zwężone ku dołowi i zaokrąglone u góry; przekrój pokazuje tylko zaokrąglone krawędzie.
+- Żebra są narysowane jako zwężające się ku górze (10 nm u podstawy, 8 nm w połowie wysokości, 6 nm pod zaokrąglonym wierzchołkiem); dokładny profil jest założony. Źródło i dren mają fasetowany profil („diament”) epitaksji, bramka, dystanse, nasadka i kontakty są prostopadłościanami z zaokrąglonymi krawędziami.
+- Bramka, jej warstwy, dystanse, nasadka i kontakty są pokazane jak przydymione szkło, a epitaksja jako półprzezroczysty kryształ, żeby było widać żebra i kanał. W rzeczywistości są nieprzezroczyste. Na powierzchni żebra w zbliżeniu widać umowny wzór płaszczyzn sieci krzemu (okres a = 0,543 nm).
 - Pominięto dielektryk wokół bramki i kontaktów, sąsiednie bramki oraz poziomy metalu, żeby było widać elementy. Kolory materiałów są umowne (TiN zbliżony do prawdziwej barwy, reszta rozróżniona dla czytelności). Cięcie przez bramkę jest ukośne (45°) dla czytelności kadru.
 - Kanał (włączony) to świecąca cienka warstwa przy powierzchni żebra pod bramką, po trzech stronach żebra; jasność i kolor są umowne. Ciemniejszy odcień krzemu pod źródłem i drenem oznacza silne domieszkowanie schematycznie, bez prawdziwego profilu.
-- Kulki płynące od źródła do drenu to umowna wizualizacja przepływu nośników, nie ich liczba, wielkość, prędkość ani tor. W stanie wyłączonym gromadzą się przed bramką; prądy upływu pominięto.
+- Jasne punkty ze smugami płynące po ścianach i wierzchu żeber od źródła do drenu to umowna wizualizacja przepływu nośników, nie ich liczba, wielkość, prędkość ani tor. W stanie wyłączonym gromadzą się przed bramką; prądy upływu pominięto.
+- Sekwencja przełączenia (impuls w kontakcie bramki, rozjaśnienie bramki, kanał zapalający się od źródła do drenu; przy wyłączeniu zanik od strony drenu) jest umowną choreografią, nie przebiegiem czasowym tranzystora (prawdziwe przełączenie trwa pikosekundy).
 - Głębia ostrości, wygaszanie krawędzi próbki i światła są środkami obrazu.
 
 ## Połączenia nad tranzystorami w rozdziale 03 (`src/scripts/scenes/scale-math.js`)
