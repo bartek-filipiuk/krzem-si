@@ -2,6 +2,11 @@
 
 - Stage A (hero + entry into the material): `docs/qa/PREMIUM_REPORT.md` (Polish), measurements in
   `docs/PERFORMANCE.md`, captures and recordings in `docs/qa/after/`, browser test report
-  `docs/qa/browser-report.json` (129 checks, Chromium on the RTX 3070).
+  `docs/qa/browser-report.json` (129 checks at stage A, Chromium on the RTX 3070).
 - v0.1 baseline: `docs/qa/before/` and `docs/qa/AUDIT.md`.
 - Chunk asset QA (Blender vs Three.js): `docs/qa/assets/NOTES.md`.
+- Chapter 01 silicon lattice (2026-10-01): board `docs/qa/after/lattice-board.webp` (hero 0.76-0.94
+  handover + chapter 01 at 0-100 %, cinematic/balanced on the RTX 3070, balanced on the AMD iGPU,
+  calm posters), frames `docs/qa/after/lattice-*.webp`, recording
+  `docs/qa/after/lattice-scroll-desktop.webm` (hero -> end of chapter 01 -> back -> forward),
+  GPU times in `docs/PERFORMANCE.md` ("Chapter 01"). Browser report updated (137 checks).

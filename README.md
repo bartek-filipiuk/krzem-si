@@ -4,9 +4,11 @@ Interaktywna opowieść o krzemie: siedem rozdziałów, natywny scroll, semantyc
 tekstowa działa bez JavaScriptu i bez GPU. Nad nią, ładowana na żądanie, jest warstwa 3D na
 Three.js (WebGL 2) z bryłką krzemu z pipeline'u Blendera.
 
-**Status: etap A3 wersji premium.** Hero i wejście w materię są zrobione na nowym rendererze.
-Rozdziały 01–06 nadal używają proceduralnych scen v0.1 (etapy B i C je zastąpią). Projekt nie
-jest opublikowany na domenie.
+**Status: etap A3 wersji premium + sieć krzemu w rozdziale 01.** Hero i wejście w materię są
+zrobione na nowym rendererze; ściana bryłki przechodzi bez cięcia w sieć krystaliczną krzemu
+generowaną w kodzie (`src/scripts/scenes/lattice*.js`), a rozdział 01 pokazuje porządkowanie
+polikryształu w monokryształ. Rozdziały 02–06 nadal używają proceduralnych scen v0.1 (etapy B i C
+je zastąpią). Projekt nie jest opublikowany na domenie.
 
 ## Uruchomienie
 
@@ -36,10 +38,13 @@ testu natywnego scrollowania.
 - `scene`: id rozdziału (`poczatek`, `materia`, `tranzystor`, `skala`, `swiat`, `inteligencja`,
   `fundament`). Strona przewija się do tego miejsca po załadowaniu.
 - `progress`: dla `poczatek` postęp hero od góry hero (0) do przypięcia rozdziału materii (1),
-  czyli razem z przejściem do materii. Dla pozostałych rozdziałów postęp przypiętej sceny.
+  czyli razem z przejściem do materii (0,79–0,98: sieć wyłania się z gasnącej ściany). Dla
+  pozostałych rozdziałów postęp przypiętej sceny; `materia` 0 = ziarna polikryształu, 1 = kadr
+  końcowy monokryształu wzdłuż [110] (ten sam co poster).
 - `quality`: `cinematic`, `balanced` albo `calm`. Wymusza profil i wyłącza automatyczną degradację.
 - `freeze=1`: zatrzymuje zegar ambientu i paralaksę; klatka jest rysowana tylko po scrollu/resize.
-- `seed`: faza obrotu bryłki (0 = poza z posteru). Każda liczba daje zawsze tę samą fazę.
+- `seed`: faza zegara ambientu: obrót bryłki i dryf kamery w sieci (0 = poza z posteru). Każda
+  liczba daje zawsze tę samą fazę. Układ ziaren sieci ma stały seed (14), więc poster zawsze pasuje.
 - `debug`: udostępnia `window.krzemDebug` (stan, profil, odstępy klatek `intervals`, czas GPU na
   klatkę `gpuMs` z `EXT_disjoint_timer_query_webgl2`, gdy przeglądarka go ma, diagnostyka GPU).
   Włącza się też samo przy `scene` lub `quality`.
@@ -76,6 +81,9 @@ python tests/screens.py                # screeny hero 0/25/50/75/100 %, plansza,
                                        # czasy klatek, transfer, nagrania -> docs/qa/after/
 python tests/screens.py --gpu amd shots perf   # zintegrowane GPU AMD (balanced); uruchom przed
                                                # przebiegiem NVIDIA, wtedy plansza ma też wiersz AMD
+python tests/screens.py lattice lattice-perf lattice-record   # przejście hero -> sieć i rozdział 01:
+                                       # lattice-board.webp, czasy GPU, lattice-scroll-desktop.webm
+python tests/screens.py posters        # postery rozdziału 01 z działającej sceny -> src/assets/posters/
 ```
 
 Na laptopie referencyjnym headless Chromium renderuje na RTX 3070 tylko z
@@ -123,7 +131,8 @@ wykonuje tylko `npm ci` i `npm run verify`.
   `camera-rig.js` (czysta funkcja pozy kamery).
 - `src/scripts/rendering/`: `renderer.js` (warstwa GPU, ładowana leniwie), `assets.js`
   (współdzielone, anulowalne ładowanie i zwalnianie), `quality.js` (profile i kontroler).
-- `src/scripts/scenes/`: `hero.js` (bryłka), `legacy*.js` (sceny v0.1 rozdziałów 01–06).
+- `src/scripts/scenes/`: `hero.js` (bryłka), `lattice.js` + `lattice-math.js` (sieć krzemu, rozdział 01;
+  matematyka sieci testowana w Node), `legacy*.js` (sceny v0.1 rozdziałów 02–06).
 - `src/assets/`: modele, HDR, JSON kamery i postery z etapu A2 (`docs/ASSET_MANIFEST.md`).
 - `tools/`: pipeline Blendera (niepotrzebny do builda). `scripts/art/`: odtwarzanie posterów v0.1.
 - `tests/`: testy Node, smoke w Playwright, screeny i nagrania.

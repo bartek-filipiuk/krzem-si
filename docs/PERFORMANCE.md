@@ -97,3 +97,45 @@ hidden. Mean per-pixel difference over the chunk and mean luminance (0-255):
 
 The remaining per-pixel difference is structure (interreflection in Cycles, finer highlights,
 streak artefacts), not exposure. The 300 ms cross-fade hides it.
+
+## Chapter 01: silicon lattice (2026-10-01)
+
+Same machine, headless Chromium, `vite preview` of the built `dist/`. Raw data: `lattice_perf`
+in `docs/qa/after/capture-nvidia.json` and `capture-amd.json`; the AMD cinematic rows are an
+ad hoc run of the same function (`lattice_perf_cinematic_adhoc` in `capture-amd.json`).
+
+Scenario (`lattice-perf` step): profile forced, scroll to the end of chapter 01, 4 s idle on the
+final monocrystal frame (ambient drift), then hero top → end of chapter 01 over 9 s, back to the
+middle over 2.5 s, forward again over 2.5 s. Intervals and GPU time in ms, median / p95 (/ max).
+
+| GPU | profile / framing | buffer | atoms / bonds | idle interval | scroll interval | >50 | GPU idle | GPU scroll |
+|---|---|---|---|---|---|---|---|---|
+| RTX 3070 | cinematic / desktop | 1440×1000 | 13397 / 25107 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 2.06 / 3.82 | 3.06 / 6.09 / 9.3 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 10577 / 19869 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 2.07 / 2.62 | 2.17 / 3.78 / 11.6 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 9895 / 18423 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.78 / 1.81 | 1.76 / 3.42 / 4.4 |
+| RTX 3070 | balanced / mobile | 390×844 | 7943 / 14826 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 0.8 / 0.84 | 0.71 / 1.19 / 1.9 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 9895 / 18423 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 4.85 / 13.11 | 5.17 / 12.19 / 20.0 |
+| AMD iGPU | balanced / mobile | 390×844 | 7943 / 14826 | 16.7 / 16.7 | 16.7 / 16.8 / 16.8 | 0 | 1.67 / 1.99 | 1.5 / 2.83 / 3.2 |
+| AMD iGPU | cinematic / desktop | 1440×1000 | 13397 / 25107 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 6.72 / 6.74 | 6.42 / 11.22 / 12.5 |
+| AMD iGPU | cinematic / mobile | 585×1266 | 10577 / 19869 | 16.7 / 16.8 | 16.7 / 16.8 / 16.8 | 0 | 3.72 / 4.17 | 3.45 / 6.67 / 12.0 |
+
+Recording (`lattice-record`, cinematic, RTX 3070, video capture running): 32 s, 1928 frames,
+16.7 / 16.7 / max 33.4 ms, GPU 1.69 / 3.67 / max 17.1 ms.
+
+Reading: balanced on the AMD Renoir iGPU stays inside a 16.7 ms frame with a GPU median of about
+5 ms on desktop; its p95 (12-13 ms) is the tightest number in the table and is the one to watch on
+weaker integrated GPUs. Cinematic on the same iGPU has a similar median-to-p95 range, so for this
+scene the profile difference is mainly atom count and fog depth, not a cliff. Atoms are two-triangle
+sphere impostors; the cost is fill and the bond cylinders (12 triangles each).
+
+CPU: the lattice is built once per framing and level of detail (`buildLattice`), about 100 ms in
+Node 22 on this laptop for the cinematic desktop block, plus shader compile; it runs inside the
+lazy GPU-layer start-up, before the first frame. A phone CPU will take several times longer
+(not measured). Per frame the lattice only sets a few uniforms.
+
+Bytes: the lattice adds no asset files at runtime; the lazy renderer chunk is 134.9 KiB brotli
+(130.1 before). The chapter 01 posters (`lattice-desktop.webp` 154 KiB, `lattice-mobile.webp`
+71 KiB) replace `scene-1.webp` (66 KiB). They are `loading="lazy"` like before, so the browser
+may still fetch them early (A3 saw chapter posters 1-2 in the first view) and also in motion mode,
+where they stay hidden. On mobile that is +5 KiB against the old poster, on desktop +88 KiB. The
+transfer table above was not re-measured for this change.

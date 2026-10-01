@@ -2,7 +2,7 @@
 
 Muzealne studio, nie efekty. Głęboki grafit `#0b0e12`, złamana biel tekstu, chłodne srebrne
 refleksy, jeden bursztynowy rim. Obraz ma się bronić na zatrzymanej klatce: kształt, materiał
-i światło, bez bloomu, mgły i grainu (nakładkę `film-grain` z v0.1 usunięto).
+i światło, bez bloomu i grainu (nakładkę `film-grain` z v0.1 usunięto). Mgła tylko jako głębia sieci krystalicznej w rozdziale 01, do koloru tła.
 
 Źródło prawdy o świetle i kadrze to pipeline Blendera (`tools/blender/`, etap A2):
 `hero-camera.json` (kamera desktop/mobile, obrót bryłki, ekspozycja, tone mapping, ściana wejścia)
@@ -35,10 +35,11 @@ Postęp hero liczymy od góry hero (0) do przypięcia rozdziału materii (1). Fa
 | 0–0,20 | kadr hero, obrót i paralaksa |
 | 0,20–0,35 | tekst hero wygasa, poświata hero przechodzi w ambient rozdziałów |
 | 0,20–0,70 | kamera jedzie do ściany wejścia; obrót bryłki zwalnia do zera |
-| 0,70–0,74 | ściana przełamu wypełnia kadr |
-| 0,74–0,84 | obraz gaśnie do tła strony (nie do czerni) |
-| 0,84 | cięcie: scena materii (na razie proceduralna scena v0.1 rozdziału 01) |
-| 0,84–0,97 | scena materii się pojawia; od 1,0 rozdział 01 jest przypięty |
+| 0,70–0,87 | ściana przełamu wypełnia kadr, kamera dalej się zbliża (60% pozostałej drogi) |
+| 0,72–0,87 | ściana gaśnie do tła strony (przyciemnienie w WebGL, nie fade całego canvasu) |
+| 0,79–0,98 | przed gasnącą ścianą z mgły wyłania się sieć krzemu, kamera sieci już płynie naprzód |
+| 0,87 | ściana jest całkiem ciemna i przestaje być rysowana; od tej chwili tylko sieć |
+| 1,0 | rozdział 01 przypięty, sieć w pełni widoczna (bez cięcia) |
 
 - **Kadr wejścia:** kadr hero przy postępie 0,2, identyczny z posterem, jeśli czytelnik nie
   poruszał myszą.
@@ -58,15 +59,37 @@ Postęp hero liczymy od góry hero (0) do przypięcia rozdziału materii (1). Fa
   i grafitu zamiast przepalać się do bieli.
   Od chwili, gdy czytelnik zaczyna scrollować, dociąga się łatka `fracture-face.glb` o gęstszych
   UV (ta sama przestrzeń obiektu, przesunięcie głębi zamiast z-fightingu).
-- **Kadr wyjścia:** ziarna polikrystalicznej ściany i prążki przełamu na całym ekranie, potem
-  wygaszenie do grafitu i cięcie do pierwszej klatki rozdziału materii. Nagłówek „Od natury. Do
-  precyzji.” wjeżdża od dołu razem ze sceną 01; nad jasną ścianą ma miękką grafitową poświatę
-  (`text-shadow`, tylko gdy aktywny jest hero).
-- **Znana luka (etap C):** przy postępie 1,0 cięcie trafia do proceduralnej, beżowej bryłki v0.1
-  rozdziału 01. Materiałowo to inny obiekt niż krzem z hero; do wymiany razem ze sceną materii.
+- **Kadr wyjścia:** ziarna polikrystalicznej ściany i prążki przełamu na całym ekranie; ściana
+  gaśnie, a w ciemności przed nią pojawia się pierwsze ziarno sieci krystalicznej (duże, bliskie
+  atomy, dużo pustej przestrzeni). Nagłówek „Od natury. Do precyzji.” wjeżdża od dołu razem ze
+  sceną 01; nad jasną ścianą ma miękką grafitową poświatę (`text-shadow`, tylko gdy aktywny jest hero).
 
-Przenikania dwóch obiektów nie ma: między bryłką a sceną materii jest świadome cięcie w tle
-strony.
+Przejście jest przenikaniem w jednym kadrze WebGL: ściana bryłki (centymetry) gaśnie, sieć
+(nanometry) wyłania się z mgły. Podziałka pojawia się dopiero, gdy sieć dominuje, i pokazuje
+wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
+
+## 01 materia: sieć krzemu (`scenes/lattice.js`, `scenes/lattice-math.js`)
+
+- **Obraz:** prawdziwa struktura diamentu krzemu (a = 0,5431 nm), model kulkowo-pręcikowy: małe
+  srebrnoszare atomy (impostory kul, oświetlone tym samym HDR studia co bryłka), cienkie pręty,
+  głębia przez mgłę do `#0b0e12` (sieć kończy się ok. 4,4 nm przed kamerą, w balanced 3,8 nm).
+  Wokół kamery jest „polana” ok. 1 nm: najbliższe atomy znikają, zamiast wypełniać obiektyw.
+- **Ruch:** postęp rozdziału przesuwa płaszczyznę frontu krystalizacji z lewej na prawą stronę
+  kadru. Przed frontem ziarna (ta sama sieć obrócona wokół środka ziarna, seed 14, granice jako
+  szczeliny) są przygaszone; za frontem atomy wracają do jednej orientacji i jaśnieją. Wąskie pasmo
+  przy froncie świeci bursztynem i lekko drga: jedyny ciepły akcent rozdziału. Kamera płynie wzdłuż
+  kanału [110] i hamuje do zera, a jednocześnie obraca się z ukosa na oś kanału.
+- **Kadr końcowy („wow”):** widok wzdłuż [110]: sześciokątne kanały zbiegają się w ciemnym punkcie
+  zbiegu. Przesunięcie obiektywu (lens shift) stawia punkt zbiegu obok tekstu: desktop ok. 63%
+  szerokości, mobile ok. 64% wysokości od góry. Strona z nagłówkiem i pas pod podpisami są
+  przyciemnione w shaderze (welon do koloru tła), więc tekst zostaje czytelny i ten sam welon jest
+  w posterze.
+- **Ambient:** powolny dryf kamery (setne części nm, okres ok. 70 s) na zegarze ambientu.
+- **Wyjście do 02:** sieć cofa się w mgłę, a scena v0.1 rozdziału 02 przenika nad nią.
+- **Poster (calm, bez JS, błędy):** zrzut działającej sceny w kadrze końcowym, bez tekstu strony
+  (`python tests/screens.py posters`).
+- **Podziałka:** element DOM pod tekstem, liczony co klatkę z kamery (piksele na nm w płaszczyźnie
+  2 nm przed kamerą), widoczny tylko przy żywej kamerze. Podpis mówi wprost, co jest umowne.
 
 ## Profile
 
@@ -78,5 +101,5 @@ strony.
 ## Czego nie robimy
 
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
-chrom. Krzem nie jest kwarcem, diamentem ani folią. Rozdziały 02–06 wciąż korzystają ze
-scen v0.1 i czekają na etapy B i C.
+chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
+Rozdziały 02–06 wciąż korzystają ze scen v0.1 i czekają na etapy B i C.

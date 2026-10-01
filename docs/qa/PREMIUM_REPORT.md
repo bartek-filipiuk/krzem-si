@@ -155,8 +155,9 @@ próg mobile, seria przełączeń animacji, brak poziomego przewijania na 320, 3
 - **Ziarno w zbliżeniu** układa się w wyraźne komórki („plaster miodu”) w górnej części ściany
   przy postępie 0,5–0,75. Obniżenie ekspozycji przesunęło je z bieli do szarości, ale wzór zostaje;
   to tekstura łatki `fracture-face.glb`.
-- **Cięcie przy postępie 1,0** trafia do proceduralnej, beżowej bryłki v0.1 rozdziału 01. To inny
-  materiał niż krzem z hero; luka do zamknięcia w etapie C razem ze sceną materii.
+- ~~**Cięcie przy postępie 1,0** do bryłki v0.1 rozdziału 01.~~ Zamknięte 1 października 2026:
+  ściana przenika w sieć krzemu bez cięcia (`docs/ART_DIRECTION.md`, „01 materia”; dowody
+  `docs/qa/after/lattice-board.webp`, `lattice-scroll-desktop.webm`).
 - **Mobile przy postępie 0,5**: w połowie łuku bryłka jest częściowo poza lewą krawędzią kadru.
   Klatka przejściowa, w ruchu czytelna, ale nie jest to kadr do zatrzymania.
 - **Oświetlenie w dojeździe** obraca studio między postępem ok. 0,40 a 0,57 o 60° plus kąt, który
