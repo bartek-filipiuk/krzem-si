@@ -8,6 +8,7 @@ import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
 import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
+import { STACK, LEVELS, KEYS, route, scaleCamera, growth, transistorRows } from '../src/scripts/scenes/scale-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -341,7 +342,76 @@ test('projection, cover crop and label layout: labels never overlap, static mark
   assert.deepEqual(Object.keys(LABELS).sort(), Object.keys(ANCHORS).sort());
 });
 
-// ---- legacy chapters 3-6 (v0.1 renderer, kept until stages B/C) ------------------------------
+// ---- interconnect stack (chapter 03) ---------------------------------------------------------
+const routed = route();
+
+test('routing is seeded, pitches follow the sourced table, segments on a track never overlap', () => {
+  assert.deepEqual(JSON.stringify(route().levels.map(l => l.segments.length)), JSON.stringify(routed.levels.map(l => l.segments.length)));
+  assert.deepEqual(STACK.slice(0, 7).map(l => l.pitch), [52, 52, 52, 80, 80, 160, 160], 'sourced pitches (Intel 14 nm: 52, 80, 160 nm)');
+  for (let i = 1; i < LEVELS.length; i++) {
+    assert.ok(LEVELS[i].pitch >= LEVELS[i - 1].pitch && LEVELS[i].base > LEVELS[i - 1].top, 'pitch grows upward, levels stacked');
+    assert.notEqual(LEVELS[i].dir, LEVELS[i - 1].dir, 'preferred direction alternates');
+  }
+  for (const level of routed.levels) {
+    const along = level.dir === 'x' ? 0 : 1, tracks = new Map();
+    for (const sg of level.segments) {
+      const centre = (sg.min[1 - along] + sg.max[1 - along]) / 2;
+      assert.ok(Math.abs(centre / level.pitch - .5 - Math.round(centre / level.pitch - .5)) < 1e-9, `${level.name} on its track grid`);
+      (tracks.get(sg.track) ?? tracks.set(sg.track, []).get(sg.track)).push(sg);
+    }
+    for (const list of tracks.values()) {
+      list.sort((a, b) => a.min[along] - b.min[along]);
+      for (let k = 1; k < list.length; k++) assert.ok(list[k].min[along] > list[k - 1].max[along], `${level.name} overlap`);
+    }
+  }
+});
+
+test('vias only where both levels have metal', () => {
+  let count = 0;
+  for (let i = 1; i < routed.levels.length; i++) {
+    const lo = routed.levels[i - 1], hi = routed.levels[i];
+    for (const v of hi.vias) {
+      const inside = sg => v.min[0] >= sg.min[0] - 1e-6 && v.max[0] <= sg.max[0] + 1e-6 && v.min[1] >= sg.min[1] - 1e-6 && v.max[1] <= sg.max[1] + 1e-6;
+      assert.ok(lo.segments.some(inside) && hi.segments.some(inside), `${hi.name} via without metal`);
+      assert.equal(v.min[2], lo.top); assert.equal(v.max[2], hi.base);
+      count++;
+    }
+  }
+  assert.ok(count > 1000);
+});
+
+test('scale camera: starts on the chapter 02 end frame, continuous, never inside metal', () => {
+  const t = transistorCamera(1, 'desktop'), c0 = scaleCamera(0, 'desktop');
+  assert.ok(near(c0.position, t.position, 1e-6) && near(c0.target, t.target, 1e-6) && Math.abs(c0.fov - t.fov) < 1e-9);
+  for (const framing of ['desktop', 'mobile']) {
+    let prev = scaleCamera(0, framing);
+    for (let i = 1; i <= 2000; i++) {
+      const c = scaleCamera(i / 2000, framing);
+      assert.ok(dist(c.position, prev.position) < .06 * Math.min(c.d, prev.d), `camera jumps at ${i / 2000} (${framing})`);
+      assert.ok(Math.abs(Math.log(c.d / prev.d)) < .05);
+      prev = c;
+    }
+  }
+  for (let i = 0; i <= 400; i++) {
+    const c = scaleCamera(i / 400), p = c.position;
+    for (const level of routed.levels) for (const b of [...level.segments, ...level.vias]) {
+      const gap = Math.hypot(...p.map((v, k) => Math.max(b.min[k] - v, 0, v - b.max[k])));
+      assert.ok(gap > .2 * c.d, `camera inside ${level.name} at u ${i / 400}`);
+    }
+  }
+  assert.deepEqual(KEYS, [0, .16, .3, .64, .82, 1]);
+  assert.deepEqual(growth(0).every(g => g === 0), true); assert.deepEqual(growth(.7).every(g => g === 1), true);
+  const rows = transistorRows();
+  assert.ok(rows.fins.some(f => f.min[1] <= -4 && f.max[1] >= 4) && rows.gates.some(g => g.min[0] < 0 && g.max[0] > 0 && g.min[1] < -42 && g.max[1] > 42), 'the chapter 02 device is one of the rows');
+});
+
+test('scale bar labels run from nanometres to millimetres', () => {
+  assert.equal(scaleBar(1000, 30, 6000).label, '500 nm');
+  assert.equal(scaleBar(1000, 30, 250000).label, '10 µm');
+  assert.equal(scaleBar(1000, 30, 3e7).label, '2 mm');
+});
+
+// ---- legacy chapters 4-6 (v0.1 renderer, kept until stages B/C) ------------------------------
 test('legacy matrices are column-major', () => {
   const m = model(2, 3, 4, .1, .2, .3, 2); assert.deepEqual(multiply(identity(), m), m);
   assert.deepEqual([...multiply(model(1, 2, 3), model(2, 3, 4))].slice(12, 15), [3, 5, 7]);
