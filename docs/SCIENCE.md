@@ -84,5 +84,5 @@ niezależnie i że tekst w HTML (dla czytelników bez JS) jest identyczny z wyli
 Płytka jest ogólną, umowną płytką akceleratora (obudowa z pokrywą, sześć modułów pamięci obok
 układu, stopnie zasilania, kondensatory, złącze krawędziowe), bez marki i bez wymiarów konkretnego
 produktu (NIEZWERYFIKOWANE). W skali jest tylko chip (4 × 3 mm, ten sam co w rozdziałach 03 i 04).
-Impulsy na ścieżkach są ilustracją przepływu danych, nie symulacją sygnałów. Podziałka jest
+Nici od macierzy do chipu i impulsy na ścieżkach (do pamięci i do złącza krawędziowego) są ilustracją przepływu danych, nie symulacją sygnałów ani prawdziwym rozkładem połączeń. Podziałka jest
 prawdziwa dla płaszczyzny ostrości.

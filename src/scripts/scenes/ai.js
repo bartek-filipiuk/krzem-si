@@ -5,17 +5,17 @@
  * traces, then the answer. Behind, subdued in the fog, the board is one of many. Illustrative.
  */
 import {
-  BoxGeometry, CanvasTexture, Color, DirectionalLight, Fog, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial,
-  PerspectiveCamera, PlaneGeometry, Scene, SphereGeometry, SRGBColorSpace,
+  BoxGeometry, BufferGeometry, CanvasTexture, Color, DirectionalLight, Float32BufferAttribute, Fog, InstancedMesh, LineBasicMaterial, LineSegments,
+  Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { BOARD, W, X, acceleratorLayout, aiCamera, demoProgress, fmt, forward } from './ai-math.js';
+import { BOARD, W, X, acceleratorLayout, aiCamera, demoProgress, fmt, forward, pulseLanes } from './ai-math.js';
 import { createDie, boxes, boardTexture } from './parts.js';
 import { scaleBar } from './lattice-math.js';
 import { smoothstep } from '../story/timeline.js';
 
 const BG = new Color('#0b0e12');
-const LAYER_Z = 11;
+const LAYER_Z = 15;
 
 /** The computation layer: a canvas with the vector, the matrix, the product and the output. */
 function createLayer() {
@@ -81,7 +81,7 @@ export async function createAi({ renderer, environment, dof }) {
   const lid = own(new Mesh(new RoundedBoxGeometry(32, 28, .6, 2, .25), new MeshPhysicalMaterial({ color: '#0d1116', transparent: true, opacity: .16, roughness: .05, clearcoat: 1, depthWrite: false })));
   lid.position.z = 1.6; lid.renderOrder = 10;
   // The board: texture with traces, inductors and power stages, capacitors, an edge connector.
-  const btex = boardTexture({ traces: L.traces, passives: L.caps, chips: L.power }, BOARD.size.slice(0, 2), { mask: '#0f1d18', px: 14 });
+  const btex = boardTexture({ traces: L.traces, passives: L.caps, chips: L.power }, BOARD.size.slice(0, 2), { mask: '#0f1d18', copper: '#7d6748', px: 14 });
   const fr4 = new MeshStandardMaterial({ color: '#2a3328', roughness: .6 });
   const top = new MeshStandardMaterial({ map: btex, metalness: .35, roughness: .45 });
   const board = own(new Mesh(new BoxGeometry(...BOARD.size), [fr4, fr4, fr4, fr4, top, fr4]));
@@ -103,19 +103,59 @@ export async function createAi({ renderer, environment, dof }) {
   // The computation layer above the chip and the pulses.
   const layer = createLayer();
   disposers.push(layer.dispose);
-  const plane = own(new Mesh(new PlaneGeometry(30, 30 / layer.aspect), new MeshStandardMaterial({
+  const plane = own(new Mesh(new PlaneGeometry(26, 26 / layer.aspect), new MeshStandardMaterial({
     color: '#000000', emissive: '#ffffff', emissiveMap: layer.texture, map: layer.texture, transparent: true, depthWrite: false, side: 2,
   })));
-  // Turned to read left to right from the chapter's camera (az about .62) and leaning towards it.
-  plane.position.set(6, 10, LAYER_Z); plane.rotation.set(0, 0, -.62); plane.rotateX(.55); plane.renderOrder = 12;
-  const pulseGeo = new SphereGeometry(.45, 10, 8), pulseMat = new MeshStandardMaterial({ color: '#000', emissive: '#e0a35c', emissiveIntensity: 3 });
-  const lanes = L.traces.filter((_, i) => i % 9 === 0).slice(0, 14);
-  const pulses = new InstancedMesh(pulseGeo, pulseMat, 6 + lanes.length * 3);
-  own(pulses);
+  // Behind and above the die as seen, so both show; turned and tilted to face the camera.
+  plane.position.set(3, 10, LAYER_Z); plane.rotation.set(0, 0, -.62); plane.rotateX(.85); plane.renderOrder = 12;
+  plane.updateMatrixWorld();
+  // Threads from the bottom row of the weight matrix down to the die, and a pulse on each.
+  const cellAt = (px, py) => plane.localToWorld(new Vector3((px / 1280 - .5) * 26, (.5 - py / 1000) * 26 / layer.aspect, 0));
+  const threadEnds = X.map((_, j) => [cellAt(170 + j * 120, 920), new Vector3(-1.5 + j * .6, -.3 + (j % 2) * .6, .02)]);
+  const threads = own(new LineSegments(new BufferGeometry().setAttribute('position', new Float32BufferAttribute(threadEnds.flatMap(([a, b]) => [...a.toArray(), ...b.toArray()]), 3)),
+    new LineBasicMaterial({ color: '#e0a35c', transparent: true, opacity: 0, depthWrite: false })));
+  threads.renderOrder = 11;
+  const pulseGeo = new SphereGeometry(.32, 10, 8), pulseMat = new MeshStandardMaterial({ color: '#000', emissive: '#ffbf75', emissiveIntensity: 4 });
+  const pulses = own(new InstancedMesh(pulseGeo, pulseMat, threadEnds.length));
+  // Lit lanes from the die to the memory packages and to the edge connector: a bright head runs
+  // along each lane during the hardware stage and leaves it glowing.
+  const lanePos = [], laneAlong = [];
+  for (const pts of pulseLanes()) {
+    const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
+    const total = seg.reduce((a, b) => a + b, 0);
+    let acc = 0;
+    seg.forEach((len, i) => {
+      const [a, b] = [pts[i], pts[i + 1]];
+      if (len < 1e-6) return; // the step down at the substrate edge
+      const nx = -(b[1] - a[1]) / len * .26, ny = (b[0] - a[0]) / len * .26, t0 = acc / total, t1 = (acc + len) / total;
+      const q = [[a[0] + nx, a[1] + ny, a[2] + .03, t0], [a[0] - nx, a[1] - ny, a[2] + .03, t0], [b[0] + nx, b[1] + ny, b[2] + .03, t1], [b[0] - nx, b[1] - ny, b[2] + .03, t1]];
+      for (const v of [q[0], q[1], q[2], q[2], q[1], q[3]]) { lanePos.push(v[0], v[1], v[2]); laneAlong.push(v[3]); }
+      acc += len;
+    });
+  }
+  const laneMat = new ShaderMaterial({
+    uniforms: { uHead: { value: 0 }, uRest: { value: 0 } }, transparent: true, depthWrite: false, side: 2,
+    vertexShader: 'attribute float along; varying float vA; void main() { vA = along; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform float uHead, uRest; varying float vA;
+      void main() {
+        float behind = step(vA, uHead), head = exp(-pow((uHead - vA) / .05, 2.0)) * behind;
+        float k = behind * uRest + head * 3.0;
+        if (k < .01) discard;
+        gl_FragColor = vec4(vec3(1.0, .64, .3) * k, min(1.0, k));
+      }`,
+  });
+  const lanes = own(new Mesh(new BufferGeometry().setAttribute('position', new Float32BufferAttribute(lanePos, 3)).setAttribute('along', new Float32BufferAttribute(laneAlong, 1)), laneMat));
+  lanes.renderOrder = 9;
+  // Status lights on the boards in the rows: a few amber points, restrained.
+  const leds = new InstancedMesh(new BoxGeometry(1.6, 1.6, .5), new MeshStandardMaterial({ color: '#000', emissive: '#f0a85a', emissiveIntensity: 3 }), rows.length * 2);
+  { const m = new Matrix4(); rows.forEach(([x, yy], i) => { leds.setMatrixAt(2 * i, m.makeTranslation(x + 58, yy + 50, -1.4)); leds.setMatrixAt(2 * i + 1, m.makeTranslation(x + 54, yy + 50, -1.4)); }); }
+  own(leds);
 
   const key = new DirectionalLight('#f1ece4', 1.5); key.position.set(-120, -60, 200);
   const warm = new DirectionalLight('#ffb070', .55); warm.position.set(200, 30, 40);
-  scene.add(key, warm);
+  // A rim from the far side catches the lids of the packages in the rows.
+  const rim = new DirectionalLight('#dfe7ef', 2.4); rim.position.set(-80, 600, 90);
+  scene.add(key, warm, rim);
   const camera = new PerspectiveCamera(30, 1, .1, 4000);
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
@@ -123,12 +163,6 @@ export async function createAi({ renderer, environment, dof }) {
   // Upload the canvas textures now, not on the first frame that sees them (a 50-80 ms hitch).
   scene.traverse(n => [n.material].flat().forEach(m => m && Object.values(m).forEach(v => v?.isTexture && renderer.initTexture(v))));
   const m4 = new Matrix4();
-  const along = (pts, k) => {
-    const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
-    let d = k * seg.reduce((a, b) => a + b, 0);
-    for (let i = 0; i < seg.length; i++) { if (d <= seg[i]) { const t = d / (seg[i] || 1); return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; } d -= seg[i]; }
-    return pts.at(-1);
-  };
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
@@ -149,18 +183,15 @@ export async function createAi({ renderer, environment, dof }) {
       layer.draw(ai.open, dp.rows, dp.answer, show);
       plane.material.opacity = show;
       plane.material.emissiveIntensity = 1.3 * show;
-      // Pulses: down from the layer into the chip, then out along a few traces.
-      let i = 0;
-      const down = smoothstep(0, .45, dp.pulse), out = smoothstep(.35, 1, dp.pulse);
-      for (let k = 0; k < 6; k++) {
-        const s = dp.pulse > 0 && dp.pulse < 1 ? 1 : 0;
-        pulses.setMatrixAt(i++, m4.makeScale(s, s, s).setPosition(6 * (1 - down) - 1.5 + k * .6, 10 * (1 - down), LAYER_Z * (1 - down) + .2));
-      }
-      for (const lane of lanes) for (let j = 0; j < 3; j++) {
-        const k = Math.min(1, Math.max(0, out * 1.2 - j * .1)), s = out > 0 && out < 1 && k > 0 && k < 1 ? 1 : 0;
-        const [x, y] = along(lane.pts, k);
-        pulses.setMatrixAt(i++, m4.makeScale(s, s, s).setPosition(x, y, zb + .3));
-      }
+      // Threads light with the operations; pulses run down them into the chip, then out along the lanes.
+      const down = smoothstep(0, .35, dp.pulse), out = smoothstep(.3, 1, dp.pulse);
+      threads.material.opacity = show * (ai.open ? .2 + .5 * smoothstep(0, 6, dp.rows) * (1 - .5 * out) : .12);
+      threadEnds.forEach(([a, b], j) => {
+        const k = Math.min(1, Math.max(0, down * 1.15 - j * .03)), s = dp.pulse > 0 && k < 1 ? 1 : 0;
+        pulses.setMatrixAt(j, m4.makeScale(s, s, s).setPosition(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k));
+      });
+      laneMat.uniforms.uHead.value = out * 1.15;
+      laneMat.uniforms.uRest.value = 1.1 * smoothstep(0, .25, out);
       pulses.instanceMatrix.needsUpdate = true;
       renderer.toneMappingExposure = 1;
       dof.render(scene, camera, { focus: cam.d, aperture: cam.aperture, opacity, farMax: 4 });

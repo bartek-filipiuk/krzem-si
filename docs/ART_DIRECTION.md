@@ -183,3 +183,9 @@ granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitow
   zapalają się po kolei, impulsy schodzą do chipu i biegną ścieżkami, potem pojawia się odpowiedź.
 - Kamera odjeżdża: płytka jest jedną z wielu, rzędy takich samych płytek gasną we mgle. Bez
   świecących mózgów i bez „myśli” modelu.
+- Na płytce widać połączenie liczb ze sprzętem: cienkie nici biegną od dolnego wiersza macierzy do
+  chipu (jaśnieją przy operacjach), impulsy schodzą nimi do chipu, a potem świecące ścieżki
+  rozchodzą się do modułów pamięci i do złącza krawędziowego i zostają podświetlone (ślad
+  widoczny także na stopklatce). Kadr składa chip, warstwę i nici razem, nad panelem demonstracji.
+- W dalekim planie obudowy w rzędach łapią kontur światła od tyłu, a na każdej płytce świecą dwie
+  małe bursztynowe diody stanu. Oszczędnie.

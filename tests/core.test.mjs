@@ -10,7 +10,7 @@ import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, cov
 import { readFileSync } from 'node:fs';
 import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows, DIE as DIE_NM } from '../src/scripts/scenes/scale-math.js';
 import { ORDER, ASSEMBLY, LAYERS, placement, activeWord, leibniz, boardLayout, worldCamera } from '../src/scripts/scenes/world-math.js';
-import { X as AI_X, W as AI_W, B as AI_B, forward, demoLines, fmt, STAGES, STAGE_AT, stageAt, demoProgress, acceleratorLayout, aiCamera } from '../src/scripts/scenes/ai-math.js';
+import { X as AI_X, W as AI_W, B as AI_B, forward, demoLines, fmt, STAGES, STAGE_AT, stageAt, demoProgress, acceleratorLayout, aiCamera, pulseLanes } from '../src/scripts/scenes/ai-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -493,6 +493,12 @@ test('AI demo: the layer above the chip shows the true product, the DOM prints t
   const layout = acceleratorLayout();
   assert.equal(JSON.stringify(acceleratorLayout()), JSON.stringify(layout), 'seeded');
   for (const c of layout.caps) assert.ok(Math.abs(c.x) >= 24 || Math.abs(c.y) >= 22, 'part under the package');
+  // Pulse lanes start at the die's edge and end at a memory package or at the edge connector.
+  for (const lane of pulseLanes()) {
+    const [x0, y0] = lane[0], [x1, y1] = lane.at(-1);
+    assert.ok(Math.abs(x0) <= 2 && Math.abs(y0) <= 1.5, 'lane starts off the die');
+    assert.ok(layout.memory.some(m => Math.abs(Math.abs(x1) - (Math.abs(m.x) - m.w / 2)) < 1e-9 && Math.abs(y1 - m.y) < m.h / 2) || y1 === -53, 'lane ends nowhere');
+  }
 });
 
 test('hand-over 04 -> 05: the same die close-up; no jumps through chapter 05', () => {
