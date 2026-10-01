@@ -21,14 +21,15 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
     uniforms: {
       tColor: { value: null }, tDepth: { value: null }, uTexel: { value: new Vector2() },
       uNear: { value: 1 }, uFar: { value: 1 }, uFocus: { value: 1 }, uCoc: { value: 0 }, uOpacity: { value: 1 }, uBg: { value: BG },
-      uTaps: { value: settings.taps },
+      uTaps: { value: settings.taps }, uFarMax: { value: 12 },
     },
     transparent: true, blending: NormalBlending, depthTest: false, depthWrite: false,
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: /* glsl */`
-      uniform sampler2D tColor, tDepth; uniform vec2 uTexel; uniform float uNear, uFar, uFocus, uCoc, uOpacity, uTaps; uniform vec3 uBg; varying vec2 vUv;
+      uniform sampler2D tColor, tDepth; uniform vec2 uTexel; uniform float uNear, uFar, uFocus, uCoc, uOpacity, uTaps, uFarMax; uniform vec3 uBg; varying vec2 vUv;
       float depthAt(vec2 uv) { float d = texture2D(tDepth, uv).x; return uNear * uFar / (uFar - d * (uFar - uNear)); }
-      float cocAt(float z) { return min(uCoc * abs(z - uFocus) / z, 12.0); }
+      // Behind the focus the blur may be capped lower (uFarMax), so a far field stays legible.
+      float cocAt(float z) { return z > uFocus ? min(uCoc * (z - uFocus) / z, uFarMax) : min(uCoc * (uFocus - z) / z, 12.0); }
       void main() {
         float z0 = depthAt(vUv), c0 = cocAt(z0);
         vec4 sum = texture2D(tColor, vUv); float wsum = 1.0;
@@ -61,14 +62,14 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
       composite.material.uniforms.uTaps.value = settings.taps;
     },
     /** Draws scene with camera; aperture: blur radius as a share of the frame height per |z - focus| / z. */
-    render(scene, camera, { focus, aperture, opacity = 1 }) {
+    render(scene, camera, { focus, aperture, opacity = 1, farMax = 12 }) {
       renderer.getDrawingBufferSize(buffer);
       if (target.width !== buffer.x || target.height !== buffer.y) target.setSize(buffer.x, buffer.y);
       const u = composite.material.uniforms;
       u.tColor.value = target.texture; u.tDepth.value = target.depthTexture;
       u.uTexel.value.set(1 / buffer.x, 1 / buffer.y);
       u.uNear.value = camera.near; u.uFar.value = camera.far; u.uFocus.value = focus;
-      u.uCoc.value = aperture * buffer.y; u.uOpacity.value = opacity;
+      u.uCoc.value = aperture * buffer.y; u.uOpacity.value = opacity; u.uFarMax.value = farMax;
       renderer.setRenderTarget(target);
       renderer.setClearColor(0x000000, 0);
       renderer.clear();

@@ -17,14 +17,14 @@ export const STACK = [
   { name: 'M1', pitch: 52, aspect: 1.8, len: [3, 14], gap: [1, 4], metal: 'lower', via: .14 },
   { name: 'M2', pitch: 52, aspect: 1.8, len: [3, 16], gap: [1, 4], metal: 'lower', via: .12 },
   { name: 'M3', pitch: 52, aspect: 1.8, len: [4, 18], gap: [1, 4], metal: 'lower', via: .12 },
-  { name: 'M4', pitch: 80, aspect: 1.9, len: [4, 18], gap: [1, 4], metal: 'copper', via: .12 },
-  { name: 'M5', pitch: 80, aspect: 1.9, len: [4, 20], gap: [1, 4], metal: 'copper', via: .12 },
+  { name: 'M4', pitch: 80, aspect: 1.9, len: [4, 18], gap: [1, 4], metal: 'lower', via: .12 },
+  { name: 'M5', pitch: 80, aspect: 1.9, len: [4, 20], gap: [1, 4], metal: 'lower', via: .12 },
   { name: 'M6', pitch: 160, aspect: 2, len: [5, 22], gap: [1, 4], metal: 'copper', via: .14 },
   { name: 'M7', pitch: 160, aspect: 2, len: [5, 24], gap: [1, 4], metal: 'copper', via: .14 },
   { name: 'M8', pitch: 320, aspect: 2, len: [6, 30], gap: [1, 4], metal: 'copper', via: .16 },
   { name: 'M9', pitch: 640, aspect: 2, len: [6, 34], gap: [1, 3], metal: 'copper', via: .18 },
-  { name: 'M10', pitch: 1280, aspect: 2, len: [4, 24], gap: [1, 3], metal: 'thick', via: .2 },
-  { name: 'M11', pitch: 4000, aspect: 1.5, len: [4, 22], gap: [1, 3], metal: 'thick', via: .25 },
+  { name: 'M10', pitch: 1280, aspect: 2, len: [4, 24], gap: [1, 3], metal: 'thick', via: .35 },
+  { name: 'M11', pitch: 4000, aspect: 1.5, len: [3, 14], gap: [1, 2], metal: 'thick', via: .45 },
 ];
 /** Top of the contacts: the first level starts here. */
 export const CONTACT_TOP = 130;
@@ -66,8 +66,9 @@ export function buildHeight(u) {
 }
 
 // ---- camera -----------------------------------------------------------------------------------
+const AVENUE_Z = LEVELS.at(-1).base + .4 * LEVELS.at(-1).thick;
 /** Model die: rectangle in nm (4 x 3 mm, an illustrative size) and its thickness. */
-export const DIE = { x: [-2.6e6, 1.4e6], y: [-1.1e6, 1.9e6], thickness: 3e5 };
+export const DIE = { x: [-3.5e6, .5e6], y: [-.45e6, 2.55e6], thickness: 3e5 };
 
 function fromPose({ position, target, fov, shift }) {
   const d = Math.hypot(...position.map((v, i) => v - target[i]));
@@ -89,9 +90,12 @@ export function keyframes(framing = 'desktop') {
     // Above the deposition front, looking down across the crossing middle levels; the thick top
     // levels then rise around the camera as it climbs.
     { target: [-200, 100, 700], d: 2000, az: .75, el: .78, fov: m ? 52 : 40, shift: m ? [0, -.25] : [.16, 0], aperture: .035 },
-    // Reveal: just above the top metal at a low angle, across its parallel walls to the horizon.
-    { target: [3000, 9000, STACK_TOP - 3000], d: 38000, az: .55, el: .28, fov: m ? 50 : 40, shift: m ? [0, -.5] : [.22, -.04], aperture: .018 },
-    { target: [0, 0, STACK_TOP], d: m ? 380000 : 250000, az: 1.2, el: .72, fov: m ? 36 : 30, shift: m ? [0, -.45] : [.24, 0], aperture: .035 },
+    // Reveal: eye level inside an avenue of the thick top metal, below its roofline: walls and via
+    // columns tower on both sides, the canyon floor drops away to the levels below, the avenue
+    // runs to a vanishing point. The low sun comes from the left (+y): shadow side under the heading.
+    { target: [-14000 + 14000 * Math.cos(.12), 0, AVENUE_Z - 14000 * Math.sin(.12)], d: 14000, az: Math.PI / 2, el: .12, fov: m ? 66 : 52, shift: m ? [0, -.3] : [.18, -.04], aperture: .02 },
+    // The die corner: pad ring, seal ring, floorplan blocks, the real stack somewhere inside.
+    { target: [-1.2e5, 2.6e5, STACK_TOP], d: m ? 2.4e6 : 1.6e6, az: .9, el: .78, fov: m ? 36 : 30, shift: m ? [0, -.42] : [.24, 0], aperture: .008 },
     { target: [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2, 0], d: m ? 1.5e7 : 9e6, az: 1.0, el: .95, fov: m ? 36 : 30, shift: m ? [0, -.42] : [.24, 0], aperture: .012 },
   ];
 }
@@ -140,13 +144,20 @@ export function scaleCamera(u = 0, framing = 'desktop', drift = 0) {
 
 // ---- routing ----------------------------------------------------------------------------------
 /** Clearance around the camera path: metal never comes closer than this (nm). */
-function clearance(cam, level) { return .28 * cam.d + level.width; }
+function clearance(cam) { return Math.min(.28 * cam.d, 700); }
 
 /** Camera samples along the whole path (both framings), for clearing a street through the stack. */
 function cameraSamples() {
   const out = [];
-  for (const framing of ['desktop', 'mobile']) for (let i = 0; i <= 600; i++) out.push(scaleCamera(i / 600, framing));
+  for (const framing of ['desktop', 'mobile']) for (let i = 0; i <= 600; i++) out.push({ ...scaleCamera(i / 600, framing), u: i / 600 });
   return out;
+}
+/** Metal the camera passes close to is deposited only after it has passed: last u it is near, plus a margin. */
+export const AFTER = { margin: .03, span: .04 };
+function after(box, near) {
+  let last = -1;
+  for (const c of near) if (boxDistance(c.position, box.min, box.max) <= clearance(c)) last = Math.max(last, c.u);
+  return last < 0 ? 0 : Math.min(1, last + AFTER.margin);
 }
 
 /** Distance from point p to an axis-aligned box. */
@@ -157,9 +168,10 @@ function boxDistance(p, min, max) {
 /**
  * Seeded routing on a track grid. Per level: tracks at (k + 1/2) * pitch across the preferred
  * direction; along each track, segments and gaps of seeded lengths (a walk, so segments on one
- * track never overlap); every 8th track is a power rail (wider, unbroken). Segments the camera
- * would pass through are removed. Vias join two adjacent levels only where both have metal.
- * Returns { levels: [{ ...level, segments: [{ min, max }], vias: [{ min, max }] }] }.
+ * track never overlap); every 8th track is a power rail (wider, unbroken). Metal the camera would
+ * pass through gets `after`: the u from which it may be deposited (0 = with its level). Vias join
+ * two adjacent levels only where both have metal.
+ * Returns { levels: [{ ...level, segments: [{ min, max, after }], vias: [{ min, max, after }] }] }.
  */
 export function route(seed = 3, samples = cameraSamples()) {
   const rand = seeded(seed);
@@ -186,10 +198,11 @@ export function route(seed = 3, samples = cameraSamples()) {
     }
     return { ...level, segments };
   });
-  // Clear the camera's street (only samples at this level's height matter).
+  // The camera's street: metal it would pass through is deposited behind it (only samples at this
+  // level's height matter), so the finished stack has no holes.
   for (const level of levels) {
-    const near = samples.filter(c => c.position[2] > level.base - clearance(c, level) && c.position[2] < level.top + clearance(c, level));
-    level.segments = level.segments.filter(sg => near.every(c => boxDistance(c.position, sg.min, sg.max) > clearance(c, level)));
+    const near = samples.filter(c => c.position[2] > level.base - clearance(c) && c.position[2] < level.top + clearance(c));
+    for (const sg of level.segments) sg.after = after(sg, near);
   }
   // Vias at crossings of adjacent levels where both have metal.
   for (let i = 1; i < levels.length; i++) {
@@ -207,13 +220,15 @@ export function route(seed = 3, samples = cameraSamples()) {
       const x = lo.dir === 'x' ? pHi : pLo, y = lo.dir === 'x' ? pLo : pHi;
       if (Math.abs(x) > lo.extent || Math.abs(y) > lo.extent) continue;
       const inside = sg => x - size / 2 >= sg.min[0] && x + size / 2 <= sg.max[0] && y - size / 2 >= sg.min[1] && y + size / 2 <= sg.max[1];
-      if (!ls.some(inside) || !hs.some(inside)) continue;
+      const a = ls.find(inside), b = hs.find(inside);
+      if (!a || !b) continue;
       if (rand() > hi.via) continue;
-      vias.push({ min: [x - size / 2, y - size / 2, lo.top], max: [x + size / 2, y + size / 2, hi.base] });
+      vias.push({ min: [x - size / 2, y - size / 2, lo.top], max: [x + size / 2, y + size / 2, hi.base], after: Math.max(a.after, b.after) });
     }
-    // The street stays clear of vias too.
-    const near = samples.filter(c => c.position[2] > lo.top - clearance(c, hi) && c.position[2] < hi.base + clearance(c, hi));
-    hi.vias = vias.filter(v => near.every(c => boxDistance(c.position, v.min, v.max) > clearance(c, hi)));
+    // Vias in the street likewise come after the camera (and never before the metal they join).
+    const near = samples.filter(c => c.position[2] > lo.top - clearance(c) && c.position[2] < hi.base + clearance(c));
+    for (const v of vias) v.after = Math.max(v.after, after(v, near));
+    hi.vias = vias;
   }
   levels[0].vias = [];
   return { levels };
@@ -258,7 +273,7 @@ export function floorplan(seed = 9) {
   const split = (x0, y0, x1, y1, depth) => {
     const w = x1 - x0, h = y1 - y0;
     if (depth > 3 || (depth > 1 && rand() < .3) || Math.min(w, h) < 5e5) {
-      const type = rand() < .42 ? 1 : rand() < .2 ? 2 : 0;
+      const type = rand() < .3 ? 1 : rand() < .2 ? 2 : 0;
       out.push([x0 + gap / 2, y0 + gap / 2, x1 - gap / 2, y1 - gap / 2, type]);
       return;
     }

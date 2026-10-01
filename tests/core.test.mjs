@@ -8,7 +8,7 @@ import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
 import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
-import { STACK, LEVELS, KEYS, route, scaleCamera, growth, transistorRows } from '../src/scripts/scenes/scale-math.js';
+import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows } from '../src/scripts/scenes/scale-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -372,12 +372,15 @@ test('vias only where both levels have metal', () => {
     const lo = routed.levels[i - 1], hi = routed.levels[i];
     for (const v of hi.vias) {
       const inside = sg => v.min[0] >= sg.min[0] - 1e-6 && v.max[0] <= sg.max[0] + 1e-6 && v.min[1] >= sg.min[1] - 1e-6 && v.max[1] <= sg.max[1] + 1e-6;
-      assert.ok(lo.segments.some(inside) && hi.segments.some(inside), `${hi.name} via without metal`);
+      const a = lo.segments.find(inside), b = hi.segments.find(inside);
+      assert.ok(a && b, `${hi.name} via without metal`);
+      assert.ok(v.after >= a.after && v.after >= b.after, 'a via never appears before the metal it joins');
       assert.equal(v.min[2], lo.top); assert.equal(v.max[2], hi.base);
       count++;
     }
   }
   assert.ok(count > 1000);
+  assert.ok(AFTER.margin > 0);
 });
 
 test('scale camera: starts on the chapter 02 end frame, continuous, never inside metal', () => {
@@ -394,9 +397,11 @@ test('scale camera: starts on the chapter 02 end frame, continuous, never inside
   }
   for (let i = 0; i <= 400; i++) {
     const c = scaleCamera(i / 400), p = c.position;
+    // Metal that exists at this u (deposited with its level, or after the camera has passed).
     for (const level of routed.levels) for (const b of [...level.segments, ...level.vias]) {
+      if (b.after > 0 && i / 400 <= b.after) continue;
       const gap = Math.hypot(...p.map((v, k) => Math.max(b.min[k] - v, 0, v - b.max[k])));
-      assert.ok(gap > .2 * c.d, `camera inside ${level.name} at u ${i / 400}`);
+      assert.ok(gap > Math.min(.2 * c.d, 600), `camera inside ${level.name} at u ${i / 400}`);
     }
   }
   assert.deepEqual(KEYS, [0, .16, .3, .64, .82, 1]);
