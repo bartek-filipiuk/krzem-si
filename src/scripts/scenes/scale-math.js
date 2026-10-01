@@ -137,6 +137,31 @@ function path(framing) {
   });
 }
 
+/**
+ * A camera path through keyframes { target, d, az, el, fov, shift, aperture } at times `keys`
+ * (monotone cubic per channel, distance in log space), for the later chapters. Returns
+ * (u, drift) -> camera like scaleCamera.
+ */
+export function cameraPath(keys, frames) {
+  const channel = f => pchip(keys, frames.map(f));
+  const logd = channel(k => Math.log(k.d)), az = channel(k => k.az), el = channel(k => k.el), fov = channel(k => k.fov);
+  const sx = channel(k => k.shift[0]), sy = channel(k => k.shift[1]), ap = channel(k => k.aperture ?? .02);
+  const target = [0, 1, 2].map(i => channel(k => k.target[i]));
+  return (u = 0, drift = 0) => {
+    u = clamp(u);
+    const d = Math.exp(logd(u)), a = az(u) + Math.sin(drift) * .006, e = el(u) + Math.sin(drift * .7) * .004;
+    const t = target.map(f => f(u));
+    const dir = [-Math.sin(a) * Math.cos(e), -Math.cos(a) * Math.cos(e), Math.sin(e)];
+    return { position: t.map((v, i) => v + dir[i] * d), target: t, d, up: [0, 0, 1], fov: fov(u), shift: [sx(u), sy(u)], aperture: ap(u) };
+  };
+}
+
+/** The chapter 03 exit frame as a keyframe, re-centred on the die (for chapter 04's entry). */
+export function dieExitFrame(framing = 'desktop', unit = 1) {
+  const k = keyframes(framing).at(-1);
+  return { ...k, target: [0, 0, 0], d: k.d * unit };
+}
+
 /** Camera for chapter progress u; drift: ambient phase (rad), a slight sway. */
 export function scaleCamera(u = 0, framing = 'desktop', drift = 0) {
   u = clamp(u);

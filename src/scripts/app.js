@@ -6,6 +6,7 @@
 import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
+import { activeWord } from './scenes/world-math.js';
 import { ANCHORS, MOBILE_LABELS, POSTER, SWITCH_MS, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
@@ -19,9 +20,10 @@ const powerButton = document.querySelector('#transistor-toggle');
 const aiButton = document.querySelector('#ai-toggle');
 const aiPanel = document.querySelector('#ai-demo');
 const progressBar = document.querySelector('#reading-progress-bar');
+const wordItems = [...document.querySelectorAll('#world-title [data-word]')];
 const partLabels = document.querySelector('.part-labels');
 const labelItems = [...partLabels.querySelectorAll('[data-part]')];
-const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale'), scale: document.querySelector('#scale-scale') };
+const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale'), scale: document.querySelector('#scale-scale'), world: document.querySelector('#world-scale') };
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reader = createScrollReader(sections, document.querySelector('#zrodla'));
 const controller = new QualityController();
@@ -104,6 +106,7 @@ function update() {
   progressBar.style.transform = `scaleX(${story.reading})`;
   if (index === 1) { const step = Math.min(3, Math.floor(progress * 4)); document.querySelectorAll('[data-process]').forEach((li, i) => li.dataset.active = String(i <= step)); }
   if (index === 2) setPower(manualPower ?? (progress > .35));
+  if (index === 4) { const w = activeWord(progress); wordItems.forEach((el, i) => el.classList.toggle('is-active', i === w)); }
   if (index === 5) { const open = manualAI ?? (progress > .23 && progress < .66); aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open)); }
   if (motionFull()) {
     root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));

@@ -8,7 +8,8 @@ import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
 import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera, switchState, finHalfWidth } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
-import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows } from '../src/scripts/scenes/scale-math.js';
+import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows, DIE as DIE_NM } from '../src/scripts/scenes/scale-math.js';
+import { ORDER, ASSEMBLY, LAYERS, placement, activeWord, leibniz, boardLayout, worldCamera } from '../src/scripts/scenes/world-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -439,7 +440,39 @@ test('scale bar labels run from nanometres to millimetres', () => {
   assert.equal(scaleBar(1000, 30, 3e7).label, '2 mm');
 });
 
-// ---- legacy chapters 4-6 (v0.1 renderer, kept until stages B/C) ------------------------------
+// ---- device (chapter 04) ---------------------------------------------------------------------
+test('device assembly: order, every part in place at the end, absent at the start', () => {
+  assert.deepEqual(ORDER, ['package', 'board', 'parts', 'battery', 'display', 'frame', 'glass']);
+  for (const name of Object.keys(ASSEMBLY)) {
+    assert.equal(placement(name, 0).appear, 0, `${name} visible at the start`);
+    assert.ok(placement(name, 1).k === 1 && placement(name, 1).offset.every(v => v === 0), `${name} not home`);
+  }
+  assert.deepEqual([0, .3, .5, .8].map(activeWord), [0, 0, 1, 2]);
+  assert.ok(Math.abs(leibniz(100000) - Math.PI) < 1e-4);
+  const layout = boardLayout();
+  assert.deepEqual(JSON.stringify(boardLayout()), JSON.stringify(layout), 'seeded');
+  // Nothing on the board overlaps the package footprint around the die.
+  const pkg = { x: -LAYERS.board.center[0], y: -LAYERS.board.center[1] };
+  for (const p of [...layout.chips, ...layout.passives]) assert.ok(Math.abs(p.x - pkg.x) > 7 + p.w / 2 || Math.abs(p.y - pkg.y) > 7 + p.h / 2);
+});
+
+test('hand-over 03 -> 04: the same camera on the die, in nm and in mm; no jumps through chapter 04', () => {
+  for (const framing of ['desktop', 'mobile']) {
+    const a = scaleCamera(1, framing), b = worldCamera(0, framing);
+    const centre = [(DIE_NM.x[0] + DIE_NM.x[1]) / 2, (DIE_NM.y[0] + DIE_NM.y[1]) / 2, 0];
+    const rel = a.position.map((v, i) => (v - centre[i]) * 1e-6);
+    assert.ok(dist(rel, b.position) < 1e-3 * b.d, `${framing} entry differs`);
+    assert.ok(Math.abs(a.fov - b.fov) < 1e-9 && near(a.shift, b.shift, 1e-9));
+    let prev = b;
+    for (let i = 1; i <= 2000; i++) {
+      const c = worldCamera(i / 2000, framing);
+      assert.ok(dist(c.position, prev.position) < .06 * Math.min(c.d, prev.d) && Math.abs(Math.log(c.d / prev.d)) < .05, `jump at ${i / 2000}`);
+      prev = c;
+    }
+  }
+});
+
+// ---- legacy chapters 5-6 (v0.1 renderer, kept until stages B/C) ------------------------------
 test('legacy matrices are column-major', () => {
   const m = model(2, 3, 4, .1, .2, .3, 2); assert.deepEqual(multiply(identity(), m), m);
   assert.deepEqual([...multiply(model(1, 2, 3), model(2, 3, 4))].slice(12, 15), [3, 5, 7]);

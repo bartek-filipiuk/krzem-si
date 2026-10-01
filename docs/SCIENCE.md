@@ -68,3 +68,7 @@ Uproszczenia:
 - Najniższe poziomy mają kolor stali/grafitu (kobalt lub wolfram w nowszych procesach, źródło 15), wyższe miedziany; kolory są przybliżone.
 - Poza kwadratem z prawdziwą geometrią każdy poziom jest płaską teksturą o tym samym rozstawie; z daleka powierzchnia chipu to tekstura z planem bloków. Plan, bloki i pady nie przedstawiają konkretnego układu.
 - Światło, mgła, przyciemnienie w głębi i głębia ostrości są środkami obrazu.
+
+## Urządzenie w rozdziale 04 (`src/scripts/scenes/world-math.js`)
+
+Ogólny, umowny model urządzenia podobnego do telefonu, bez marki i bez wzorowania się na konkretnym produkcie. W skali jest tylko chip (4 × 3 mm, ten sam co w rozdziale 03); obudowa chipu, płytka, części, bateria, rama, ekran i szkło mają przybliżone, typowe wymiary (NIEZWERYFIKOWANE jako wymiary żadnego produktu). Ścieżki, pola lutownicze, układy i elementy bierne na płytce są wygenerowane (ziarno), nie są projektem prawdziwej płytki. Kolejność składania jest umowna (rozłożony widok, nie proces montażu). Ekran pokazuje prawdziwe obliczenie (szereg Leibniza dla π liczony na żywo w przeglądarce), plakat strony odsłaniany wiersz po wierszu i przykładową wymianę wiadomości. Podziałka jest prawdziwa dla płaszczyzny ostrości (od setek µm do kilku cm).

@@ -386,3 +386,9 @@ html[data-renderer=webgl][data-motion=full] #skala .chapter-copy{opacity:var(--s
 }
 html[data-renderer=webgl] #skala .lattice-legend{text-shadow:0 0 6px #0b0e12,0 0 2px #0b0e12,0 1px 14px #0b0e12}
 .part-label[hidden]{display:none}
+
+/* Chapter 04: the heading's three words follow the display (app.js); without the live scene all
+   three are simply there. */
+html[data-renderer=webgl][data-motion=full] #world-title [data-word]{opacity:.32;transition:opacity .4s}
+html[data-renderer=webgl][data-motion=full] #world-title [data-word].is-active{opacity:1}
+html[data-renderer=webgl] #swiat .chapter-copy,html[data-renderer=webgl] #swiat .lattice-legend{text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}

@@ -149,6 +149,17 @@ przechodzą jedna w drugą komplementarnym ditherem; linie poniżej piksela uśr
 migotać. Jedno niskie ciepłe słońce (cienie na cinematic), chłodne światło w cieniu, głębia w
 granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitowa poświata pod tekstem.
 
+## 04 możliwości: urządzenie (`scenes/world.js`, `scenes/world-math.js`, `scenes/parts.js`)
+
+- Chip z końca rozdziału 03 zostaje w kadrze (ta sama kamera, przenikanie). Wokół niego, w jednym
+  ruchu, składa się ogólne urządzenie w rozłożonym widoku: obudowa chipu z kulkami lutowia, płytka
+  (wygenerowane ścieżki, pola, układy, elementy bierne), bateria, anodyzowana rama z tyłem, ekran,
+  szkło. Ekran nad chipem ma w dolnej części ciemne okno, przez które chip i płytka są widoczne.
+- Trzy słowa nagłówka sterują ekranem i są podświetlane w DOM: „Liczyć” (π z szeregu Leibniza
+  liczone na żywo), „Tworzyć” (plakat bryłki odsłaniany wiersz po wierszu), „Łączyć” (rozmowa
+  po polsku i wskaźnik zasięgu). Na końcu kamera wraca do chipu przez szkło: kadr wejścia
+  rozdziału 05.
+
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
 chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
 Rozdziały 04–06 wciąż korzystają ze scen v0.1 i czekają na etap C.

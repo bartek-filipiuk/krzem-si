@@ -157,6 +157,13 @@ with sync_playwright() as p:
     check('Scale: heading shown after the reveal', copy_opacity() > .95)
     check('Scale: the bar reaches micrometres or millimetres at the exit', re.search(r'(µm|mm)$', lattice_scale(desktop, '#scale-scale')[1]) is not None)
     check('Scale: GPU returns NO_ERROR', gpu_error(desktop) == 0)
+    # Chapter 04: the display's state and the active word of the heading move together.
+    active = lambda: desktop.evaluate("[...document.querySelectorAll('#world-title [data-word]')].findIndex(e=>e.classList.contains('is-active'))")
+    goto_chapter(desktop, 'swiat', .3); desktop.wait_for_timeout(150)
+    first = active()
+    goto_chapter(desktop, 'swiat', .9); desktop.wait_for_timeout(150)
+    check('World: the active word follows the display (Liczyć -> Łączyć)', first == 0 and active() == 2)
+    check('World: live scale bar', lattice_scale(desktop, '#world-scale')[0] and gpu_error(desktop) == 0)
     goto_chapter(desktop, 'tranzystor')
     desktop.wait_for_timeout(200)
     check('FinFET: six part labels on screen, clear of each other and of the copy', labels_ok(desktop))
