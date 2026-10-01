@@ -7706,16 +7706,16 @@
  },
  "device_record": {
   "profile": "cinematic",
-  "frames": 2925,
+  "frames": 2927,
   "median_ms": 16.7,
-  "p95_ms": 16.7,
-  "max_ms": 33.5,
+  "p95_ms": 16.8,
+  "max_ms": 33.3,
   "over_50ms": 0,
   "gpu_time": {
-   "frames": 2897,
-   "median_ms": 2.63,
-   "p95_ms": 13.96,
-   "max_ms": 20.5,
+   "frames": 2900,
+   "median_ms": 2.66,
+   "p95_ms": 14.06,
+   "max_ms": 20.6,
    "over_50ms": 0
   }
  }

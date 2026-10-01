@@ -240,6 +240,6 @@ program's link during loading, one per task; the GPU layer goes live about 0.1 s
 in the 03-06 scroll on the AMD iGPU: 9 over 40 ms before, none after; max interval 83.4 -> 33.4 ms.
 
 Recording (`device-record`, cinematic, RTX 3070, 03 -> 04 -> 05 with the demo running, closed and
-reopened, a reverse back into 04, then on to 06): 2925 frames, 16.7 / 16.7 / max 33.5 ms,
+reopened, a reverse back into 04, then on to 06): 2927 frames, 16.7 / 16.8 / max 33.3 ms,
 0 over 50 ms (before the fix: max 83 ms with three frames over 50 ms, then 50 ms after
 the texture pre-upload).
