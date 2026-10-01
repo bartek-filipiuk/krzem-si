@@ -81,6 +81,15 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
       renderer.render(post, postCamera);
       renderer.autoClear = auto;
     },
+    /**
+     * Compile the scene's programs for the target it is drawn into (linear, no tone mapping):
+     * compiling against the canvas builds other variants, and the real ones then link mid-scroll.
+     */
+    async compile(scene, camera) {
+      const previous = renderer.getRenderTarget();
+      renderer.setRenderTarget(target);
+      try { await renderer.compileAsync(scene, camera); } finally { renderer.setRenderTarget(previous); }
+    },
     dispose() { target.dispose(); composite.geometry.dispose(); composite.material.dispose(); },
   };
 }

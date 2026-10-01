@@ -236,7 +236,7 @@ export async function createTransistor({ renderer, environment, dof }) {
   const camera = new PerspectiveCamera(30, 1, 5, 4000);
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
-  await renderer.compileAsync(scene, camera);
+  await dof.compile(scene, camera);
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },

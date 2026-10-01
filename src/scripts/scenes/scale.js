@@ -328,6 +328,7 @@ export async function createScale({ renderer, environment, dof, shadows = true }
   }
   const dieSize = [DIE.x[1] - DIE.x[0], DIE.y[1] - DIE.y[0]], dieCenter = [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2];
   const topMap = bakeTop(levels);
+  renderer.initTexture(topMap); // upload now, not on the first frame that sees the die
   addSurface(2, { rect: [DIE.x[0], DIE.y[0], DIE.x[1], DIE.y[1]], hole: E, z: STACK_TOP + 2, uniforms: { uTopMap: { value: topMap } } },
     { level: LEVELS.length - 1, pitch: LEVELS.at(-1).pitch, die: true });
   for (const s of surfaces) if (s.die) floorplan().forEach((b, i) => { s.mesh.userData.uniforms.uBlocks.value[i].set(b[0], b[1], b[2], b[3]); s.mesh.userData.uniforms.uKinds.value[i] = b[4]; });
@@ -348,7 +349,7 @@ export async function createScale({ renderer, environment, dof, shadows = true }
   let framing = 'desktop', size = [1, 1];
   // Compile both variants of everything now, so a hand-over never stalls on a shader compile.
   const all = [...groups, ...surfaces].map(g => g.mesh);
-  for (const v of [1, 0]) { for (const m of all) m.material = m.userData.variants[v]; await renderer.compileAsync(scene, camera); }
+  for (const v of [1, 0]) { for (const m of all) m.material = m.userData.variants[v]; await dof.compile(scene, camera); }
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
