@@ -57,7 +57,8 @@ function createScreen() {
 
   function draw(u, time) {
     const word = activeWord(u), local = word === 0 ? (u - WORDS[0]) / (WORDS[1] - WORDS[0]) : word === 1 ? (u - WORDS[1]) / (WORDS[2] - WORDS[1]) : (u - WORDS[2]) / (1 - WORDS[2]);
-    const n = Math.floor(40 + time * 120) % 5000 + 1;
+    // 120 terms a second, redrawn (and re-uploaded) 15 times a second.
+    const n = (40 + Math.floor(time * 15) * 8) % 5000 + 1;
     const k = `${word}/${Math.round(local * 200)}/${word === 0 ? n : word === 2 ? Math.floor(time * 2) : 0}/${hero.complete}`;
     if (k === key) return false;
     key = k;
