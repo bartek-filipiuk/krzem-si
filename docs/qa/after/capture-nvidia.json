@@ -5941,5 +5941,1782 @@
    "over_50ms": 0
   },
   "seconds": 38.9
+ },
+ "world_shots": {
+  "world-cinematic-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 9,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 9,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-cinematic-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 9,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 9,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-balanced-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "world-calm-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "world-calm-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  }
+ },
+ "ai_shots": {
+  "ai-cinematic-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 13397,
+     "bonds": 25107
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 11,
+    "geometries": 25,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-cinematic-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "cinematic",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "cinematic",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1.5,
+    "buffer": [
+     585,
+     1266
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 10577,
+     "bonds": 19869
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 11,
+    "geometries": 25,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-balanced-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 1,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 2,
+    "textures": 8,
+    "geometries": 13,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "ai-calm-desktop-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-desktop-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-desktop-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-desktop-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-desktop-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-mobile-000": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-mobile-025": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-mobile-050": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-mobile-075": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  },
+  "ai-calm-mobile-100": {
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "calm",
+   "renderer": "static",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": null
+  }
+ },
+ "device_perf": {
+  "cinematic/desktop": {
+   "idle_world": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_world": {
+    "frames": 240,
+    "median_ms": 16.24,
+    "p95_ms": 30.66,
+    "max_ms": 32.5,
+    "over_50ms": 0
+   },
+   "idle_ai": {
+    "frames": 234,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.4,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_ai": {
+    "frames": 224,
+    "median_ms": 2.76,
+    "p95_ms": 18.93,
+    "max_ms": 23.4,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 1075,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 83.3,
+    "over_50ms": 1
+   },
+   "gpu_time_scroll": {
+    "frames": 1055,
+    "median_ms": 4.2,
+    "p95_ms": 18.17,
+    "max_ms": 27.2,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ]
+  },
+  "cinematic/mobile": {
+   "idle_world": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_world": {
+    "frames": 240,
+    "median_ms": 2.49,
+    "p95_ms": 20.87,
+    "max_ms": 23.6,
+    "over_50ms": 0
+   },
+   "idle_ai": {
+    "frames": 233,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.4,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_ai": {
+    "frames": 215,
+    "median_ms": 2.14,
+    "p95_ms": 21.99,
+    "max_ms": 27.4,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 1070,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 83.3,
+    "over_50ms": 1
+   },
+   "gpu_time_scroll": {
+    "frames": 1050,
+    "median_ms": 3.63,
+    "p95_ms": 19.29,
+    "max_ms": 41.2,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    585,
+    1266
+   ]
+  },
+  "balanced/desktop": {
+   "idle_world": {
+    "frames": 241,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_world": {
+    "frames": 242,
+    "median_ms": 1.29,
+    "p95_ms": 19.63,
+    "max_ms": 24.5,
+    "over_50ms": 0
+   },
+   "idle_ai": {
+    "frames": 236,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.3,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_ai": {
+    "frames": 221,
+    "median_ms": 1.5,
+    "p95_ms": 18.07,
+    "max_ms": 22.6,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 1066,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 83.3,
+    "over_50ms": 1
+   },
+   "gpu_time_scroll": {
+    "frames": 1040,
+    "median_ms": 2.72,
+    "p95_ms": 19.33,
+    "max_ms": 39.7,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ]
+  },
+  "balanced/mobile": {
+   "idle_world": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_world": {
+    "frames": 240,
+    "median_ms": 0.44,
+    "p95_ms": 18.97,
+    "max_ms": 22.5,
+    "over_50ms": 0
+   },
+   "idle_ai": {
+    "frames": 234,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 33.4,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_ai": {
+    "frames": 222,
+    "median_ms": 0.49,
+    "p95_ms": 19.88,
+    "max_ms": 24.1,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 1072,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 83.3,
+    "over_50ms": 1
+   },
+   "gpu_time_scroll": {
+    "frames": 1053,
+    "median_ms": 0.84,
+    "p95_ms": 18.5,
+    "max_ms": 44.8,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
+   "buffer": [
+    390,
+    844
+   ]
+  }
+ },
+ "device_record": {
+  "profile": "cinematic",
+  "frames": 2853,
+  "median_ms": 16.7,
+  "p95_ms": 16.8,
+  "max_ms": 50,
+  "over_50ms": 0,
+  "gpu_time": {
+   "frames": 2789,
+   "median_ms": 2.92,
+   "p95_ms": 19.17,
+   "max_ms": 27.0,
+   "over_50ms": 0
+  }
  }
 }
