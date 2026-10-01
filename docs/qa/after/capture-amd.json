@@ -2064,7 +2064,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 26,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.353206997084548
@@ -2097,7 +2097,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 29,
+    "geometries": 31,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -2361,7 +2361,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 26,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.3521177369973332
@@ -2394,7 +2394,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 28,
+    "geometries": 32,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -2427,7 +2427,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.05
@@ -2503,17 +2503,17 @@
  "scale_perf": {
   "balanced/desktop": {
    "idle": {
-    "frames": 240,
+    "frames": 241,
     "median_ms": 16.7,
-    "p95_ms": 16.8,
+    "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 240,
-    "median_ms": 10.41,
-    "p95_ms": 10.5,
-    "max_ms": 10.6,
+    "frames": 150,
+    "median_ms": 11.3,
+    "p95_ms": 12.2,
+    "max_ms": 12.8,
     "over_50ms": 0
    },
    "scroll": {
@@ -2524,10 +2524,10 @@
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 784,
-    "median_ms": 5.35,
-    "p95_ms": 15.3,
-    "max_ms": 16.0,
+    "frames": 615,
+    "median_ms": 4.91,
+    "p95_ms": 14.91,
+    "max_ms": 16.3,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
@@ -2546,23 +2546,23 @@
    },
    "gpu_time_idle": {
     "frames": 240,
-    "median_ms": 2.31,
-    "p95_ms": 2.59,
-    "max_ms": 3.1,
+    "median_ms": 3.38,
+    "p95_ms": 3.65,
+    "max_ms": 3.7,
     "over_50ms": 0
    },
    "scroll": {
     "frames": 843,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
     "frames": 843,
-    "median_ms": 1.49,
+    "median_ms": 1.44,
     "p95_ms": 4.12,
-    "max_ms": 5.0,
+    "max_ms": 4.6,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",

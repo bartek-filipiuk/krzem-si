@@ -4538,7 +4538,7 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 34,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.353206997084548
@@ -4571,7 +4571,7 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 34,
+    "geometries": 31,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -4835,7 +4835,7 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 34,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.3521177369973332
@@ -4868,7 +4868,7 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 34,
+    "geometries": 32,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -4901,7 +4901,7 @@
     },
     "triangles": 2,
     "textures": 7,
-    "geometries": 14,
+    "geometries": 12,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.05
@@ -5132,7 +5132,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 26,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.353206997084548
@@ -5165,7 +5165,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 29,
+    "geometries": 31,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -5429,7 +5429,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 26,
+    "geometries": 28,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.3521177369973332
@@ -5462,7 +5462,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 28,
+    "geometries": 32,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.55
@@ -5495,7 +5495,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.05
@@ -5928,16 +5928,16 @@
  },
  "scale_record": {
   "profile": "cinematic",
-  "frames": 2342,
+  "frames": 2343,
   "median_ms": 16.7,
   "p95_ms": 16.7,
-  "max_ms": 33.4,
+  "max_ms": 16.8,
   "over_50ms": 0,
   "gpu_time": {
    "frames": 2344,
-   "median_ms": 2.86,
-   "p95_ms": 12.24,
-   "max_ms": 18.5,
+   "median_ms": 13.86,
+   "p95_ms": 16.55,
+   "max_ms": 21.9,
    "over_50ms": 0
   },
   "seconds": 38.9

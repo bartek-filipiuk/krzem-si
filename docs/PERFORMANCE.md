@@ -195,3 +195,8 @@ Start-up: the routing (about 20 000 segments and vias, clearance along the camer
 compiled for the depth-of-field target up front (compiling them for the canvas built the wrong
 variants and cost up to 380 ms on first view). A phone CPU will be slower (not measured).
 Bytes: renderer chunk 146.4 KiB brotli; chapter 03 posters replace `scene-3.webp`.
+
+Steep reveal (2026-10-01, `scale-perf` long run, AMD iGPU balanced 1440×1000): idle at the reveal
+GPU 11.3 / 12.2 ms (median / p95), scroll through the chapter GPU 4.9 / 14.9 / max 16.3 ms, frame
+intervals 16.7 / 16.7 / max 16.8 ms, none over 50 ms. Mobile 3.4 / 3.7 idle, 1.4 / 4.1 scrolling.
+Within a 60 Hz frame; the reveal is the most expensive frame of the chapter on the iGPU.
