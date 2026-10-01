@@ -15,145 +15,145 @@ TAP version 13
 # Subtest: chapter progress handles boundaries and short chapters
 ok 1 - chapter progress handles boundaries and short chapters
   ---
-  duration_ms: 2.398769
+  duration_ms: 2.78674
   type: 'test'
   ...
 # Subtest: hero progress spans hero top to the pinned material chapter
 ok 2 - hero progress spans hero top to the pinned material chapter
   ---
-  duration_ms: 0.34299
+  duration_ms: 0.36122
   type: 'test'
   ...
 # Subtest: QA positions map back to the same chapter and progress
 ok 3 - QA positions map back to the same chapter and progress
   ---
-  duration_ms: 0.510819
+  duration_ms: 0.463607
   type: 'test'
   ...
 # Subtest: entry phases: copy leaves first, the face dims while the lattice emerges, no cut
 ok 4 - entry phases: copy leaves first, the face dims while the lattice emerges, no cut
   ---
-  duration_ms: 9.56197
+  duration_ms: 7.818112
   type: 'test'
   ...
 # Subtest: lattice progress is continuous from the hero into the material chapter
 ok 5 - lattice progress is continuous from the hero into the material chapter
   ---
-  duration_ms: 0.328114
+  duration_ms: 0.511658
   type: 'test'
   ...
 # Subtest: legacy cross-fade only runs in full motion and not for the hero
 ok 6 - legacy cross-fade only runs in full motion and not for the hero
   ---
-  duration_ms: 0.349486
+  duration_ms: 0.374559
   type: 'test'
   ...
 # Subtest: camera at s=0 is exactly the Blender hero camera, whatever the chunk rotation
 ok 7 - camera at s=0 is exactly the Blender hero camera, whatever the chunk rotation
   ---
-  duration_ms: 0.880629
+  duration_ms: 1.207417
   type: 'test'
   ...
 # Subtest: camera pose is a pure function: forward, backward and fresh evaluations agree
 ok 8 - camera pose is a pure function: forward, backward and fresh evaluations agree
   ---
-  duration_ms: 3.729594
+  duration_ms: 3.673097
   type: 'test'
   ...
 # Subtest: camera ends on the face normal at END_DISTANCE and looks into the face
 ok 9 - camera ends on the face normal at END_DISTANCE and looks into the face
   ---
-  duration_ms: 0.666216
+  duration_ms: 0.593931
   type: 'test'
   ...
 # Subtest: camera path is continuous and stays outside the chunk, also when the face points away
 ok 10 - camera path is continuous and stays outside the chunk, also when the face points away
   ---
-  duration_ms: 93.763318
+  duration_ms: 91.263868
   type: 'test'
   ...
 # Subtest: pointer parallax is capped at 2 degrees and fades out during the entry
 ok 11 - pointer parallax is capped at 2 degrees and fades out during the entry
   ---
-  duration_ms: 0.830343
+  duration_ms: 0.873506
   type: 'test'
   ...
 # Subtest: hero framing: cover-crop FOV, width rule shared with the poster, compact is layout only
 ok 12 - hero framing: cover-crop FOV, width rule shared with the poster, compact is layout only
   ---
-  duration_ms: 0.255689
+  duration_ms: 0.368483
   type: 'test'
   ...
 # Subtest: profile selection order: QA > user choice > reduced motion / Save-Data > default
 ok 13 - profile selection order: QA > user choice > reduced motion / Save-Data > default
   ---
-  duration_ms: 0.233829
+  duration_ms: 0.225029
   type: 'test'
   ...
 # Subtest: DPR caps 1.5 / 1.0 plus a pixel budget; 1K textures on phone framing
 ok 14 - DPR caps 1.5 / 1.0 plus a pixel budget; 1K textures on phone framing
   ---
-  duration_ms: 0.208058
+  duration_ms: 0.26393
   type: 'test'
   ...
 # Subtest: controller demotes only after two consecutive slow windows (hysteresis)
 ok 15 - controller demotes only after two consecutive slow windows (hysteresis)
   ---
-  duration_ms: 1.098813
+  duration_ms: 1.088408
   type: 'test'
   ...
 # Subtest: controller judges p95 as well as median, and never promotes
 ok 16 - controller judges p95 as well as median, and never promotes
   ---
-  duration_ms: 0.843753
+  duration_ms: 0.679137
   type: 'test'
   ...
 # Subtest: controller ignores holds (shader compile, tab return) and paused-loop gaps
 ok 17 - controller ignores holds (shader compile, tab return) and paused-loop gaps
   ---
-  duration_ms: 0.245003
+  duration_ms: 0.216508
   type: 'test'
   ...
 # Subtest: slow devices demote within seconds, not minutes
 ok 18 - slow devices demote within seconds, not minutes
   ---
-  duration_ms: 0.138635
+  duration_ms: 0.134724
   type: 'test'
   ...
 # Subtest: asset manager shares one fetch, disposes on last release, cancels on abort
 ok 19 - asset manager shares one fetch, disposes on last release, cancels on abort
   ---
-  duration_ms: 16.738022
+  duration_ms: 15.175689
   type: 'test'
   ...
 # Subtest: diamond cubic: 8 atoms per cell, every interior atom has exactly 4 neighbours at a*sqrt(3)/4
 ok 20 - diamond cubic: 8 atoms per cell, every interior atom has exactly 4 neighbours at a*sqrt(3)/4
   ---
-  duration_ms: 8.170103
+  duration_ms: 7.684645
   type: 'test'
   ...
 # Subtest: lattice build is seeded and deterministic; the final camera looks down an open [110] channel
 ok 21 - lattice build is seeded and deterministic; the final camera looks down an open [110] channel
   ---
-  duration_ms: 207.441529
+  duration_ms: 145.864656
   type: 'test'
   ...
 # Subtest: scale bar is physically true at the focus distance and labelled in Polish
 ok 22 - scale bar is physically true at the focus distance and labelled in Polish
   ---
-  duration_ms: 0.421074
+  duration_ms: 0.412134
   type: 'test'
   ...
 # Subtest: legacy matrices are column-major
 ok 23 - legacy matrices are column-major
   ---
-  duration_ms: 0.870013
+  duration_ms: 3.333598
   type: 'test'
   ...
 # Subtest: legacy geometry is seeded, finite and has unit normals
 ok 24 - legacy geometry is seeded, finite and has unit normals
   ---
-  duration_ms: 142.490184
+  duration_ms: 127.827705
   type: 'test'
   ...
 1..24
@@ -164,7 +164,7 @@ ok 24 - legacy geometry is seeded, finite and has unit normals
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 588.309088
+# duration_ms 508.458851
 
 > krzem-si@0.1.0 build
 > vite build && node scripts/build.mjs
@@ -178,22 +178,22 @@ dist/assets/favicon-DsWf-hz3.svg               0.28 kB │ gzip:   0.21 kB
 dist/assets/scene-4-BJ915bGZ.webp              5.22 kB
 dist/assets/scene-2-rvEBY1eM.webp              9.58 kB
 dist/assets/hero-mobile-B_S4DzUa.webp         13.12 kB
-dist/index.html                               13.93 kB │ gzip:   5.06 kB
+dist/index.html                               13.94 kB │ gzip:   5.06 kB
 dist/assets/hero-desktop-c_G3iTlS.webp        16.83 kB
 dist/assets/scene-6-D2Aw0xmR.webp             21.91 kB
+dist/assets/lattice-mobile-D0NIuEv9.webp      38.94 kB
 dist/assets/scene-5-D1g_1Yus.webp             49.66 kB
-dist/assets/lattice-mobile-WNub3A3Y.webp      72.61 kB
+dist/assets/lattice-desktop-CciBl4lI.webp     82.20 kB
 dist/assets/scene-3-BdqVaWcx.webp            107.19 kB
-dist/assets/lattice-desktop-DM8c5xU0.webp    157.85 kB
 dist/assets/studio-1k-BabGBT47.hdr           198.58 kB
 dist/assets/fracture-face-BxKEnn6Q.glb       709.42 kB
 dist/assets/silicon-chunk-1k-CYYiKB6e.glb  1,036.77 kB
 dist/assets/silicon-chunk-2k-CVMIotq-.glb  2,807.04 kB
-dist/assets/index-CKxLYGPy.css                21.82 kB │ gzip:   5.73 kB
-dist/assets/index-1iuB8y-L.js                 13.23 kB │ gzip:   5.74 kB
-dist/assets/renderer-DDyly4NY.js             652.10 kB │ gzip: 170.10 kB
+dist/assets/index-m8UHrmWx.css                21.93 kB │ gzip:   5.75 kB
+dist/assets/index-CReYBP0-.js                 13.23 kB │ gzip:   5.74 kB
+dist/assets/renderer-CcE1x7Ih.js             653.06 kB │ gzip: 170.53 kB
 
-✓ built in 386ms
-Initial HTML/CSS/JS (brotli): 14.2 KiB  [assets/index-1iuB8y-L.js 5.0, assets/index-CKxLYGPy.css 4.9, index.html 4.3]
-Lazy GPU chunks (brotli): assets/renderer-DDyly4NY.js 134.7 KiB
-dist/: 21 files, 5797.5 KiB raw (before .br/.gz variants).
+✓ built in 379ms
+Initial HTML/CSS/JS (brotli): 14.2 KiB  [assets/index-CReYBP0-.js 5.1, assets/index-m8UHrmWx.css 4.9, index.html 4.3]
+Lazy GPU chunks (brotli): assets/renderer-CcE1x7Ih.js 135.1 KiB
+dist/: 21 files, 5691.8 KiB raw (before .br/.gz variants).

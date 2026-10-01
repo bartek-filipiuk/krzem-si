@@ -1,5 +1,5 @@
 {
-  "url": "http://127.0.0.1:4174/",
+  "url": "http://127.0.0.1:4175/",
   "browser": "Chromium 145.0.7632.6",
   "gpu": "nvidia",
   "checks": [

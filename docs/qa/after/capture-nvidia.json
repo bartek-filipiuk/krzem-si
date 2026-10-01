@@ -1104,10 +1104,10 @@
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 241,
-    "median_ms": 2.06,
-    "p95_ms": 3.82,
-    "max_ms": 7.3,
+    "frames": 240,
+    "median_ms": 3.87,
+    "p95_ms": 4.7,
+    "max_ms": 6.0,
     "over_50ms": 0
    },
    "scroll": {
@@ -1118,10 +1118,10 @@
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 844,
-    "median_ms": 3.06,
-    "p95_ms": 6.09,
-    "max_ms": 9.3,
+    "frames": 843,
+    "median_ms": 2.69,
+    "p95_ms": 5.61,
+    "max_ms": 16.5,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -1138,29 +1138,29 @@
    "idle_lattice": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
     "frames": 240,
-    "median_ms": 2.07,
-    "p95_ms": 2.62,
-    "max_ms": 3.2,
+    "median_ms": 3.15,
+    "p95_ms": 3.84,
+    "max_ms": 5.5,
     "over_50ms": 0
    },
    "scroll": {
-    "frames": 842,
+    "frames": 843,
     "median_ms": 16.7,
     "p95_ms": 16.8,
-    "max_ms": 33.4,
+    "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 842,
-    "median_ms": 2.17,
-    "p95_ms": 3.78,
-    "max_ms": 11.6,
+    "frames": 843,
+    "median_ms": 2.6,
+    "p95_ms": 5.59,
+    "max_ms": 12.4,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -1177,29 +1177,29 @@
    "idle_lattice": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 241,
-    "median_ms": 1.78,
-    "p95_ms": 1.81,
-    "max_ms": 1.9,
+    "frames": 240,
+    "median_ms": 3.24,
+    "p95_ms": 3.27,
+    "max_ms": 3.3,
     "over_50ms": 0
    },
    "scroll": {
     "frames": 843,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
     "frames": 843,
-    "median_ms": 1.76,
-    "p95_ms": 3.42,
-    "max_ms": 4.4,
+    "median_ms": 2.36,
+    "p95_ms": 5.87,
+    "max_ms": 11.0,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -1216,29 +1216,29 @@
    "idle_lattice": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.8,
+    "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
     "frames": 240,
-    "median_ms": 0.8,
-    "p95_ms": 0.84,
-    "max_ms": 0.9,
+    "median_ms": 1.28,
+    "p95_ms": 1.31,
+    "max_ms": 1.4,
     "over_50ms": 0
    },
    "scroll": {
     "frames": 843,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
     "frames": 843,
-    "median_ms": 0.71,
-    "p95_ms": 1.19,
-    "max_ms": 1.9,
+    "median_ms": 1.19,
+    "p95_ms": 2.48,
+    "max_ms": 3.9,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -1254,16 +1254,16 @@
  },
  "lattice_record": {
   "profile": "cinematic",
-  "frames": 1928,
+  "frames": 1929,
   "median_ms": 16.7,
   "p95_ms": 16.7,
-  "max_ms": 33.4,
+  "max_ms": 16.8,
   "over_50ms": 0,
   "gpu_time": {
-   "frames": 1929,
-   "median_ms": 1.69,
-   "p95_ms": 3.67,
-   "max_ms": 17.1,
+   "frames": 1931,
+   "median_ms": 2.47,
+   "p95_ms": 4.7,
+   "max_ms": 28.6,
    "over_50ms": 0
   },
   "seconds": 32.0
