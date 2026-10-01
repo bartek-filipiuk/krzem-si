@@ -353,4 +353,6 @@ html[data-motion=full][data-compact=true] .stage{height:100vh;height:100svh;min-
 .lattice-scale{display:flex;align-items:center;gap:12px;font-size:10px;letter-spacing:1.2px;color:#c4c8cc}
 .lattice-scale[hidden]{display:none}
 .lattice-scale i{display:block;height:5px;border:1px solid #c4c8cc;border-top:0}
+/* The stage strip sits over the moving lattice: a graphite halo keeps its labels legible. */
+html[data-renderer=webgl] #materia .process-strip{text-shadow:0 0 3px #0b0e12,0 1px 12px #0b0e12,0 0 24px #0b0e12}
 @media(max-width:759px){.lattice-legend{right:var(--pad);width:auto;bottom:calc(12.5% + 52px);font-size:8px}}

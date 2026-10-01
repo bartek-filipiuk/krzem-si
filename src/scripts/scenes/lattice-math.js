@@ -120,17 +120,23 @@ export function latticeCamera(u, framing = 'desktop', drift = 0) {
 }
 
 /**
- * Crystallisation front: atoms with dot(position, normal) < offset are monocrystal. The normal
- * points to the right of the final frame (and a little up), so the front crosses the frame left to
- * right while u goes from .3 to .82 (chapter progress ~.12 to ~.78). Camera travel along the
- * channel is perpendicular to the normal, so the sweep does not depend on the glide.
- * heat: strength of the amber band, zero before and after the sweep.
+ * Crystallisation front: atoms with dot(position, normal) < offset are monocrystal. The plane is
+ * nearly horizontal (tilted 20 degrees towards the viewing axis) and contains the frame's
+ * horizontal, so its hot edge crosses the whole width of the frame and rises from the bottom
+ * to the top of the in-focus plane: lower third at chapter progress .25, upper third at .5,
+ * everything visible ordered by ~.85. The offset is measured from the camera, so the sweep does
+ * not depend on the glide. heat: strength of the amber band, zero before and after the sweep.
  */
-export const FRONT_NORMAL = normalize([.62, -.62, .3]);
-const FRONT_RANGE = [-1.8, 2.8];
+export const FRONT_NORMAL = normalize(add(scale(UP, .94), scale(CHANNEL_DIR, .34)));
+const FRONT_KEYS = [[.27, -.9], [.4, .1], [.6, .5], [.76, 1.6], [.88, 3.2]];
 export function latticeFront(u) {
-  const k = smoothstep(.3, .82, u), origin = dot(CHANNEL_POINT, FRONT_NORMAL);
-  return { normal: FRONT_NORMAL, offset: origin + FRONT_RANGE[0] + (FRONT_RANGE[1] - FRONT_RANGE[0]) * k, heat: Math.sin(Math.PI * k) ** .5 };
+  const keys = FRONT_KEYS, last = keys.length - 1;
+  let i = 0;
+  while (i < last - 1 && u > keys[i + 1][0]) i++;
+  const k = clamp((u - keys[i][0]) / (keys[i + 1][0] - keys[i][0]));
+  const local = keys[i][1] + (keys[i + 1][1] - keys[i][1]) * k;
+  const sweep = clamp((u - keys[0][0]) / (keys[last][0] - keys[0][0]));
+  return { normal: FRONT_NORMAL, offset: dot(latticeCamera(u).position, FRONT_NORMAL) + local, heat: sweep > 0 && sweep < 1 ? Math.sin(Math.PI * sweep) ** .35 : 0 };
 }
 
 /** The camera poses the block must cover: the whole path, both framings' extents. */

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chapterAt, heroProgress, positionOf, storyAt, entryPhases, latticeProgress, ENTRY, LATTICE_PIN, clamp, smoothstep } from '../src/scripts/story/timeline.js';
-import { A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT } from '../src/scripts/scenes/lattice-math.js';
+import { A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT, FOCUS, FRONT_NORMAL } from '../src/scripts/scenes/lattice-math.js';
 import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG, rotateY } from '../src/scripts/story/camera-rig.js';
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
@@ -277,6 +277,15 @@ test('lattice build is seeded and deterministic; the final camera looks down an 
   const front = [0, .3, .5, .82, 1].map(u => latticeFront(u).offset);
   assert.ok(front.every((v, i) => !i || v >= front[i - 1]), 'the front only moves forward with u');
   assert.equal(latticeFront(0).heat, 0); assert.ok(latticeFront(1).heat < 1e-6);
+  // The hot edge crosses the in-focus plane (the sharp, scale-true part of the frame) at chapter
+  // progress .25 (lower half) and .5 (upper half), so it reads in a still.
+  for (const [p, lower] of [[.25, true], [.5, false]]) {
+    const u = LATTICE_PIN + (1 - LATTICE_PIN) * p, cam = latticeCamera(u), front = latticeFront(u);
+    const centre = cam.position.map((v, i) => v + cam.forward[i] * FOCUS);
+    const half = FOCUS * Math.tan(cam.fov * Math.PI / 360), at = y => centre.reduce((s, v, i) => s + (v + [0, 0, y][i]) * FRONT_NORMAL[i], 0);
+    assert.ok(front.heat > .5, `front hot at ${p}`);
+    assert.ok(lower ? front.offset > at(-half) && front.offset < at(0) : front.offset > at(0) && front.offset < at(half), `front edge in frame at ${p}`);
+  }
 });
 
 test('scale bar is physically true at the focus distance and labelled in Polish', () => {

@@ -8,28 +8,34 @@
  * for two triangles each, shaded with a per-pixel sphere normal.
  */
 import {
-  Color, CylinderGeometry, Fog, InstancedBufferAttribute, InstancedBufferGeometry, Mesh,
+  Color, CustomBlending, CylinderGeometry, Fog, OneMinusSrcAlphaFactor, SrcAlphaFactor, InstancedBufferAttribute, InstancedBufferGeometry, Mesh,
   MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, Vector3, Vector4,
 } from 'three';
-import { buildLattice, latticeCamera, latticeFront, scaleBar, BOND, FOCUS } from './lattice-math.js';
+import { buildLattice, latticeCamera, latticeFront, scaleBar, BOND, CHANNEL_DIR, FOCUS } from './lattice-math.js';
 
 const BG = new Color('#0b0e12');
 const BG_SRGB = [11 / 255, 14 / 255, 18 / 255]; // raw shader output is already sRGB
 /** Level of detail per profile lod: fog distance in nm (the block is cut to what the fog lets through). */
 const LOD = { high: { far: 4.4 }, low: { far: 3.8 } };
-const ATOM_RADIUS = .034, BOND_RADIUS = .007, BAND = .3, EXPOSURE = 1;
+const ATOM_RADIUS = .022, BOND_RADIUS = .0045, BAND = .3, EXPOSURE = 1;
+/**
+ * Depth of field: one sharp plane at FOCUS (the plane the scale bar is true for). Thin lens: the
+ * blur, measured as a radius in the scene at the object's own depth, is APERTURE * |z - focus| / focus.
+ */
+const APERTURE = .07;
 const AMBER = new Color('#d98a4a'); // redder than the CSS amber: dimmed by fog it turns brown, not olive
 
 // Shared vertex code: lattice position -> current position for the front and grain pose.
 const COMMON = /* glsl */`
-uniform vec4 uFront; uniform float uBand, uHeat, uTime, uRadius, uBond;
-varying float vHeat, vOrder;
+uniform vec4 uFront; uniform float uBand, uHeat, uTime, uRadius, uBond, uFocus, uAperture;
+varying float vHeat, vOrder, vSharp;
+float blurAt(float z) { return uAperture * abs(z - uFocus) / uFocus; }
 vec3 rotateAxis(vec3 v, vec3 k, float a) { float c = cos(a), s = sin(a); return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c); }
 // t: 1 behind the front (monocrystal), 0 ahead of it (grain pose).
 vec3 placeAtom(vec3 lattice, vec3 centre, vec4 rot, float seed, out float t, out float heat) {
   float d = dot(lattice, uFront.xyz) - uFront.w;
   t = 1.0 - smoothstep(-uBand, uBand, d);
-  heat = exp(-d * d / (.1 * uBand)) * uHeat; // the hot band is narrower than the blend
+  heat = exp(-d * d / .02) * uHeat; // the hot band (~0.1 nm) is narrower than the blend
   vec3 p = centre + rotateAxis(lattice - centre, rot.xyz, rot.w * (1.0 - t));
   // Agitation in the hot band only: a liquid-like jitter, on the ambient clock.
   return p + heat * .03 * sin(vec3(3.1, 2.7, 3.7) * uTime + seed * vec3(40.0, 17.0, 29.0));
@@ -64,10 +70,10 @@ function patch(material, uniforms, key, code) {
       .replace('#include <begin_vertex>', code.position)
       .replace('#include <project_vertex>', code.project ?? '#include <project_vertex>');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\nvarying float vHeat, vOrder;\nuniform vec3 uAmber; uniform vec2 uViewport; uniform vec4 uVeil; uniform vec3 uFloor; uniform vec2 uCentre;\n${code.fragmentHead ?? ''}`)
+      .replace('#include <common>', `#include <common>\nvarying float vHeat, vOrder, vSharp;\nuniform vec3 uAmber; uniform vec2 uViewport; uniform vec4 uVeil; uniform vec3 uFloor; uniform vec2 uCentre;\n${code.fragmentHead ?? ''}`)
       .replace('#include <normal_fragment_begin>', code.fragmentNormal ?? '#include <normal_fragment_begin>')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(.5, 1.0, vOrder); // the ordered crystal reads brighter')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAmber * vHeat;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAmber * vHeat * 1.8;')
       .replace('#include <fog_fragment>', FOG.replace('BOND_FOG', code.fog ?? ''));
   };
   return material;
@@ -78,20 +84,27 @@ const ATOM_SHADER = {
   normal: `float t, heat; vec3 centreNow = placeAtom(aLattice, aCentre, aRot, aInfo.y, t, heat);
     vHeat = heat; vOrder = t; vec3 objectNormal = vec3(0.0, 0.0, 1.0);`,
   position: 'vec3 transformed = centreNow;',
-  // Quad facing the camera, pushed forward by the radius so bonds end inside the sphere.
+  // Quad facing the camera, pushed forward by the radius so bonds end inside the sphere, grown by
+  // the blur radius. vSharp: share of the quad that is the sharp core of the sphere.
   project: `vec4 mvCentre = modelViewMatrix * vec4(centreNow, 1.0);
     float r = uRadius * mix(aInfo.x, 1.0, t) * nearFade(centreNow);
+    float size = r + blurAt(-mvCentre.z);
+    vSharp = r / max(size, 1e-6);
     vW = normalize(-mvCentre.xyz); vU = normalize(cross(vec3(0.0, 1.0, 0.0), vW)); vV = cross(vW, vU); vImp = position.xy;
-    vec4 mvPosition = vec4(mvCentre.xyz + (vU * position.x + vV * position.y + vW) * r, 1.0);
+    vec4 mvPosition = vec4(mvCentre.xyz + (vU * position.x + vV * position.y) * size + vW * r, 1.0);
     gl_Position = projectionMatrix * mvPosition;`,
   fragmentHead: 'varying vec2 vImp; varying vec3 vU, vV, vW;',
-  // Sphere normal per pixel; the rim is antialiased through the alpha (MSAA alpha-to-coverage).
-  fragmentNormal: `float rr = dot(vImp, vImp);
-    float rim = 1.0 - smoothstep(1.0 - 1.5 * fwidth(rr), 1.0, rr);
-    if (rim <= 0.0) discard;
-    diffuseColor.a *= rim;
+  // Sharp sphere in focus; out of focus a soft disc whose light is spread over the blur
+  // (alpha ~ (r / size)^1.4, a little brighter than strict energy conservation).
+  fragmentNormal: `float rho = length(vImp);
+    float inner = min(2.0 * vSharp - 1.0, 1.0 - 1.5 * fwidth(rho));
+    float alpha = (1.0 - smoothstep(inner, 1.0, rho)) * pow(vSharp, 1.4);
+    if (alpha < .004) discard;
+    diffuseColor.a *= alpha;
+    vec2 q = vImp / max(vSharp, .05);
+    float qq = min(dot(q, q), 1.0);
     float faceDirection = 1.0;
-    vec3 normal = normalize(vU * vImp.x + vV * vImp.y + vW * sqrt(max(0.0, 1.0 - rr)));
+    vec3 normal = normalize(vU * q.x + vV * q.y + vW * sqrt(1.0 - qq));
     vec3 nonPerturbedNormal = normal;`,
 };
 const BOND_SHADER = {
@@ -101,10 +114,15 @@ const BOND_SHADER = {
     vec3 side = normalize(cross(dir, abs(dir.z) < .9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0))), bi = cross(dir, side);
     // Bonds stretched across the front (one end still in its grain pose) are not bonds: hide them.
     float show = mix(aShow, 1.0, smoothstep(.6, .95, min(ta, tb))) * min(nearFade(pa), nearFade(pb)) * (1.0 - smoothstep(1.08, 1.3, length(axis) / uBond));
-    vHeat = .5 * max(ha, hb); vOrder = min(ta, tb); vec3 objectNormal = side * normal.x + bi * normal.z;`,
+    vHeat = .8 * max(ha, hb); vOrder = min(ta, tb);
+    vSharp = uRadius / (uRadius + blurAt(-(modelViewMatrix * vec4(.5 * (pa + pb), 1.0)).z));
+    // Well out of focus a bond thins away (a fogged but opaque bar would read as a dark stripe).
+    show *= smoothstep(.1, .3, vSharp);
+    vec3 objectNormal = side * normal.x + bi * normal.z;`,
   position: 'vec3 transformed = pa + axis * position.y + (side * position.x + bi * position.z) * uRadius * show;',
-  // Thin far bonds alias into flicker before the atoms do: they fade out earlier.
-  fog: 'fogFactor = max(fogFactor, smoothstep(fogNear, fogFar * .7, vFogDepth));',
+  // Thin bonds cannot blur cheaply: out of focus they recede into the background instead (this
+  // also keeps far bonds from aliasing into flicker).
+  fog: 'fogFactor = max(fogFactor, 1.0 - smoothstep(.12, .6, vSharp));',
 };
 
 function instanced(base, count, attributes) {
@@ -129,12 +147,16 @@ function grainArrays(lattice, atoms) {
 
 function buildMeshes(lattice, atomMaterial, bondMaterial) {
   const n = lattice.positions.length, m = lattice.pairs.length;
-  const atoms = grainArrays(lattice, Array.from({ length: n }, (_, i) => i));
+  // Blurred atoms are blended: draw them far to near along the viewing axis (the camera always
+  // looks roughly along +[110]), so soft discs composite in order without a per-frame sort.
+  const depth = lattice.positions.map(p => p[0] * CHANNEL_DIR[0] + p[1] * CHANNEL_DIR[1] + p[2] * CHANNEL_DIR[2]);
+  const order = Array.from({ length: n }, (_, i) => i).sort((i, j) => depth[j] - depth[i]);
+  const atoms = grainArrays(lattice, order);
   const info = new Float32Array(n * 2);
-  for (let i = 0; i < n; i++) { info[2 * i] = lattice.visible[i]; info[2 * i + 1] = lattice.hashes[i]; }
+  order.forEach((atom, i) => { info[2 * i] = lattice.visible[atom]; info[2 * i + 1] = lattice.hashes[atom]; });
   const quad = new PlaneGeometry(2, 2);
   const atomGeometry = instanced(quad, n, {
-    aLattice: [Float32Array.from(lattice.positions.flat()), 3], aCentre: [atoms.centre, 3], aRot: [atoms.rot, 4], aInfo: [info, 2],
+    aLattice: [Float32Array.from(order.flatMap(i => lattice.positions[i])), 3], aCentre: [atoms.centre, 3], aRot: [atoms.rot, 4], aInfo: [info, 2],
   });
   const cylinder = new CylinderGeometry(1, 1, 1, 6, 1, true).translate(0, .5, 0);
   const a = grainArrays(lattice, lattice.pairs.map(([i]) => i)), b = grainArrays(lattice, lattice.pairs.map(([, j]) => j));
@@ -156,21 +178,22 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
   scene.environmentIntensity = 1;
   scene.fog = new Fog(BG, 1, LOD.high.far);
   const shared = {
-    uFront: { value: new Vector4() }, uBand: { value: BAND }, uBond: { value: BOND }, uHeat: { value: 0 }, uTime: { value: 0 },
+    uFront: { value: new Vector4() }, uBand: { value: BAND }, uFocus: { value: FOCUS }, uAperture: { value: APERTURE }, uBond: { value: BOND }, uHeat: { value: 0 }, uTime: { value: 0 },
     uAmber: { value: AMBER }, uViewport: { value: new Vector2(1, 1) }, uVeil: { value: new Vector4() }, uFloor: { value: new Vector3() }, uCentre: { value: new Vector2() },
   };
-  const atomMaterial = patch(new MeshStandardMaterial({ color: '#a3acb6', metalness: .4, roughness: .42, alphaToCoverage: true }),
+  const atomMaterial = patch(new MeshStandardMaterial({ color: '#b3bcc6', metalness: .45, roughness: .38, transparent: true }),
     { ...shared, uRadius: { value: ATOM_RADIUS } }, 'lattice-atom', ATOM_SHADER);
   const bondMaterial = patch(new MeshStandardMaterial({ color: '#7a848f', metalness: .5, roughness: .5 }),
     { ...shared, uRadius: { value: BOND_RADIUS } }, 'lattice-bond', BOND_SHADER);
-  // Dims whatever is already in the frame (the hero's face) to the page background. Drawn at
-  // the far plane after the atoms, so the depth test keeps it behind them.
+  // Dims whatever is already in the frame (the hero's face) to the page background. First in the
+  // opaque list (custom blending keeps it there), so everything of the lattice draws over it.
   const dim = new Mesh(new PlaneGeometry(2, 2), new ShaderMaterial({
-    uniforms: { uColor: { value: new Vector4() } }, transparent: true, depthWrite: false,
+    uniforms: { uColor: { value: new Vector4() } }, depthWrite: false, depthTest: false,
+    blending: CustomBlending, blendSrc: SrcAlphaFactor, blendDst: OneMinusSrcAlphaFactor,
     vertexShader: 'void main() { gl_Position = vec4(position.xy, .99999, 1.0); }',
     fragmentShader: 'uniform vec4 uColor; void main() { gl_FragColor = uColor; }',
   }));
-  dim.frustumCulled = false; dim.renderOrder = 10;
+  dim.frustumCulled = false; dim.renderOrder = -1;
   scene.add(dim);
 
   const camera = new PerspectiveCamera(40, 1, .02, LOD.high.far + 1);
@@ -218,7 +241,7 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
       shared.uTime.value = time;
       renderer.getDrawingBufferSize(shared.uViewport.value);
       if (framing === 'mobile') { shared.uVeil.value.set(.36, .6, 0, .85); shared.uFloor.value.set(.2, .4, .85); }
-      else { shared.uVeil.value.set(.28, .56, 1, .85); shared.uFloor.value.set(.12, .34, .7); }
+      else { shared.uVeil.value.set(.28, .56, 1, .85); shared.uFloor.value.set(.2, .38, .85); }
       shared.uCentre.value.set(.5 + cam.shift[0] / 2, .5 + cam.shift[1] / 2);
       scene.fog.near = .5 + .9 * emerge;
       scene.fog.far = .55 + (far - .55) * emerge;
