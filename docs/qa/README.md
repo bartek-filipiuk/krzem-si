@@ -10,3 +10,7 @@
   calm posters), frames `docs/qa/after/lattice-*.webp`, recording
   `docs/qa/after/lattice-scroll-desktop.webm` (hero -> end of chapter 01 -> back -> forward),
   GPU times in `docs/PERFORMANCE.md` ("Chapter 01"). Browser report updated (137 checks). Before/after of the polish round: `lattice-v1-cinematic-desktop-{h088,050,100}.webp` (first version) next to `lattice-cinematic-desktop-{h088,050,100}.webp`.
+- Chapter 02 FinFET (2026-10-01): board `docs/qa/after/transistor-board.webp` (OFF then ON at 0-100 %),
+  frames `docs/qa/after/transistor-*.webp`; before/after of the readability round:
+  `transistor-v1-cinematic-desktop-{off,on}-050.webp`, `transistor-v1-cinematic-mobile-on-050.webp`
+  next to the same names without `v1`. GPU times in `docs/PERFORMANCE.md` ("Chapter 02").
