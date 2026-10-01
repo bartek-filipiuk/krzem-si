@@ -200,3 +200,10 @@ Steep reveal (2026-10-01, `scale-perf` long run, AMD iGPU balanced 1440×1000): 
 GPU 11.3 / 12.2 ms (median / p95), scroll through the chapter GPU 4.9 / 14.9 / max 16.3 ms, frame
 intervals 16.7 / 16.7 / max 16.8 ms, none over 50 ms. Mobile 3.4 / 3.7 idle, 1.4 / 4.1 scrolling.
 Within a 60 Hz frame; the reveal is the most expensive frame of the chapter on the iGPU.
+
+Chapter 02 redesign (2026-10-01, `transistor-perf`, switch ON, idle at the close view .5 then a sweep):
+AMD iGPU balanced desktop GPU 7.9 / 8.5 ms idle, 7.3 / 8.4 ms scrolling; balanced mobile 1.6 / 1.7.
+RTX 3070 balanced desktop 5.0 / 5.1. Frame intervals 16.7 ms, none over 50 ms. Glass parts and
+particle trails are the cost (fill rate); balanced draws two trail copies instead of four. The
+RTX cinematic long-run numbers show the same low-clock effect as chapter 03 (about 16 ms reported
+without a missed frame) and are not a cost measure.

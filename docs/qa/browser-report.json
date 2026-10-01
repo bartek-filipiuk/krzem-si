@@ -156,6 +156,10 @@
       "passed": true
     },
     {
+      "name": "Transistor: rapid double toggle ends in the starting state",
+      "passed": true
+    },
+    {
       "name": "Transistor: Space toggles it",
       "passed": true
     },
@@ -569,6 +573,14 @@
     },
     {
       "name": "Keyboard: Enter on a chapter link moves there",
+      "passed": true
+    },
+    {
+      "name": "Transistor: state attribute is right at once after a double press",
+      "passed": true
+    },
+    {
+      "name": "Transistor: after the sequence the scene shows the button state",
       "passed": true
     },
     {

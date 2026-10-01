@@ -2701,11 +2701,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-off-025": {
@@ -2734,11 +2734,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-off-050": {
@@ -2767,11 +2767,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-off-075": {
@@ -2800,11 +2800,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-off-100": {
@@ -2833,11 +2833,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-on-000": {
@@ -2866,11 +2866,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-on-025": {
@@ -2899,11 +2899,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-on-050": {
@@ -2932,11 +2932,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-on-075": {
@@ -2965,11 +2965,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-desktop-on-100": {
@@ -2998,11 +2998,11 @@
      "bonds": 25107
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-off-000": {
@@ -3031,11 +3031,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-off-025": {
@@ -3064,11 +3064,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-off-050": {
@@ -3097,11 +3097,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-off-075": {
@@ -3130,11 +3130,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-off-100": {
@@ -3163,11 +3163,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-on-000": {
@@ -3196,11 +3196,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-on-025": {
@@ -3229,11 +3229,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-on-050": {
@@ -3262,11 +3262,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-on-075": {
@@ -3295,11 +3295,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-cinematic-mobile-on-100": {
@@ -3328,11 +3328,11 @@
      "bonds": 19869
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-off-000": {
@@ -3361,11 +3361,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-off-025": {
@@ -3394,11 +3394,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-off-050": {
@@ -3427,11 +3427,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-off-075": {
@@ -3460,11 +3460,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-off-100": {
@@ -3493,11 +3493,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-on-000": {
@@ -3526,11 +3526,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-on-025": {
@@ -3559,11 +3559,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-on-050": {
@@ -3592,11 +3592,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-on-075": {
@@ -3625,11 +3625,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-desktop-on-100": {
@@ -3658,11 +3658,11 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-off-000": {
@@ -3691,11 +3691,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-off-025": {
@@ -3724,11 +3724,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-off-050": {
@@ -3757,11 +3757,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-off-075": {
@@ -3790,11 +3790,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-off-100": {
@@ -3823,11 +3823,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-on-000": {
@@ -3856,11 +3856,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-on-025": {
@@ -3889,11 +3889,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-on-050": {
@@ -3922,11 +3922,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-on-075": {
@@ -3955,11 +3955,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-balanced-mobile-on-100": {
@@ -3988,11 +3988,11 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 4,
-    "geometries": 12,
+    "textures": 5,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
-    "exposure": 0.85
+    "exposure": 0.9
    }
   },
   "transistor-calm-desktop-off-000": {
@@ -4239,31 +4239,31 @@
  "transistor_perf": {
   "cinematic/desktop": {
    "idle": {
-    "frames": 241,
+    "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 241,
-    "median_ms": 4.74,
-    "p95_ms": 6.85,
-    "max_ms": 7.9,
+    "frames": 240,
+    "median_ms": 16.07,
+    "p95_ms": 19.22,
+    "max_ms": 20.2,
     "over_50ms": 0
    },
    "scroll": {
-    "frames": 663,
+    "frames": 664,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 663,
-    "median_ms": 4.83,
-    "p95_ms": 5.49,
-    "max_ms": 8.2,
+    "frames": 665,
+    "median_ms": 15.86,
+    "p95_ms": 17.96,
+    "max_ms": 20.7,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -4276,15 +4276,15 @@
    "idle": {
     "frames": 241,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
     "frames": 241,
-    "median_ms": 4.36,
-    "p95_ms": 4.71,
-    "max_ms": 8.9,
+    "median_ms": 5.44,
+    "p95_ms": 6.55,
+    "max_ms": 9.5,
     "over_50ms": 0
    },
    "scroll": {
@@ -4295,10 +4295,10 @@
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 663,
-    "median_ms": 4.44,
-    "p95_ms": 4.71,
-    "max_ms": 9.0,
+    "frames": 664,
+    "median_ms": 5.51,
+    "p95_ms": 7.16,
+    "max_ms": 11.6,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -4311,15 +4311,15 @@
    "idle": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.8,
+    "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 240,
-    "median_ms": 5.2,
-    "p95_ms": 5.26,
-    "max_ms": 7.0,
+    "frames": 241,
+    "median_ms": 5.0,
+    "p95_ms": 5.05,
+    "max_ms": 5.2,
     "over_50ms": 0
    },
    "scroll": {
@@ -4330,10 +4330,10 @@
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 664,
-    "median_ms": 4.89,
-    "p95_ms": 5.19,
-    "max_ms": 7.2,
+    "frames": 665,
+    "median_ms": 4.81,
+    "p95_ms": 5.31,
+    "max_ms": 5.7,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",
@@ -4344,31 +4344,31 @@
   },
   "balanced/mobile": {
    "idle": {
-    "frames": 241,
+    "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 241,
-    "median_ms": 1.04,
-    "p95_ms": 1.07,
-    "max_ms": 1.9,
+    "frames": 240,
+    "median_ms": 16.27,
+    "p95_ms": 16.79,
+    "max_ms": 17.2,
     "over_50ms": 0
    },
    "scroll": {
     "frames": 663,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 663,
-    "median_ms": 1.03,
-    "p95_ms": 1.07,
-    "max_ms": 3.4,
+    "frames": 664,
+    "median_ms": 16.12,
+    "p95_ms": 16.91,
+    "max_ms": 18.1,
     "over_50ms": 0
    },
    "gl": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3070 Laptop GPU/PCIe/SSE2, OpenGL ES 3.2)",

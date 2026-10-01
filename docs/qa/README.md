@@ -17,3 +17,6 @@
 - Chapter 03 interconnect and die (2026-10-01): board `docs/qa/after/scale-board.webp` (0, .16, .25, .3, .5,
   .6, .75, .8, 1), frames `docs/qa/after/scale-*.webp`, recording `docs/qa/after/scale-scroll-desktop.webm`
   (02 -> 03 -> 04 with a reverse and a fling), GPU times in `docs/PERFORMANCE.md` ("Chapter 03").
+- Chapter 02 redesign (2026-10-01): `transistor-board.webp`, frames `transistor-*.webp` (before: `transistor-v2-*`),
+  switch recording `transistor-switch-desktop.webm` (automatic ON, OFF, ON, double press, scroll through).
+  Chapter 03 steep reveal: `scale-cinematic-desktop-060.webp` (before: `scale-v2-cinematic-desktop-060.webp`).
