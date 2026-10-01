@@ -6,9 +6,10 @@
 import { WebGLRenderer } from 'three';
 import { createAssetManager } from './assets.js';
 import { PROFILES, pixelRatio, textureSet } from './quality.js';
-import { entryPhases } from '../story/timeline.js';
+import { entryPhases, latticeProgress, smoothstep } from '../story/timeline.js';
 import { createHero } from '../scenes/hero.js';
 import { createLegacyScenes } from '../scenes/legacy.js';
+import { createLattice } from '../scenes/lattice.js';
 
 export async function createGpuLayer({ canvas, profile, framing, signal, invalidate, gpuTimer = false }) {
   const settings = PROFILES[profile];
@@ -17,12 +18,14 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, legacy = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
+    lattice = await createLattice({ renderer, environment: hero.environment });
+    signal?.throwIfAborted();
     legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
-    hero?.dispose(); assets.dispose(); renderer.dispose();
+    hero?.dispose(); lattice?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
   }
 
@@ -33,6 +36,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     renderer.setSize(width, height, false);
     hero.resize(width, height, current.framing);
     hero.setAnisotropy(p.anisotropy);
+    lattice.resize(width, height, current.framing, p.lod);
     legacy.resize(width, height, p.lod);
   }
 
@@ -45,26 +49,42 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     frame(state) {
       const started = performance.now();
       timer?.begin();
-      if (state.index === 0 && entryPhases(state.hero).scene === 'hero') hero.render(state);
-      else {
-        const material = state.index === 0;
+      const u = latticeProgress(state);
+      scale = null;
+      if (state.index === 0) {
+        // Hero, then the fracture face dims while the lattice emerges in front of it (no cut).
+        const entry = entryPhases(state.hero);
+        if (entry.hero) hero.render(state);
+        if (entry.lattice > 0) scale = lattice.render({ u, time: state.time, emerge: entry.lattice, fade: entry.dark, over: entry.hero });
+        else if (!entry.hero) renderer.clear();
+      } else if (state.index === 1) {
+        // The lattice recedes into the background while chapter 02 (legacy) fades in over it.
+        scale = lattice.render({ u, time: state.time, emerge: 1 - smoothstep(0, .8, state.transition) });
+        if (state.transition > 0) {
+          renderer.resetState();
+          legacy.render({ ...state, keep: true });
+          renderer.resetState();
+        }
+      } else {
         renderer.resetState();
-        legacy.render({ ...state, index: material ? 1 : state.index, progress: material ? 0 : state.progress, transition: material ? 0 : state.transition });
+        legacy.render(state);
         renderer.resetState();
       }
       timer?.end();
       return performance.now() - started;
     },
+    /** Scale bar of the last frame ({ nm, px, label }), null when the lattice is not on screen. */
+    get scale() { return scale; },
     /** GPU time per rendered frame in ms (EXT_disjoint_timer_query_webgl2), only with gpuTimer. */
     gpuTimes: timer?.samples ?? null,
     get diagnostics() {
       const gl = renderer.getContext(), info = renderer.info;
       return { ...current, pixelRatio: renderer.getPixelRatio(), buffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
-        calls: info.render.calls, triangles: info.render.triangles, textures: info.memory.textures, geometries: info.memory.geometries,
+        calls: info.render.calls, lattice: lattice.count, triangles: info.render.triangles, textures: info.memory.textures, geometries: info.memory.geometries,
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); legacy.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); legacy.dispose(); assets.dispose();
       renderer.dispose();
     },
   };

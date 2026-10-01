@@ -1,5 +1,6 @@
 /**
- * v0.1 procedural scenes for chapters 1-6, kept until stages B/C replace them. They draw into the
+ * v0.1 procedural scenes for chapters 2-6, kept until stages B/C replace them. Chapter 1 is the
+ * lattice (scenes/lattice.js); index 1 here draws nothing, only its cross-fade into chapter 2. They draw into the
  * same WebGL 2 context as Three.js (GLSL ES 1.00 shaders are valid there); the caller resets
  * Three's state cache around render(). Chapter 0 is the Three.js hero now.
  */
@@ -111,8 +112,6 @@ export function createLegacyScenes(gl) {
   function mesh(name){
     if(meshes.has(name))return meshes.get(name);
     if(name==='rock')return upload(name,geometry.crystal());
-    if(name==='wafer')return upload(name,geometry.cylinder(1.6,.045));
-    if(name==='ingot')return upload(name,geometry.cylinder(.8,2.25,64));
     const makers={transistor:geometry.transistor,circuit:()=>geometry.circuit(quality==='high'?30:20),computer:()=>geometry.computer(false),phone:()=>geometry.computer(true),compute:geometry.compute};
     const group=name.split(':')[0];
     for(const [part,data] of Object.entries(makers[group]()))upload(`${group}:${part}`,data);
@@ -133,7 +132,7 @@ export function createLegacyScenes(gl) {
     quality=lod;width=Math.max(1,cssWidth);height=Math.max(1,cssHeight);
     viewProjection=multiply(perspective(42*Math.PI/180,width/height),lookAt(eye));
   }
-  function render({index,progress:p,transition=0,time:t,pointer=[0,0],power=false}){
+  function render({index,progress:p,transition=0,time:t,pointer=[0,0],power=false,keep=false}){
     if(disposed)return;
     // Three.js leaves its own state behind: set everything this program relies on.
     gl.bindVertexArray?.(null);gl.useProgram(program);
@@ -141,18 +140,14 @@ export function createLegacyScenes(gl) {
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     gl.uniformMatrix4fv(uniforms.uViewProjection,false,viewProjection);gl.uniform3fv(uniforms.uEye,eye);
-    gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    // keep: draw over what is already in the frame (chapter 01's lattice during its exit).
+    gl.clearColor(0,0,0,0);gl.clear(keep?gl.DEPTH_BUFFER_BIT:gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.uniform1f(uniforms.uTime,t);
     const mobile=width<760, x=mobile?0:1.67, y=mobile?-1.05:-.05;
     const s=mobile?.61:1.30;
     const px=mobile?0:pointer[0]*.07,py=mobile?0:pointer[1]*.06;
     function compose(index,p){
-    if(index===1){
-      const crystalFade=1-smoothstep(.18,.34,p),ingotFade=smoothstep(.17,.32,p)*(1-smoothstep(.57,.73,p)),waferFade=smoothstep(.56,.75,p);
-      draw('rock',model(x,y,0,.13,t*.03+p*.5,-.15,s*.9),4,crystalFade);
-      draw('ingot',model(x,y,0,.25+p*.8,.5,-.8,s*.9),0,ingotFade);
-      draw('wafer',model(x,y,0,-.22-p*.1,-.45+px+t*.016,-.16,s),1,waferFade);
-    }else if(index===2){
+    if(index===2){
       const mat=model(x,y,0,.48+py,-.45+px,.05,s*.89);
       draw('transistor:substrate',mat,2);draw('transistor:contacts',mat);draw('transistor:gate',mat);
       draw('transistor:channel',mat,3,1,power?1:.05);

@@ -27,6 +27,8 @@ const URLS = {
  * alone, so exposure x environmentIntensity is what counts: .49 x 1.65 = the reviewed .6 x 1.35.
  */
 const ENTRY_EXPOSURE = .49;
+/** Share of the remaining distance to the face covered while it dims (entryPhases().push). */
+const PUSH = .6;
 /** One turn every 90 s on the ambient clock. */
 export const TURN_SECONDS = 90;
 const TONE = { AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, NoToneMapping };
@@ -121,7 +123,7 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
     render(state) {
       const theta = rest + state.time * 2 * Math.PI / TURN_SECONDS;
       if (!detail && (state.hero > .02 || ++frames > 20)) loadDetail();
-      const s = entryPhases(state.hero).camera;
+      const { camera: s, push } = entryPhases(state.hero);
       // The entry face looks almost straight into the key softbox: at hero exposure the close-up
       // clips to white and the grain reads as a honeycomb. The camera therefore ends on the face
       // normal (no bias towards the key's mirror direction) and the exposure eases down along the
@@ -134,7 +136,8 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       // (entryFace.lightRotationY), so the close-up is lit the same way whatever the hero pose and
       // whatever angle the ambient turn had reached (the turn is at rest by then).
       scene.environmentRotation.y = wrap(theta - lightYaw) * smoothstep(.35, .85, s);
-      camera.position.set(...pose.position);
+      // After the face fills the frame the camera keeps moving in while the lattice takes over.
+      camera.position.set(...pose.position.map((v, i) => pose.target[i] + (v - pose.target[i]) * (1 - PUSH * push)));
       camera.lookAt(...pose.target);
       renderer.render(scene, camera);
     },
@@ -144,6 +147,7 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       if (detail) assets.release(URLS.face);
     },
     face,
+    environment: environment.texture,
   };
 }
 

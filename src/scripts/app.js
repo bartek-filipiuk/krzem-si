@@ -18,6 +18,7 @@ const powerButton = document.querySelector('#transistor-toggle');
 const aiButton = document.querySelector('#ai-toggle');
 const aiPanel = document.querySelector('#ai-demo');
 const progressBar = document.querySelector('#reading-progress-bar');
+const scaleBox = document.querySelector('#lattice-scale');
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reader = createScrollReader(sections, document.querySelector('#zrodla'));
 const controller = new QualityController();
@@ -84,9 +85,7 @@ function update() {
   if (index === 2) setPower(manualPower ?? (progress > .35));
   if (index === 5) { const open = manualAI ?? (progress > .23 && progress < .66); aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open)); }
   if (motionFull()) {
-    const phases = entryPhases(story.hero);
-    root.style.setProperty('--hero-copy', phases.copy.toFixed(3));
-    root.style.setProperty('--dip', (index === 0 ? phases.canvas : 1).toFixed(3));
+    root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));
   }
   dirty = false;
 }
@@ -114,6 +113,7 @@ function tick(now) {
   try {
     cpu = layer.frame({ ...story, time: ambient, parallax, power: lastPower ?? false });
   } catch (error) { fail('Render error', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE'); return; }
+  showScale(layer.scale);
   if (!liveAt) {
     liveAt = now;
     root.dataset.renderer = 'webgl'; root.dataset.hero = 'live';
@@ -124,6 +124,18 @@ function tick(now) {
   }
   // Ambient motion needs every frame; a frozen QA frame only redraws on scroll or resize.
   if (!qa.freeze || wasDirty) schedule();
+}
+
+/** Scale bar under the lattice: only drawn from a live camera, so it never shows a stale value. */
+let shownScale = '';
+function showScale(scale) {
+  const key = scale ? `${scale.label}/${scale.px.toFixed(1)}` : '';
+  if (key === shownScale) return;
+  shownScale = key;
+  scaleBox.hidden = !scale;
+  if (!scale) return;
+  scaleBox.querySelector('i').style.width = `${scale.px.toFixed(1)}px`;
+  scaleBox.querySelector('span').textContent = scale.label;
 }
 
 function demote(next) {
@@ -149,7 +161,7 @@ function stop(message = 'TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ') {
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   layer?.dispose(); layer = null; liveAt = 0; lastFrame = 0; profile = 'calm';
   root.dataset.renderer = 'static'; root.dataset.quality = 'calm'; delete root.dataset.hero;
-  root.style.removeProperty('--hero-copy'); root.style.removeProperty('--dip');
+  root.style.removeProperty('--hero-copy'); showScale(null);
   status.textContent = message; motionLabel.textContent = 'Włącz animacje'; motionButton.setAttribute('aria-pressed', 'true');
   relayout('static');
   measure();
