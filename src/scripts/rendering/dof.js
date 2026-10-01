@@ -53,6 +53,7 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
   composite.frustumCulled = false;
   post.add(composite);
   const postCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  let postCompiled = false;
   const buffer = new Vector2();
 
   return {
@@ -89,6 +90,19 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
       const previous = renderer.getRenderTarget();
       renderer.setRenderTarget(target);
       try { await renderer.compileAsync(scene, camera); } finally { renderer.setRenderTarget(previous); }
+      // The composite is drawn to the canvas (tone mapped); compile that variant once too, or it
+      // links on the first frame of whichever chapter is seen first (a 40-70 ms hitch).
+      if (!postCompiled) {
+        postCompiled = true;
+        renderer.setRenderTarget(null);
+        try { await renderer.compileAsync(post, postCamera); } finally { renderer.setRenderTarget(previous); }
+      }
+      // Without KHR_parallel_shader_compile three checks a program's link on its first draw and
+      // that check waits for the link (50-110 ms mid-scroll on the first sight of a material).
+      // Check them now, one per task, while the page is still loading.
+      const programs = new Set();
+      for (const s of [scene, post]) s.traverse(o => [o.material].flat().forEach(m => { const p = m && renderer.properties.get(m).currentProgram; if (p) programs.add(p); }));
+      for (const p of programs) { p.getUniforms(); await new Promise(done => setTimeout(done)); }
     },
     dispose() { target.dispose(); composite.geometry.dispose(); composite.material.dispose(); },
   };
