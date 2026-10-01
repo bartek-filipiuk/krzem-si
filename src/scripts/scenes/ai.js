@@ -120,6 +120,8 @@ export async function createAi({ renderer, environment, dof }) {
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
   await dof.compile(scene, camera);
+  // Upload the canvas textures now, not on the first frame that sees them (a 50-80 ms hitch).
+  scene.traverse(n => [n.material].flat().forEach(m => m && Object.values(m).forEach(v => v?.isTexture && renderer.initTexture(v))));
   const m4 = new Matrix4();
   const along = (pts, k) => {
     const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));

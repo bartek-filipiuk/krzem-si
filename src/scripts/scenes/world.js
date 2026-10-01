@@ -180,6 +180,8 @@ export async function createWorld({ renderer, environment, dof }) {
   let framing = 'desktop', size = [1, 1];
   screen.draw(.3, 0);
   await dof.compile(scene, camera);
+  // Upload the canvas textures now, not on the first frame that sees them (a 50-80 ms hitch).
+  scene.traverse(n => [n.material].flat().forEach(m => m && Object.values(m).forEach(v => v?.isTexture && renderer.initTexture(v))));
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
