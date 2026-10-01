@@ -18,7 +18,7 @@ const BG_SRGB = [11 / 255, 14 / 255, 18 / 255]; // raw shader output is already 
 /** Level of detail per profile lod: fog distance in nm (the block is cut to what the fog lets through). */
 const LOD = { high: { far: 4.4 }, low: { far: 3.8 } };
 const ATOM_RADIUS = .034, BOND_RADIUS = .007, BAND = .3, EXPOSURE = 1;
-const AMBER = new Color('#d39a52');
+const AMBER = new Color('#d98a4a'); // redder than the CSS amber: dimmed by fog it turns brown, not olive
 
 // Shared vertex code: lattice position -> current position for the front and grain pose.
 const COMMON = /* glsl */`
@@ -67,7 +67,7 @@ function patch(material, uniforms, key, code) {
       .replace('#include <common>', `#include <common>\nvarying float vHeat, vOrder;\nuniform vec3 uAmber; uniform vec2 uViewport; uniform vec4 uVeil; uniform vec3 uFloor; uniform vec2 uCentre;\n${code.fragmentHead ?? ''}`)
       .replace('#include <normal_fragment_begin>', code.fragmentNormal ?? '#include <normal_fragment_begin>')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(.5, 1.0, vOrder); // the ordered crystal reads brighter')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAmber * vHeat * 1.3;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAmber * vHeat;')
       .replace('#include <fog_fragment>', FOG.replace('BOND_FOG', code.fog ?? ''));
   };
   return material;
