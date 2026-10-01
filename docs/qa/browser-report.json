@@ -116,11 +116,35 @@
       "passed": true
     },
     {
+      "name": "FinFET: six part labels on screen, clear of each other and of the copy",
+      "passed": true
+    },
+    {
+      "name": "FinFET: live scale bar at the focal plane",
+      "passed": true
+    },
+    {
       "name": "Transistor switches OFF/ON accessibly",
       "passed": true
     },
     {
+      "name": "Transistor: manual state survives a small scroll",
+      "passed": true
+    },
+    {
       "name": "Transistor switches back",
+      "passed": true
+    },
+    {
+      "name": "Transistor: Space toggles it",
+      "passed": true
+    },
+    {
+      "name": "Transistor: Enter toggles it back",
+      "passed": true
+    },
+    {
+      "name": "Transistor: GPU returns NO_ERROR",
       "passed": true
     },
     {
@@ -145,6 +169,18 @@
     },
     {
       "name": "Motion OFF: chapter 01 shows the lattice poster",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: chapter 02 poster shows the switch state",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: part labels over the poster, clear of the copy",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: the switch swaps the chapter 02 poster",
       "passed": true
     },
     {
@@ -213,6 +249,10 @@
     },
     {
       "name": "mobile/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "mobile: FinFET labels clear of each other and of the copy",
       "passed": true
     },
     {
@@ -344,6 +384,10 @@
       "passed": true
     },
     {
+      "name": "tablet: FinFET labels clear of each other and of the copy",
+      "passed": true
+    },
+    {
       "name": "tablet/skala: heading visible",
       "passed": true
     },
@@ -389,6 +433,10 @@
     },
     {
       "name": "reduced-motion/tranzystor: heading visible",
+      "passed": true
+    },
+    {
+      "name": "reduced-motion: FinFET labels clear of each other and of the copy",
       "passed": true
     },
     {
@@ -440,6 +488,10 @@
       "passed": true
     },
     {
+      "name": "no-javascript: FinFET labels clear of each other and of the copy",
+      "passed": true
+    },
+    {
       "name": "no-javascript/skala: heading visible",
       "passed": true
     },
@@ -477,6 +529,10 @@
     },
     {
       "name": "QA mode: hero handover frame lands in the lattice",
+      "passed": true
+    },
+    {
+      "name": "QA mode: power=on forces the switch before the auto-on point",
       "passed": true
     },
     {
