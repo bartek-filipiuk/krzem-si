@@ -93,11 +93,11 @@ export function keyframes(framing = 'desktop') {
     // Above the deposition front, looking down across the crossing middle levels; the thick top
     // levels then rise around the camera as it climbs.
     { target: [-200, 100, 700], d: 2000, az: .75, el: .78, fov: m ? 52 : 40, shift: m ? [0, -.25] : [.16, 0], aperture: .035 },
-    // Reveal: an oblique view from just above the top straps, about 23 degrees down: two or three
-    // thick straps cross the near third, through the openings the eye falls past the middle levels
-    // to the fine ones; the structure repeats to a horizon at the top of the frame. The sun comes
-    // from the right, so the left (under the heading) is the shadow side.
-    { target: [2500, 2000, 3500], d: 15000, az: .95, el: .5, fov: m ? 60 : 50, shift: m ? [0, -.5] : [.2, .02], aperture: .012 },
+    // Reveal: just above the top straps, about 15 degrees down, looking along them: they recede as
+    // rails to a horizon in the upper third, the nearest one quiet on the left under the heading;
+    // between them the eye drops past the middle levels to the fine ones. The low sun from the right
+    // throws long shadows of the straps across the level below.
+    { target: [15000, 4500, 5000], d: 18000, az: 1.45, el: .26, fov: m ? 60 : 50, shift: m ? [0, -.5] : [.2, -.3], aperture: .012 },
     // The die corner: pad ring, seal ring, floorplan blocks, the real stack somewhere inside.
     { target: [-1.2e5, 2.6e5, STACK_TOP], d: m ? 2.4e6 : 1.6e6, az: .9, el: .78, fov: m ? 36 : 30, shift: m ? [0, -.55] : [.24, 0], aperture: .008 },
     { target: [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2, 0], d: m ? 1.6e7 : 9e6, az: 1.0, el: .95, fov: m ? 36 : 30, shift: m ? [0, -.5] : [.24, 0], aperture: .012 },
@@ -149,7 +149,7 @@ export function scaleCamera(u = 0, framing = 'desktop', drift = 0) {
 // ---- routing ----------------------------------------------------------------------------------
 /** Clearance around the camera path: metal never comes closer than this (nm). */
 /** Clearance around the camera path: metal never comes closer than this (nm); wide lines keep more. */
-function clearance(cam, level) { return Math.min(.45 * cam.d, 1500) + level.width; }
+function clearance(cam, level) { return Math.min(.6 * cam.d, 3000) + level.width; }
 
 /** Camera samples along the whole path (both framings), for clearing a street through the stack. */
 function cameraSamples() {
@@ -158,7 +158,7 @@ function cameraSamples() {
   return out;
 }
 /** Metal the camera passes close to is deposited only after it has passed: last u it is near, plus a margin. */
-export const AFTER = { margin: .03, span: .04 };
+export const AFTER = { margin: .1, span: .05 };
 function after(box, near, level) {
   let last = -1;
   for (const c of near) if (boxDistance(c.position, box.min, box.max) <= clearance(c, level)) last = Math.max(last, c.u);
@@ -288,6 +288,10 @@ export function floorplan(seed = 9) {
     else { const m = y0 + h * t; split(x0, y0, x1, m, depth + 1); split(x0, m, x1, y1, depth + 1); }
   };
   split(DIE.x[0] + margin, DIE.y[0] + margin, DIE.x[1] - margin, DIE.y[1] - margin, 0);
+  // Analog/IO blocks sit at the die edge, the block holding the 3D stack is logic.
+  for (const b of out) if (b[4] === 2 && b[0] > DIE.x[0] + 3e5 && b[2] < DIE.x[1] - 3e5 && b[1] > DIE.y[0] + 3e5 && b[3] < DIE.y[1] - 3e5) b[4] = 0;
+  const edgeBlocks = out.filter(b => b[0] < DIE.x[0] + 3e5 || b[3] > DIE.y[1] - 3e5);
+  if (!out.some(b => b[4] === 2) && edgeBlocks.length) edgeBlocks[0][4] = 2;
   for (const b of out) if (b[0] < 0 && b[2] > 0 && b[1] < 0 && b[3] > 0) b[4] = 0;
   return out.slice(0, 24);
 }

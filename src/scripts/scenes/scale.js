@@ -26,7 +26,7 @@ const BG = new Color('#0b0e12');
 const METALS = {
   lower: { color: '#7c858f', metalness: .85, roughness: .4 },
   copper: { color: '#a07f6a', metalness: .65, roughness: .38, cap: .45 },
-  thick: { color: '#b08e74', metalness: .55, roughness: .42, cap: .55 },
+  thick: { color: '#b89274', metalness: .45, roughness: .45, cap: .5 },
   silicon: { color: '#8a939c', metalness: .6, roughness: .38 },
   gate: { color: '#a59d92', metalness: .85, roughness: .32 },
   epi: { color: '#9aa3ac', metalness: .5, roughness: .36 },
@@ -34,8 +34,12 @@ const METALS = {
 };
 // Low sun from the left of the reveal avenue (+y), a little ahead of the camera.
 const SUN = new Vector3(.32, .7, .95).normalize();
+// For the reveal the sun drops lower and comes from the right of the view (long shadows, the left
+// under the heading in shade); between the two the direction is interpolated.
+const SUN_LOW = new Vector3(.35, -.78, .55).normalize();
+const sunDir = new Vector3();
 /** Shared by every material of the scene (same objects, so one update reaches all). */
-const LIGHT = { uSunDir: { value: SUN }, uHaze: { value: new Color('#3d3029') }, uDeep: { value: new Color('#05080d') },
+const LIGHT = { uSunDir: { value: sunDir }, uHorizon: { value: new Color('#8f735c') }, uHorizonMix: { value: 0 }, uHaze: { value: new Color('#3d3029') }, uDeep: { value: new Color('#05080d') },
   uCool: { value: new Vector3(.78, .9, 1.12) }, uU: { value: 0 } };
 
 const FOG = /* glsl */`
@@ -45,12 +49,15 @@ const FOG = /* glsl */`
   float glow = pow(max(dot(normalize(vWorldP - cameraPosition), uSunDir), 0.0), 5.0);
   // Depths go blue-black (the canyon floors), the distance goes to the page background.
   gl_FragColor.rgb = mix(gl_FragColor.rgb, uDeep, .65 * (1.0 - exp(-max(uTop - vWorldP.z, 0.0) / uShadeScale)));
-  gl_FragColor.rgb = mix(gl_FragColor.rgb, mix(fogColor, uHaze, glow), fogFactor);
+  // Toward the horizon of the reveal the haze is a little lighter and warmer (low sun in the air).
+  vec3 hazeColor = mix(mix(fogColor, uHaze, glow), uHorizon * (.6 + .6 * glow), uHorizonMix);
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, hazeColor, fogFactor);
 #endif
 `;
 const COMMON = /* glsl */`
 uniform float uVis, uGrow, uTop, uLiner, uCap, uShadeScale, uU;
-uniform vec3 uSunDir, uHaze, uDeep, uCool;
+uniform vec3 uSunDir, uHaze, uDeep, uCool, uHorizon;
+uniform float uHorizonMix;
 varying vec3 vLocal; varying vec3 vHalf; varying vec3 vWorldP;
 float hash2(vec2 p) { vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 float hash3(vec3 p) { p = fract(p * .1031); p += dot(p, p.yzx + 33.33); return fract((p.x + p.y) * p.z); }
@@ -155,7 +162,8 @@ function boxes(list, { cap = 0, ...params }, { liner = 0, shadows } = {}) {
 // ---- flat surfaces ----------------------------------------------------------------------------
 const SURFACE = /* glsl */`
 uniform float uVis, uGrow, uTop, uShadeScale, uPitch, uWidth, uDir, uU;
-uniform vec3 uSunDir, uHaze, uDeep, uCool;
+uniform vec3 uSunDir, uHaze, uDeep, uCool, uHorizon;
+uniform float uHorizonMix;
 uniform sampler2D uTopMap;
 uniform vec4 uBlocks[24];
 uniform float uKinds[24];
@@ -224,10 +232,29 @@ vec3 col; float metal, rough;
   }
   // Fine textures fade to their average once they go below a pixel (fwidth of the coordinate).
   float fine = 1.0 - smoothstep(700.0, 2500.0, fwidth(w.x));
-  // Memory: sub-arrays in a regular grid (visible from millimetres), logic: an irregular tone.
-  if (kind > .5 && kind < 1.5) col = mix(vec3(.06, .07, .085), vec3(.2, .23, .27), stripe(w.x, 9000.0, 6500.0) * stripe(w.y, 5000.0, 3600.0)) * (.85 + .3 * stripe(w.x, 9e4, 8.4e4) * stripe(w.y, 6e4, 5.6e4));
-  else if (kind > 1.5) col = vec3(.1, .095, .095);
-  else if (kind > -.5) col = mix(vec3(.07, .065, .06), mix(vec3(.05, .05, .05), vec3(.1, .095, .09), hash2(floor(w / 3000.0))), fine) * (.85 + .3 * vnoise2(w / 6e4));
+  vec3 view = normalize(cameraPosition - vWorldP);
+  float sheenK = 0.0, blockMetal = .5;
+  if (kind > .5 && kind < 1.5) {
+    // Memory: sub-arrays of bit cells in a regular grid, word-line/bit-line rhythm inside, a fine
+    // neutral interference sheen that shifts with the view angle (regular gratings do this).
+    float cells = stripe(w.x, 9000.0, 6500.0) * stripe(w.y, 5000.0, 3600.0);
+    float bank = stripe(w.x, 9e4, 8.4e4) * stripe(w.y, 6e4, 5.6e4);
+    col = mix(vec3(.07, .08, .095), vec3(.21, .23, .26), cells) * (.8 + .35 * bank);
+    col += .05 * (.5 + .5 * cos(6.2831 * (view.z * 1.7 + vec3(0.0, .33, .67)))) * bank;
+    blockMetal = .7;
+  } else if (kind > 1.5) {
+    // Analog / IO: a few large devices (capacitor and transistor arrays) in a coarse grid.
+    col = mix(vec3(.09, .09, .1), vec3(.2, .19, .18), stripe(w.x, 2.4e4, 1.5e4) * stripe(w.y, 1.6e4, 1e4));
+  } else if (kind > -.5) {
+    // Logic: standard-cell rows separated by routing channels; inside the rows, the real routing
+    // (the baked level under the top straps) at a quarter of its size, so it reads at this scale.
+    vec2 ruv = .5 + (fract(w / 3.2e4) - .5) * ${(2 * LEVELS.at(-2).extent / (2 * LEVELS.at(-1).extent)).toFixed(4)};
+    float routing = texture2D(uTopMap, ruv).g;
+    float rows = stripe(w.y, 3.2e4, 2.6e4);
+    col = mix(vec3(.06, .062, .066), mix(vec3(.08, .08, .085), vec3(.19, .17, .15), routing), rows) * (.9 + .2 * vnoise2(w / 6e4));
+  }
+  // Power grid: wide straps every 100 um in both directions, catching the sun.
+  float grid = max(stripe(w.x, 1e5, 9000.0), stripe(w.y, 1e5, 9000.0)) * step(-.5, kind);
   // The top straps (every third track, unbroken) and the level below, exactly as routed.
   float top = stripe(w.y, ${(3 * LEVELS.at(-1).pitch).toFixed(1)}, ${LEVELS.at(-1).width.toFixed(1)});
   float below = stripe(w.x, ${LEVELS.at(-2).pitch.toFixed(1)}, ${LEVELS.at(-2).width.toFixed(1)}) * .8;
@@ -235,14 +262,14 @@ vec3 col; float metal, rough;
   if (max(abs(w.x), abs(w.y)) < ${LEVELS.at(-2).extent.toFixed(1)}) below = texture2D(uTopMap, tuv).g;
   vec3 copperTone = vec3(.37, .29, .22);
   col = mix(col, mix(col * .7, copperTone * .5, .5), below * .5);
-  col = mix(col, mix(copperTone, vec3(.4), .35), top);
+  col = mix(col, mix(copperTone, vec3(.4), .35), max(top, grid * .8));
   vec2 e = min(w - vec2(${DIE.x[0].toFixed(1)}, ${DIE.y[0].toFixed(1)}), vec2(${DIE.x[1].toFixed(1)}, ${DIE.y[1].toFixed(1)}) - w);
   float edge = min(e.x, e.y);
   float ring = max((1.0 - smoothstep(2.6e4, 2.9e4, edge)) * smoothstep(1.8e4, 2.1e4, edge), (1.0 - smoothstep(4.0e4, 4.3e4, edge)) * smoothstep(3.5e4, 3.8e4, edge));
   float pads = (1.0 - smoothstep(1.4e5, 1.42e5, edge)) * smoothstep(7e4, 7.2e4, edge) * stripe(e.x < e.y ? w.y : w.x, 1.2e5, 7e4);
   col = mix(col, vec3(.55, .58, .62), ring * .8);
   col = mix(col, vec3(.7, .56, .44), pads);
-  metal = .45 + .4 * top; rough = .38;
+  metal = mix(blockMetal, .8, max(top, grid)); rough = mix(.4, .3, max(top, grid));
 #endif
 float ao = depthShade(vWorldP.z);`)
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = col;')
@@ -328,7 +355,7 @@ export async function createScale({ renderer, environment, dof, shadows = true }
   for (const s of surfaces) if (s.die) floorplan().forEach((b, i) => { s.mesh.userData.uniforms.uBlocks.value[i].set(b[0], b[1], b[2], b[3]); s.mesh.userData.uniforms.uKinds.value[i] = b[4]; });
   for (const s of surfaces) scene.add(s.mesh);
   // The die body under it all (its top hidden below the oxide), for the edges in the far view.
-  const body = new Mesh(new BoxGeometry(dieSize[0], dieSize[1], DIE.thickness), new MeshStandardMaterial({ color: '#3a4048', metalness: .6, roughness: .5 }));
+  const body = new Mesh(new BoxGeometry(dieSize[0], dieSize[1], DIE.thickness), new MeshStandardMaterial({ color: '#6a7078', metalness: .55, roughness: .45 }));
   body.position.set(dieCenter[0], dieCenter[1], -DIE.thickness / 2 - 2);
   scene.add(body);
 
@@ -363,7 +390,10 @@ export async function createScale({ renderer, environment, dof, shadows = true }
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       camera.position.set(...cam.position);
       camera.lookAt(...cam.target);
-      scene.fog.near = d * 2.2; scene.fog.far = d * 14;
+      // The reveal gets the low sun, more of it, and the horizon haze; inside the layers stays as is.
+      const reveal = smoothstep(.42, .56, progress) * (1 - smoothstep(.64, .74, progress));
+      LIGHT.uHorizonMix.value = reveal;
+      scene.fog.near = d * (2.2 - .9 * LIGHT.uHorizonMix.value); scene.fog.far = d * (14 - 5 * LIGHT.uHorizonMix.value);
 
       // Darker the deeper below the viewer (and below the deposited top): canyons, not a black pit.
       const g = growth(progress), top = Math.min(buildHeight(progress), cam.position[2] + .3 * d), shade = .3 * top + 60;
@@ -388,13 +418,17 @@ export async function createScale({ renderer, environment, dof, shadows = true }
         s.mesh.visible = u.uGrow.value > 1e-3 && (!s.inner || u.uVis.value < 1);
         s.mesh.material = s.mesh.userData.variants[u.uGrow.value < 1 ? 1 : 0];
       }
+      sunDir.copy(SUN).lerp(SUN_LOW, reveal).normalize();
+      sun.intensity = 2.6 + 8 * reveal;
+      scene.environmentIntensity = 1.3 + .6 * reveal;
+      LIGHT.uHorizonMix.value = reveal;
       sun.target.position.set(...cam.target);
-      sun.position.copy(sun.target.position).addScaledVector(SUN, d * 4);
+      sun.position.copy(sun.target.position).addScaledVector(sunDir, d * 4);
       const sc = sun.shadow.camera, r = d * 1.4;
       sc.left = -r; sc.right = r; sc.top = r; sc.bottom = -r; sc.near = d * .5; sc.far = d * 9;
       sc.updateProjectionMatrix();
       sun.shadow.bias = -.0004; sun.shadow.normalBias = d * .002;
-      renderer.toneMappingExposure = 1.05;
+      renderer.toneMappingExposure = 1.05 + .5 * reveal;
       dof.render(scene, camera, { focus: d, aperture: cam.aperture, opacity, farMax: 3.5 });
       return opacity > .6 ? { ...scaleBar(size[1], cam.fov, d, 90), scene: 'scale' } : null;
     },
