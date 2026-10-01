@@ -208,37 +208,38 @@ particle trails are the cost (fill rate); balanced draws two trail copies instea
 RTX cinematic long-run numbers show the same low-clock effect as chapter 03 (about 16 ms reported
 without a missed frame) and are not a cost measure.
 
-## Chapters 04-05: device and accelerator (2026-10-01)
+## Chapters 04-05: device and accelerator (2026-10-01, second look round)
 
 `device-perf` step (built site, port 4176): idle 4 s on the exploded device with the live pi digits
 (04 at .3), idle 4 s on the board with the demo open (05 at .4), then a scroll from 85 % of 03 to
 the top of 06 and back. Raw data: `device_perf` in `docs/qa/after/capture-*.json`. Intervals and
 GPU times in ms (median / p95 / max); the RTX GPU timer has the low-clock caveat described for
-chapter 03; the AMD rows are the budget reference. Measured after the texture pre-upload and the
-15 Hz pi redraw.
+chapter 03; the AMD rows are the budget reference.
 
 | GPU | profile / framing | buffer | idle interval 04 / 05 | scroll interval | >50 | GPU idle 04 | GPU idle 05 | GPU scroll |
 |---|---|---|---|---|---|---|---|---|
-| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 83.3 | 1 | 16.24 / 30.66 | 2.76 / 18.93 | 4.2 / 18.17 / 27.2 |
-| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.8 / 83.3 | 1 | 2.49 / 20.87 | 2.14 / 21.99 | 3.63 / 19.29 / 41.2 |
-| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 83.3 | 1 | 1.29 / 19.63 | 1.5 / 18.07 | 2.72 / 19.33 / 39.7 |
-| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.8 / 83.3 | 1 | 0.44 / 18.97 | 0.49 / 19.88 | 0.84 / 18.5 / 44.8 |
-| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.7 / 83.4 | 2 | 1.33 / 1.78 | 2.41 / 2.94 | 2.55 / 7.79 / 8.7 |
-| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 0.33 / 0.74 | 0.55 / 1.1 | 0.72 / 1.98 / 3.2 |
+| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 15.59 / 31.99 | 2.9 / 16.82 | 4.23 / 14.54 / 23.6 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.7 / 33.4 | 0 | 2.67 / 21.53 | 1.81 / 20.14 | 3.33 / 15.2 / 26.2 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 1.58 / 19.87 | 1.63 / 19.09 | 1.98 / 16.5 / 24.5 |
+| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 0.53 / 19.51 | 0.55 / 17.97 | 0.71 / 15.74 / 26.7 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.7 / 33.4 | 0 | 1.63 / 2.72 | 2.54 / 3.82 | 2.94 / 9.2 / 11.9 |
+| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.8 / 33.4 | 0 | 0.72 / 1.61 | 0.86 / 1.78 | 0.78 / 2.35 / 4.9 |
 
-AMD iGPU balanced desktop: GPU 1.3 ms on the device, 2.4 / 2.9 ms on the board with the demo
-running, scroll 2.6 / 7.8 / max 8.7 ms. That is lighter than the chapter 03 reveal (10-11 ms idle,
-scroll p95 ~15 ms). The demo re-uploads the 1280×1000 layer canvas only while its numbers change
-(about 3 s after opening); chapter 04 re-uploads the 700×1480 screen canvas 15 times a second on
-"Liczyć" and otherwise only when scrolling changes its content.
+AMD iGPU balanced desktop: GPU 1.6 / 2.7 ms on the device, 2.5 / 3.8 ms on the board with the demo
+running, scroll 2.9 / 9.2 / max 11.9 ms. That is lighter than the chapter 03 reveal (10-11 ms idle,
+scroll p95 ~15 ms). The demo re-uploads the 1280×1000 layer canvas only while its numbers change;
+chapter 04 re-uploads the 700×1480 screen canvas 15 times a second on "Liczyć" and otherwise only
+when scrolling changes its content.
 
-Open: the scroll still has one or two long frames per run (50-83 ms on the AMD iGPU, one of 83 ms
-in each RTX run). A frame-by-frame probe puts them at the start of the scroll (the jump back to 03 at
-.85) and around 04 at .49, and they are CPU-side (60-80 ms of main-thread work in the frame, GPU
-time normal). Not diagnosed yet; candidates are the first draw of the hero image into the screen
-canvas ("Tworzyć" starts at .45) and a late program link.
+Long frames (fixed): the scroll had 1-2 frames of 50-117 ms per run, CPU-side. A CPU profile put
+them in three.js `onFirstUse` -> `getProgramInfoLog`: without KHR_parallel_shader_compile three
+checks a program's link on its first draw and that check waits for the link (113 ms for the
+device's glass at 04 .49, 37 ms in chapter 03), and the depth-of-field composite (drawn tone mapped
+to the canvas) was never precompiled. `dof.compile` now compiles the composite once and checks every
+program's link during loading, one per task; the GPU layer goes live about 0.1 s later. Long frames
+in the 03-06 scroll on the AMD iGPU: 9 over 40 ms before, none after; max interval 83.4 -> 33.4 ms.
 
 Recording (`device-record`, cinematic, RTX 3070, 03 -> 04 -> 05 with the demo running, closed and
-reopened, a reverse back into 04, then on to 06), taken after the texture pre-upload but before the
-15 Hz pi redraw: 2853 frames, 16.7 / 16.8 / max 50 ms, 0 over 50 ms. Before the
-texture pre-upload the same run had three frames of 50-83 ms.
+reopened, a reverse back into 04, then on to 06): 2925 frames, 16.7 / 16.7 / max 33.5 ms,
+0 over 50 ms (before the fix: max 83 ms with three frames over 50 ms, then 50 ms after
+the texture pre-upload).

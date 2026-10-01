@@ -2577,43 +2577,43 @@
    "idle_world": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.8,
+    "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle_world": {
     "frames": 241,
-    "median_ms": 1.33,
-    "p95_ms": 1.78,
-    "max_ms": 1.8,
-    "over_50ms": 0
-   },
-   "idle_ai": {
-    "frames": 238,
-    "median_ms": 16.7,
-    "p95_ms": 16.8,
-    "max_ms": 33.4,
-    "over_50ms": 0
-   },
-   "gpu_time_idle_ai": {
-    "frames": 221,
-    "median_ms": 2.41,
-    "p95_ms": 2.94,
+    "median_ms": 1.63,
+    "p95_ms": 2.72,
     "max_ms": 3.0,
     "over_50ms": 0
    },
+   "idle_ai": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle_ai": {
+    "frames": 240,
+    "median_ms": 2.54,
+    "p95_ms": 3.82,
+    "max_ms": 4.1,
+    "over_50ms": 0
+   },
    "scroll": {
-    "frames": 1072,
+    "frames": 1077,
     "median_ms": 16.7,
     "p95_ms": 16.7,
-    "max_ms": 83.4,
-    "over_50ms": 2
+    "max_ms": 33.4,
+    "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 1053,
-    "median_ms": 2.55,
-    "p95_ms": 7.79,
-    "max_ms": 8.7,
+    "frames": 1075,
+    "median_ms": 2.94,
+    "p95_ms": 9.2,
+    "max_ms": 11.9,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
@@ -2626,15 +2626,15 @@
    "idle_world": {
     "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.8,
+    "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle_world": {
     "frames": 240,
-    "median_ms": 0.33,
-    "p95_ms": 0.74,
-    "max_ms": 1.6,
+    "median_ms": 0.72,
+    "p95_ms": 1.61,
+    "max_ms": 1.9,
     "over_50ms": 0
    },
    "idle_ai": {
@@ -2645,24 +2645,24 @@
     "over_50ms": 0
    },
    "gpu_time_idle_ai": {
-    "frames": 238,
-    "median_ms": 0.55,
-    "p95_ms": 1.1,
-    "max_ms": 1.6,
+    "frames": 241,
+    "median_ms": 0.86,
+    "p95_ms": 1.78,
+    "max_ms": 2.0,
     "over_50ms": 0
    },
    "scroll": {
-    "frames": 1082,
+    "frames": 1078,
     "median_ms": 16.7,
     "p95_ms": 16.8,
     "max_ms": 33.4,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 1082,
-    "median_ms": 0.72,
-    "p95_ms": 1.98,
-    "max_ms": 3.2,
+    "frames": 1076,
+    "median_ms": 0.78,
+    "p95_ms": 2.35,
+    "max_ms": 4.9,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
@@ -2699,8 +2699,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 6,
-    "geometries": 2,
+    "textures": 11,
+    "geometries": 4,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2732,8 +2732,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 9,
+    "textures": 11,
+    "geometries": 13,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2765,8 +2765,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2798,8 +2798,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2831,8 +2831,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2864,8 +2864,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 6,
-    "geometries": 2,
+    "textures": 11,
+    "geometries": 4,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2897,8 +2897,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 9,
+    "textures": 11,
+    "geometries": 13,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2930,8 +2930,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2963,8 +2963,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2996,8 +2996,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3031,8 +3031,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3064,8 +3064,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3097,8 +3097,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3130,8 +3130,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3163,8 +3163,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3197,7 +3197,7 @@
     },
     "triangles": 2,
     "textures": 11,
-    "geometries": 25,
+    "geometries": 29,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3229,8 +3229,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3262,8 +3262,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3295,8 +3295,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3328,8 +3328,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 8,
-    "geometries": 13,
+    "textures": 11,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1

@@ -156,7 +156,7 @@ def posters(browser):
     chapter 03: the reveal frame (progress .64)."""
     out = ROOT / 'src/assets/posters'
     shots_ = [('lattice', 'scene=materia&progress=1'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
-              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6'), ('world', 'scene=swiat&progress=0.7'), ('ai', 'scene=inteligencja&progress=0.4')]
+              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6'), ('world', 'scene=swiat&progress=0.775'), ('ai', 'scene=inteligencja&progress=0.4')]
     for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
                       'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
         page = browser.new_page(**ctx)
