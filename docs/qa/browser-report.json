@@ -104,6 +104,18 @@
       "passed": true
     },
     {
+      "name": "Lattice: live scale bar in chapter 01",
+      "passed": true
+    },
+    {
+      "name": "Lattice: live canvas, poster hidden",
+      "passed": true
+    },
+    {
+      "name": "Lattice: no scale bar over the hero",
+      "passed": true
+    },
+    {
       "name": "Transistor switches OFF/ON accessibly",
       "passed": true
     },
@@ -125,6 +137,14 @@
     },
     {
       "name": "Motion OFF: choice is persisted",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: no scale bar without a live camera",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: chapter 01 shows the lattice poster",
       "passed": true
     },
     {
@@ -348,6 +368,10 @@
       "passed": true
     },
     {
+      "name": "reduced-motion: no scale bar without a live camera",
+      "passed": true
+    },
+    {
       "name": "reduced-motion: never downloads the GPU layer",
       "passed": true
     },
@@ -389,6 +413,10 @@
     },
     {
       "name": "no-javascript: starts in static mode",
+      "passed": true
+    },
+    {
+      "name": "no-javascript: no scale bar without a live camera",
       "passed": true
     },
     {
@@ -448,6 +476,10 @@
       "passed": true
     },
     {
+      "name": "QA mode: hero handover frame lands in the lattice",
+      "passed": true
+    },
+    {
       "name": "Direct load at #materia lands on the material chapter",
       "passed": true
     },
@@ -464,7 +496,7 @@
       "passed": true
     },
     {
-      "name": "Fling: canvas opacity matches the entry phase",
+      "name": "Fling: no CSS fade of the canvas, the dissolve into the lattice is drawn in WebGL",
       "passed": true
     },
     {

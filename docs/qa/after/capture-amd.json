@@ -413,5 +413,761 @@
    ],
    "pixel_ratio": 1.5
   }
+ },
+ "lattice_perf": {
+  "balanced/desktop": {
+   "idle_lattice": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle": {
+    "frames": 240,
+    "median_ms": 4.85,
+    "p95_ms": 13.11,
+    "max_ms": 17.3,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_scroll": {
+    "frames": 842,
+    "median_ms": 5.17,
+    "p95_ms": 12.19,
+    "max_ms": 20.0,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ],
+   "lattice": {
+    "atoms": 9895,
+    "bonds": 18423
+   }
+  },
+  "balanced/mobile": {
+   "idle_lattice": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle": {
+    "frames": 240,
+    "median_ms": 1.67,
+    "p95_ms": 1.99,
+    "max_ms": 2.2,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_scroll": {
+    "frames": 843,
+    "median_ms": 1.5,
+    "p95_ms": 2.83,
+    "max_ms": 3.2,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    390,
+    844
+   ],
+   "lattice": {
+    "atoms": 7943,
+    "bonds": 14826
+   }
+  }
+ },
+ "lattice_shots": {
+  "lattice-amd-balanced-desktop-h076": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 45999,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 2,
+    "toneMapping": 7,
+    "exposure": 0.582708
+   }
+  },
+  "lattice-amd-balanced-desktop-h082": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 3,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240868,
+    "textures": 6,
+    "geometries": 5,
+    "assets": 2,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-h088": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-h094": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-000": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-025": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-050": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-075": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-desktop-100": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 1,
+   "viewport": [
+    1440,
+    1000
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "pixelRatio": 1,
+    "buffer": [
+     1440,
+     1000
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 9895,
+     "bonds": 18423
+    },
+    "triangles": 240866,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-h076": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 45999,
+    "textures": 6,
+    "geometries": 2,
+    "assets": 2,
+    "toneMapping": 7,
+    "exposure": 0.582708
+   }
+  },
+  "lattice-amd-balanced-mobile-h082": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 3,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193800,
+    "textures": 6,
+    "geometries": 5,
+    "assets": 2,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-h088": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-h094": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-000": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-025": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-050": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-075": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  },
+  "lattice-amd-balanced-mobile-100": {
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "dpr": 2,
+   "viewport": [
+    390,
+    844
+   ],
+   "quality": "balanced",
+   "renderer": "webgl",
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+   "gpu": {
+    "profile": "balanced",
+    "framing": "mobile",
+    "width": 390,
+    "height": 844,
+    "pixelRatio": 1,
+    "buffer": [
+     390,
+     844
+    ],
+    "calls": 2,
+    "lattice": {
+     "atoms": 7943,
+     "bonds": 14826
+    },
+    "triangles": 193798,
+    "textures": 2,
+    "geometries": 2,
+    "assets": 1,
+    "toneMapping": 7,
+    "exposure": 1
+   }
+  }
+ },
+ "lattice_perf_cinematic_adhoc": {
+  "cinematic/desktop": {
+   "idle_lattice": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle": {
+    "frames": 241,
+    "median_ms": 6.72,
+    "p95_ms": 6.74,
+    "max_ms": 7.2,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.7,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_scroll": {
+    "frames": 844,
+    "median_ms": 6.42,
+    "p95_ms": 11.22,
+    "max_ms": 12.5,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    1440,
+    1000
+   ],
+   "lattice": {
+    "atoms": 13397,
+    "bonds": 25107
+   }
+  },
+  "cinematic/mobile": {
+   "idle_lattice": {
+    "frames": 240,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_idle": {
+    "frames": 241,
+    "median_ms": 3.72,
+    "p95_ms": 4.17,
+    "max_ms": 4.2,
+    "over_50ms": 0
+   },
+   "scroll": {
+    "frames": 843,
+    "median_ms": 16.7,
+    "p95_ms": 16.8,
+    "max_ms": 16.8,
+    "over_50ms": 0
+   },
+   "gpu_time_scroll": {
+    "frames": 843,
+    "median_ms": 3.45,
+    "p95_ms": 6.67,
+    "max_ms": 12.0,
+    "over_50ms": 0
+   },
+   "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
+   "buffer": [
+    585,
+    1266
+   ],
+   "lattice": {
+    "atoms": 10577,
+    "bonds": 19869
+   }
+  }
  }
 }
