@@ -12,6 +12,7 @@ import {
   MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, Vector3, Vector4,
 } from 'three';
 import { buildLattice, latticeCamera, latticeFront, scaleBar, BOND, CHANNEL_DIR, FOCUS } from './lattice-math.js';
+import { smoothstep } from '../story/timeline.js';
 
 const BG = new Color('#0b0e12');
 const BG_SRGB = [11 / 255, 14 / 255, 18 / 255]; // raw shader output is already sRGB
@@ -243,8 +244,11 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
       if (framing === 'mobile') { shared.uVeil.value.set(.36, .6, 0, .85); shared.uFloor.value.set(.2, .4, .85); }
       else { shared.uVeil.value.set(.28, .56, 1, .85); shared.uFloor.value.set(.2, .38, .85); }
       shared.uCentre.value.set(.5 + cam.shift[0] / 2, .5 + cam.shift[1] / 2);
+      // While the lattice emerges the focus racks from the nearest grain (1.1 nm) out to FOCUS;
+      // it is there before the scale bar appears (emerge > .6), so the bar is always true.
+      shared.uFocus.value = 1.1 + (FOCUS - 1.1) * smoothstep(0, .6, emerge);
       scene.fog.near = .5 + .9 * emerge;
-      scene.fog.far = .55 + (far - .55) * emerge;
+      scene.fog.far = 1.3 + (far - 1.3) * emerge;
       dim.material.uniforms.uColor.value.set(...BG_SRGB, fade);
       dim.visible = over;
       renderer.toneMappingExposure = EXPOSURE;
