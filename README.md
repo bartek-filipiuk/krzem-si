@@ -45,6 +45,8 @@ testu natywnego scrollowania.
 - `freeze=1`: zatrzymuje zegar ambientu i paralaksę; klatka jest rysowana tylko po scrollu/resize.
 - `seed`: faza zegara ambientu: obrót bryłki i dryf kamery w sieci (0 = poza z posteru). Każda
   liczba daje zawsze tę samą fazę. Układ ziaren sieci ma stały seed (14), więc poster zawsze pasuje.
+- `power`: `on` albo `off` ustawia przełącznik tranzystora (rozdział 02) jak kliknięcie, także
+  przed punktem, w którym włącza się sam.
 - `debug`: udostępnia `window.krzemDebug` (stan, profil, odstępy klatek `intervals`, czas GPU na
   klatkę `gpuMs` z `EXT_disjoint_timer_query_webgl2`, gdy przeglądarka go ma, diagnostyka GPU).
   Włącza się też samo przy `scene` lub `quality`.
@@ -83,7 +85,8 @@ python tests/screens.py --gpu amd shots perf   # zintegrowane GPU AMD (balanced)
                                                # przebiegiem NVIDIA, wtedy plansza ma też wiersz AMD
 python tests/screens.py lattice lattice-perf lattice-record   # przejście hero -> sieć i rozdział 01:
                                        # lattice-board.webp, czasy GPU, lattice-scroll-desktop.webm
-python tests/screens.py posters        # postery rozdziału 01 z działającej sceny -> src/assets/posters/
+python tests/screens.py transistor transistor-perf   # rozdział 02 OFF/ON 0-100 %: transistor-board.webp, czasy GPU
+python tests/screens.py posters        # postery rozdziałów 01 i 02 z działających scen -> src/assets/posters/
 ```
 
 Na laptopie referencyjnym headless Chromium renderuje na RTX 3070 tylko z
@@ -132,7 +135,8 @@ wykonuje tylko `npm ci` i `npm run verify`.
 - `src/scripts/rendering/`: `renderer.js` (warstwa GPU, ładowana leniwie), `assets.js`
   (współdzielone, anulowalne ładowanie i zwalnianie), `quality.js` (profile i kontroler).
 - `src/scripts/scenes/`: `hero.js` (bryłka), `lattice.js` + `lattice-math.js` (sieć krzemu, rozdział 01;
-  matematyka sieci testowana w Node), `legacy*.js` (sceny v0.1 rozdziałów 02–06).
+  matematyka sieci testowana w Node), `transistor.js` + `transistor-math.js` (FinFET, rozdział 02),
+  `legacy*.js` (sceny v0.1 rozdziałów 03–06).
 - `src/assets/`: modele, HDR, JSON kamery i postery z etapu A2 (`docs/ASSET_MANIFEST.md`).
 - `tools/`: pipeline Blendera (niepotrzebny do builda). `scripts/art/`: odtwarzanie posterów v0.1.
 - `tests/`: testy Node, smoke w Playwright, screeny i nagrania.

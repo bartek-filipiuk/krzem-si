@@ -109,6 +109,32 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 
 ## Czego nie robimy
 
+## 02 przełącznik: FinFET (`scenes/transistor.js`, `scenes/transistor-math.js`)
+
+- **Obraz:** wycinek tranzystora FinFET wygenerowany w kodzie, w skali głównych wymiarów procesu
+  14 nm (żebra, bramki, ścieżki; `docs/SCIENCE.md`). Schodkowe cięcie: z przodu po stronie źródła
+  usunięta ćwiartka (płaszczyzna przez środek przedniego żebra i przez środek bramki), nad stroną
+  źródła zdjęty metal. Na przekroju widać, jak bramka (TiN złoty, wypełnienie szare, cienki jasny
+  dielektryk) obejmuje żebro z trzech stron; to główna myśl kadru. Przekroje są matowe i nieco
+  ciemniejsze od powierzchni, krawędzie zaokrąglone w normalnych, kontaktowe cienie analityczne.
+- **Światło i optyka:** HDR studia (obrócony do osi Z sceny), chłodne światło kluczowe z góry,
+  jedno niskie ciepłe z boku drenu. Głębia ostrości w jednym przebiegu pełnoekranowym, ostra
+  płaszczyzna na rogu cięcia (tej samej, dla której prawdziwa jest podziałka). Próbka wygasa do
+  tła na dalszych krawędziach i w dół, więc nie czyta się jako kostka.
+- **Stany:** OFF: brak kanału, punkty (nośniki) stoją po stronie źródła przed bramką. ON: cienka
+  bursztynowa warstwa kanału pod bramką, słaba poświata na bramce, punkty płyną od źródła przez
+  kanał. Różnicę niesie też kształt (obecność kanału, ruch) i tekst statusu, nie sam kolor.
+  Przełączenie trwa ok. 0,4 s (wygładzenie w `app.js`); pokaz z choreografią to następny krok.
+- **Kamera:** z przodu i z góry na róg cięcia, wolny obrót (ok. 9°) i lekki odjazd do końca
+  rozdziału (miejsce na odjazd do wielu tranzystorów w rozdziale 03). Mobile: dalej i niżej, pod
+  tekstem i przełącznikiem.
+- **Podpisy części:** prawdziwy tekst HTML (Źródło, Bramka, Dren, Żebro (kanał), Izolator,
+  Kontakt) w dwóch kolumnach obok grupy punktów, z cienkimi liniami do punktów. Pozycje liczy ta
+  sama czysta kamera co scena; bez JS i w trybie spokojnym te same pozycje leżą na posterach
+  OFF/ON (pudełko przycięte jak `object-fit: cover`).
+- **Przejścia:** 01 → 02 i 02 → 03 przez tło (sieć gaśnie w mgle, tranzystor wyłania się z
+  grafitu; potem scena v0.1 rozdziału 03).
+
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
 chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
-Rozdziały 02–06 wciąż korzystają ze scen v0.1 i czekają na etapy B i C.
+Rozdziały 03–06 wciąż korzystają ze scen v0.1 i czekają na etapy B i C.

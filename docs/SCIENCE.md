@@ -27,3 +27,22 @@ Krzem jest ważnym podłożem współczesnej elektroniki, a nie jedynym materia�
 Użyte 0/1 to abstrakcyjne stany poglądowego przełącznika. Nie definiują napięć ani zachowania konkretnej bramki logicznej. W MOSFET przewodzenie nie jest idealnie zero-jedynkowe; ilustracja pomija charakterystyki analogowe i prądy upływu.
 
 Geometria tranzystora jest uproszczona i nie jest rysunkiem produkcyjnym. Struktury układu są artystyczne i nie mają fizycznej podziałki. Akcenty świetlne nie przedstawiają rzeczywistych świecących elektronów. Etapy produkcji materiału są skondensowane. Przykład AI nie pokazuje wewnętrznego rozumowania ani rzeczywistego śladu obliczeń modelu.
+
+## Tranzystor FinFET w rozdziale 02 (`src/scripts/scenes/transistor-math.js`)
+
+Źródła (sprawdzone 1 października 2026):
+
+9. Intel, M. Bohr, „14 nm Technology Announcement”, 11 sierpnia 2014 (slajdy w pakiecie prasowym): rozstaw żeber 42 nm, rozstaw bramek 70 nm, rozstaw ścieżek 52 nm, wysokość żebra ponad izolacją 42 nm, schemat bramki obejmującej żebro (metal gate, cienka warstwa dielektryka, Si substrate), zdjęcia TEM żeber. https://download.intel.com/newsroom/kits/14nm/pdfs/Intel_14nm_New_uArch.pdf
+10. Intel, M. Bohr, „14 nm Process Technology: Opening New Horizons” (IDF 2014): „8 nm Fin Width, 42 nm Fin Pitch”. https://www.intel.com/content/dam/www/public/us/en/documents/technology-briefs/bohr-14nm-idf-2014-brief.pdf
+11. EE Times, „Intel, IBM Dueling 14nm FinFETs”: żebra 42 nm wysokości i 8 nm szerokości (potwierdzenie źródeł 9–10). https://www.eetimes.com/intel-ibm-dueling-14nm-finfets/
+
+W skali modelu (nm, test w `tests/core.test.mjs`): szerokość żebra 8, wysokość ponad izolacją 42, rozstaw żeber 42, rozstaw bramek 70, rozstaw ścieżek pierwszego metalu 52. Podziałka pod sceną jest liczona z kamery i jest prawdziwa dla płaszczyzny ostrości (punkt, na który patrzy kamera).
+
+NIEZWERYFIKOWANE: długość bramki 20 nm (podana w streszczeniu artykułu IEDM 2014, Natarajan i in., „A 14nm logic technology featuring 2nd-generation FinFET…”, którego tekstu nie udało się otworzyć). Założone, bez źródła: grubość dielektryka bramki (2 nm) i warstwy TiN (1,5 nm), szerokość dystansów (8 nm), wysokość bramki i jej nasadki, kształt i wymiary epitaksjalnych obszarów źródła i drenu, wymiary kontaktów, przelotek i ścieżek (poza ich rozstawem), głębokość izolacji (40 nm).
+
+Uproszczenia:
+- Wszystkie części to prostopadłościany (obszary źródła i drenu obrócone o 45°, by przypominały fasetowaną epitaksję). Prawdziwe żebra są lekko zwężone ku dołowi i zaokrąglone u góry; przekrój pokazuje tylko zaokrąglone krawędzie.
+- Dielektryk między poziomami metalu jest pominięty, żeby było widać elementy. Kolory materiałów są umowne (miedź i TiN zbliżone do prawdziwych barw, reszta rozróżniona dla czytelności).
+- Kanał (włączony) to świecąca cienka warstwa przy powierzchni żebra pod bramką, po trzech stronach żebra; jasność i kolor są umowne. Ciemniejszy odcień krzemu pod źródłem i drenem oznacza silne domieszkowanie schematycznie, bez prawdziwego profilu.
+- Punkty płynące od źródła to umowna wizualizacja przepływu nośników, nie ich liczba, prędkość ani tor. W stanie wyłączonym zatrzymują się przed bramką; prądy upływu pominięto.
+- Głębia ostrości, wygaszanie krawędzi próbki i światła są środkami obrazu.

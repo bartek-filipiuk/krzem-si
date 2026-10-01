@@ -138,3 +138,25 @@ Bytes: the lattice adds no asset files at runtime; the lazy renderer chunk is 13
 `lattice-mobile.webp` 38 KiB) replace `scene-1.webp` (66 KiB). They are `loading="lazy"`, so the
 browser may still fetch them early and also in motion mode, where they stay hidden. The transfer
 table above was not re-measured for this change.
+
+## Chapter 02: FinFET (2026-10-01)
+
+Same machine and method (`transistor-perf` step of `tests/screens.py`, built site on port 4175):
+switch forced ON, 4 s idle at chapter progress .5 (carriers moving), then a sweep through the
+whole chapter and back. Raw data: `transistor_perf` in `docs/qa/after/capture-*.json`.
+
+| GPU | profile / framing | buffer | idle interval | scroll interval | >50 | GPU idle | GPU scroll |
+|---|---|---|---|---|---|---|---|
+| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 4.94 / 6.21 | 4.81 / 5.58 / 8.9 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 4.68 / 4.97 | 4.75 / 4.9 / 8.7 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 5.35 / 5.38 | 5.02 / 5.32 / 5.4 |
+| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.26 / 1.28 | 1.24 / 1.27 / 3.4 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 16.8 | 0 | 5.91 / 6.18 | 5.88 / 6.44 / 11.4 |
+| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.32 / 1.74 | 1.16 / 1.27 / 10.9 |
+
+The scene is ~120 boxes, but every fragment runs the cut-away test (and writes depth for section
+faces) and the frame then goes through one full-screen depth-of-field pass (24 taps cinematic with
+4x MSAA on the scene target, 12 taps balanced without). That pass is most of the cost on large
+viewports, which is why balanced desktop is not cheaper than cinematic on the RTX 3070. On the AMD
+iGPU balanced desktop stays around 6 ms, well inside a 16.7 ms frame. Bytes: the renderer chunk is
+139.2 KiB brotli (+4 KiB); the four FinFET posters are 11-19 KiB each and replace `scene-2.webp`.
