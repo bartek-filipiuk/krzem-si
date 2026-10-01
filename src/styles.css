@@ -379,3 +379,9 @@ html[data-renderer=webgl] .part-labels:not([data-live]){visibility:hidden}
 /* Chapter 03: the heading waits for the reveal frame (app.js sets --scale-copy); without the live
    scene (calm, no JS) it is simply there. */
 html[data-renderer=webgl][data-motion=full] #skala .chapter-copy{opacity:var(--scale-copy,1);text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}
+@media(max-width:759px){
+ /* On a phone the copy sits over the upper part of the scene: a soft graphite scrim behind it. */
+ html[data-renderer=webgl][data-motion=full] #skala .stage:before{content:"";position:absolute;inset:0 0 auto;height:62%;z-index:2;pointer-events:none;opacity:var(--scale-copy,1);
+  background:linear-gradient(#0b0e12f2 0,#0b0e12cc 45%,#0b0e1200 100%)}
+}
+html[data-renderer=webgl] #skala .lattice-legend{text-shadow:0 0 6px #0b0e12,0 0 2px #0b0e12,0 1px 14px #0b0e12}

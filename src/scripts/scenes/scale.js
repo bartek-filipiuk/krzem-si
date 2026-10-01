@@ -172,7 +172,9 @@ float stripe(float x, float P, float W) {
   return mix(c, W / P, smoothstep(.15 * P, .5 * P, fw));
 }
 // Segments along a track: cells of 12 pitches, some broken (like the routing's gaps).
-float breaks(float along, float track, float P) { return step(.22, hash2(vec2(floor(along / (12.0 * P)), floor(track / P)) + 3.1)); }
+// Smooth value noise for large, soft tonal variation (no visible cells).
+float vnoise2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash2(i), hash2(i + vec2(1, 0)), f.x), mix(hash2(i + vec2(0, 1)), hash2(i + vec2(1, 1)), f.x), f.y); }
 `;
 
 /**
@@ -225,30 +227,22 @@ vec3 col; float metal, rough;
   // Memory: sub-arrays in a regular grid (visible from millimetres), logic: an irregular tone.
   if (kind > .5 && kind < 1.5) col = mix(vec3(.06, .07, .085), vec3(.2, .23, .27), stripe(w.x, 9000.0, 6500.0) * stripe(w.y, 5000.0, 3600.0)) * (.85 + .3 * stripe(w.x, 9e4, 8.4e4) * stripe(w.y, 6e4, 5.6e4));
   else if (kind > 1.5) col = vec3(.1, .095, .095);
-  else if (kind > -.5) col = mix(vec3(.07, .065, .06), mix(vec3(.05, .05, .05), vec3(.1, .095, .09), hash2(floor(w / 3000.0))), fine) * (.8 + .4 * hash2(floor(w / 4e4)));
-  float pxTop = fwidth(w.y) / ${LEVELS.at(-1).pitch.toFixed(1)};
-  float top = stripe(w.y, ${LEVELS.at(-1).pitch.toFixed(1)}, ${LEVELS.at(-1).width.toFixed(1)}) * mix(breaks(w.x, w.y, ${LEVELS.at(-1).pitch.toFixed(1)}), .78, smoothstep(.1, .4, pxTop));
-  float below = stripe(w.x, ${LEVELS.at(-2).pitch.toFixed(1)}, ${LEVELS.at(-2).width.toFixed(1)});
-  // Over the real stack: the same segments, baked from the routing (R: top level, G: the one below).
+  else if (kind > -.5) col = mix(vec3(.07, .065, .06), mix(vec3(.05, .05, .05), vec3(.1, .095, .09), hash2(floor(w / 3000.0))), fine) * (.85 + .3 * vnoise2(w / 6e4));
+  // The top straps (every third track, unbroken) and the level below, exactly as routed.
+  float top = stripe(w.y, ${(3 * LEVELS.at(-1).pitch).toFixed(1)}, ${LEVELS.at(-1).width.toFixed(1)});
+  float below = stripe(w.x, ${LEVELS.at(-2).pitch.toFixed(1)}, ${LEVELS.at(-2).width.toFixed(1)}) * .8;
   vec2 tuv = w / ${(2 * LEVELS.at(-1).extent).toFixed(1)} + .5;
-  if (all(greaterThan(tuv, vec2(0.0))) && all(lessThan(tuv, vec2(1.0)))) {
-    vec4 tm = texture2D(uTopMap, tuv);
-    top = tm.r;
-    if (max(abs(w.x), abs(w.y)) < ${LEVELS.at(-2).extent.toFixed(1)}) below = tm.g;
-  }
-  // Around the real 3D stack the surface reads like it (top metal over the crossing level below,
-  // the same albedo as the thick copper), so the hand-over has no visible square; further out the
-  // floorplan takes over.
-  float nearStack = 1.0 - smoothstep(${LEVELS.at(-1).extent.toFixed(1)}, ${(3 * LEVELS.at(-1).extent).toFixed(1)}, max(abs(w.x), abs(w.y)));
+  if (max(abs(w.x), abs(w.y)) < ${LEVELS.at(-2).extent.toFixed(1)}) below = texture2D(uTopMap, tuv).g;
   vec3 copperTone = vec3(.37, .29, .22);
-  vec3 stackLook = mix(mix(vec3(.02, .03, .045), copperTone * .55, below), mix(copperTone, vec3(.4), .35), top);
-  col = mix(mix(col, copperTone, top * .3), stackLook, nearStack);
+  col = mix(col, mix(col * .7, copperTone * .5, .5), below * .5);
+  col = mix(col, mix(copperTone, vec3(.4), .35), top);
   vec2 e = min(w - vec2(${DIE.x[0].toFixed(1)}, ${DIE.y[0].toFixed(1)}), vec2(${DIE.x[1].toFixed(1)}, ${DIE.y[1].toFixed(1)}) - w);
-  float ring = (1.0 - smoothstep(2.4e4, 3.2e4, min(e.x, e.y))) * smoothstep(1.2e4, 1.6e4, min(e.x, e.y));
-  float pads = (1.0 - smoothstep(1.4e5, 1.45e5, min(e.x, e.y))) * smoothstep(6.5e4, 7e4, min(e.x, e.y)) * stripe(e.x < e.y ? w.y : w.x, 1.2e5, 7e4);
+  float edge = min(e.x, e.y);
+  float ring = max((1.0 - smoothstep(2.6e4, 2.9e4, edge)) * smoothstep(1.8e4, 2.1e4, edge), (1.0 - smoothstep(4.0e4, 4.3e4, edge)) * smoothstep(3.5e4, 3.8e4, edge));
+  float pads = (1.0 - smoothstep(1.4e5, 1.42e5, edge)) * smoothstep(7e4, 7.2e4, edge) * stripe(e.x < e.y ? w.y : w.x, 1.2e5, 7e4);
   col = mix(col, vec3(.55, .58, .62), ring * .8);
   col = mix(col, vec3(.7, .56, .44), pads);
-  metal = mix(.5 + .4 * top, .75, nearStack); rough = mix(.35, .4, nearStack);
+  metal = .45 + .4 * top; rough = .38;
 #endif
 float ao = depthShade(vWorldP.z);`)
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = col;')

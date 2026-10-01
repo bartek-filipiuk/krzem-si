@@ -7,6 +7,7 @@ Serve the build first:  npm run build && npm run preview      (http://127.0.0.1:
     python tests/screens.py --gpu amd shots perf  # integrated AMD GPU: balanced shots + timings
 Steps: shots, board, handover, perf, transfer, record (hero, stage A); lattice, lattice-perf,
 lattice-record (hero -> lattice -> end of chapter 01); transistor, transistor-perf (chapter 02 OFF/ON);
+scale, scale-perf, scale-record (chapter 03 flythrough, 02 -> 03 -> 04 recording);
 posters (writes src/assets/posters/lattice-* and finfet-*).
 Output: docs/qa/after/. The boards also take the AMD rows when they exist: run
 `--gpu amd shots lattice perf lattice-perf` first, then the NVIDIA run.
@@ -110,6 +111,10 @@ LATTICE_ROWS = [('cinematic · RTX 3070', 'lattice-cinematic'), ('balanced · RT
 # Chapter 02 at 0-100 %, OFF then ON (power forced like a click on the switch).
 TRANSISTOR_FRAMES = [('tranzystor', p, f'{state}-{int(p * 100):03d}', f'&power={state}') for state in ('off', 'on') for p in PROGRESS]
 TRANSISTOR_ROWS = [(label, prefix.replace('lattice', 'transistor')) for label, prefix in LATTICE_ROWS]
+# Chapter 03: progress 0/25/50/75/100 and the five control frames (scale-math.js KEYS: entry 0,
+# repetition .16, inside the layers .3, reveal .6, the die corner .8, exit 1).
+SCALE_FRAMES = [('skala', p, f'{round(p * 100):03d}') for p in (0, .16, .25, .3, .5, .6, .75, .8, 1)]
+SCALE_ROWS = [(label, prefix.replace('lattice', 'scale')) for label, prefix in LATTICE_ROWS]
 
 
 def lattice_board(frames=None, rows_spec=None, name='lattice-board.webp', title=None):
@@ -142,10 +147,11 @@ def lattice_board(frames=None, rows_spec=None, name='lattice-board.webp', title=
 def posters(browser):
     """Calm/no-JS posters from the running scenes, page text hidden. Same pixel sizes as the hero
     posters (1600x1000 desktop, 900x1400 mobile). Chapter 01: the final monocrystal frame;
-    chapter 02: the FinFET OFF and ON at the frame transistor-math.js POSTER names (progress .5)."""
+    chapter 02: the FinFET OFF and ON at the frame transistor-math.js POSTER names (progress .5);
+    chapter 03: the reveal frame (progress .64)."""
     out = ROOT / 'src/assets/posters'
     shots_ = [('lattice', 'scene=materia&progress=1'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
-              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on')]
+              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6')]
     for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
                       'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
         page = browser.new_page(**ctx)
@@ -324,6 +330,62 @@ SWEEP = '''async ([id,segments])=>{const el=document.getElementById(id),top=el.g
     await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,top+span*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
 
 
+def scale_perf(browser, profiles):
+    """Chapter 03: idle at the reveal (ambient sway), then the whole flythrough and back."""
+    out = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            page.goto(f'{URL}?quality={profile}&debug', wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            page.evaluate(TO_CHAPTER, ['skala', .6])
+            page.wait_for_timeout(2500)
+            page.evaluate('krzemDebug.reset()')
+            page.wait_for_timeout(4000)
+            idle, idle_gpu = page.evaluate('krzemDebug.intervals'), page.evaluate('krzemDebug.gpuMs') or []
+            page.evaluate('krzemDebug.reset()')
+            page.evaluate(SWEEP, ['skala', [[0, 1, 9000], [1, .3, 3000], [.3, .7, 2000]]])
+            moving, gpu_ms = page.evaluate('krzemDebug.intervals'), page.evaluate('krzemDebug.gpuMs') or []
+            info = page.evaluate(INFO)
+            out[f'{profile}/{name}'] = {'idle': stats(idle), 'gpu_time_idle': stats(idle_gpu), 'scroll': stats(moving),
+                                        'gpu_time_scroll': stats(gpu_ms), 'gl': info['gl'],
+                                        'buffer': info['gpu']['buffer'] if info['gpu'] else None}
+            page.close()
+    return out
+
+
+# Fractions of the way from 80 % of chapter 02 to the top of chapter 04.
+SCALE_SCROLL = '''async ([segments])=>{const a=document.getElementById('tranzystor'),b=document.getElementById('swiat');
+  const from=a.getBoundingClientRect().top+scrollY+(a.offsetHeight-innerHeight)*.8,to=b.getBoundingClientRect().top+scrollY+innerHeight*.3;
+  for(const [p,q,ms] of segments){const t0=performance.now();
+    await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,from+(to-from)*(p+(q-p)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
+
+
+def scale_record(p, gpu):
+    """Desktop ~40 s: chapter 02 -> the whole of 03 -> start of 04, a reverse, a fling, a turn mid-shot."""
+    browser = launch(p, gpu)
+    ctx = VIEWPORTS['desktop']
+    segments = [[0, 0, 1500], [0, .5, 12000], [.5, .82, 9000], [.82, .82, 1500], [.82, .35, 4000], [.35, .9, 900],
+                [.9, .6, 2500], [.6, 1, 6000], [1, 1, 1500]]
+    with tempfile.TemporaryDirectory() as tmp:
+        context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=ctx['viewport'])
+        page = context.new_page()
+        page.goto(URL + '?debug&power=on', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.evaluate(SCALE_SCROLL, [[[0, 0, 10]]])
+        page.wait_for_timeout(1500)
+        page.evaluate('krzemDebug.reset()')
+        page.evaluate(SCALE_SCROLL, [segments])
+        measured = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                    'gpu_time': stats(page.evaluate('krzemDebug.gpuMs') or []), 'seconds': round(sum(ms for _, _, ms in segments) / 1000, 1)}
+        video = page.video.path()
+        context.close()
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                        '-crf', '44', '-row-mt', '1', '-an', str(OUT / 'scale-scroll-desktop.webm')], check=True)
+    browser.close()
+    return measured
+
+
 def lattice_record(p, gpu):
     """Desktop ~30 s: hero, entry into the face, dissolve into the lattice, the whole of chapter 01,
     back up into the hero and down again."""
@@ -430,7 +492,7 @@ def record(p, gpu):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--gpu', default='nvidia', choices=['nvidia', 'amd'])
-    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record', 'lattice', 'lattice-perf', 'lattice-record', 'transistor', 'transistor-perf'])
+    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record', 'lattice', 'lattice-perf', 'lattice-record', 'transistor', 'transistor-perf', 'scale', 'scale-perf', 'scale-record'])
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     log_path = OUT / f'capture-{a.gpu}.json'
@@ -451,6 +513,10 @@ if __name__ == '__main__':
             log['lattice_shots'] = shots(browser, a.gpu, profiles, LATTICE_FRAMES, 'lattice')
         if 'transistor' in a.steps:
             log['transistor_shots'] = shots(browser, a.gpu, profiles, TRANSISTOR_FRAMES, 'transistor')
+        if 'scale' in a.steps:
+            log['scale_shots'] = shots(browser, a.gpu, profiles, SCALE_FRAMES, 'scale')
+        if 'scale-perf' in a.steps:
+            log['scale_perf'] = scale_perf(browser, [x for x in profiles if x != 'calm'])
         if 'transistor-perf' in a.steps:
             log['transistor_perf'] = transistor_perf(browser, [x for x in profiles if x != 'calm'])
         if 'lattice-perf' in a.steps:
@@ -460,6 +526,8 @@ if __name__ == '__main__':
         browser.close()
         if 'lattice' in a.steps or 'board' in a.steps:
             lattice_board()
+        if 'scale' in a.steps or 'board' in a.steps:
+            lattice_board(SCALE_FRAMES, SCALE_ROWS, 'scale-board.webp', lambda scene, p, suffix: f'03 {p:.2f}')
         if 'transistor' in a.steps or 'board' in a.steps:
             lattice_board(TRANSISTOR_FRAMES, TRANSISTOR_ROWS, 'transistor-board.webp', lambda scene, p, suffix: f'02 {suffix[:-4].upper()} {p:.2f}')
         if 'board' in a.steps or 'shots' in a.steps:
@@ -468,7 +536,9 @@ if __name__ == '__main__':
                 before_after()
         if 'record' in a.steps and a.gpu == 'nvidia':
             log['record'] = record(p, a.gpu)
+        if 'scale-record' in a.steps and a.gpu == 'nvidia':
+            log['scale_record'] = scale_record(p, a.gpu)
         if 'lattice-record' in a.steps and a.gpu == 'nvidia':
             log['lattice_record'] = lattice_record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
-    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf')}, indent=1)[:8000])
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf', 'scale_perf', 'scale_record')}, indent=1)[:8000])

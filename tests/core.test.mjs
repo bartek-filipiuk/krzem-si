@@ -401,10 +401,10 @@ test('scale camera: starts on the chapter 02 end frame, continuous, never inside
     for (const level of routed.levels) for (const b of [...level.segments, ...level.vias]) {
       if (b.after > 0 && i / 400 <= b.after) continue;
       const gap = Math.hypot(...p.map((v, k) => Math.max(b.min[k] - v, 0, v - b.max[k])));
-      assert.ok(gap > Math.min(.2 * c.d, 600), `camera inside ${level.name} at u ${i / 400}`);
+      assert.ok(gap > Math.min(.3 * c.d, 1200), `camera inside ${level.name} at u ${i / 400}`);
     }
   }
-  assert.deepEqual(KEYS, [0, .16, .3, .64, .82, 1]);
+  assert.deepEqual(KEYS, [0, .16, .3, .6, .8, 1]);
   assert.deepEqual(growth(0).every(g => g === 0), true); assert.deepEqual(growth(.7).every(g => g === 1), true);
   const rows = transistorRows();
   assert.ok(rows.fins.some(f => f.min[1] <= -4 && f.max[1] >= 4) && rows.gates.some(g => g.min[0] < 0 && g.max[0] > 0 && g.min[1] < -42 && g.max[1] > 42), 'the chapter 02 device is one of the rows');

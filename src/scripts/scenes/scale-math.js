@@ -12,7 +12,10 @@ import { clamp, smoothstep } from '../story/timeline.js';
 import { seeded } from './legacy-math.js';
 import { DIM, transistorCamera } from './transistor-math.js';
 
-/** Levels bottom to top. pitch in nm; aspect = thickness / width; len, gap: segment and gap lengths in pitches. */
+/**
+ * Levels bottom to top. pitch in nm; aspect = thickness / width; len, gap: segment and gap lengths
+ * in pitches; every: only every n-th track is used ((k - 1) mod n = 0); continuous: one segment per track.
+ */
 export const STACK = [
   { name: 'M1', pitch: 52, aspect: 1.8, len: [3, 14], gap: [1, 4], metal: 'lower', via: .14 },
   { name: 'M2', pitch: 52, aspect: 1.8, len: [3, 16], gap: [1, 4], metal: 'lower', via: .12 },
@@ -21,10 +24,11 @@ export const STACK = [
   { name: 'M5', pitch: 80, aspect: 1.9, len: [4, 20], gap: [1, 4], metal: 'lower', via: .12 },
   { name: 'M6', pitch: 160, aspect: 2, len: [5, 22], gap: [1, 4], metal: 'copper', via: .14 },
   { name: 'M7', pitch: 160, aspect: 2, len: [5, 24], gap: [1, 4], metal: 'copper', via: .14 },
-  { name: 'M8', pitch: 320, aspect: 2, len: [6, 30], gap: [1, 4], metal: 'copper', via: .16 },
-  { name: 'M9', pitch: 640, aspect: 2, len: [6, 34], gap: [1, 3], metal: 'copper', via: .18 },
-  { name: 'M10', pitch: 1280, aspect: 2, len: [4, 24], gap: [1, 3], metal: 'thick', via: .35 },
-  { name: 'M11', pitch: 4000, aspect: 1.5, len: [3, 14], gap: [1, 2], metal: 'thick', via: .45 },
+  { name: 'M8', pitch: 320, aspect: 2, len: [6, 30], gap: [1, 4], metal: 'copper', via: .16, every: 2 },
+  { name: 'M9', pitch: 640, aspect: 2, len: [6, 34], gap: [1, 3], metal: 'copper', via: .18, every: 2 },
+  { name: 'M10', pitch: 1280, aspect: 2, len: [4, 24], gap: [1, 3], metal: 'thick', via: .35, every: 2 },
+  // Top level: wide power straps on every third track, unbroken (occupancy and continuity assumed).
+  { name: 'M11', pitch: 4000, aspect: 1.5, len: [1, 1], gap: [1, 1], metal: 'thick', via: .5, every: 3, continuous: true },
 ];
 /** Top of the contacts: the first level starts here. */
 export const CONTACT_TOP = 130;
@@ -40,7 +44,7 @@ export function stack() {
     const top = base + thick;
     // Real geometry is generated over a square that grows with the pitch (about 40 tracks to each
     // side); beyond it the level is drawn as a flat texture (scale.js).
-    const extent = clamp(40 * level.pitch, 2100, 160000);
+    const extent = clamp(50 * level.pitch, 4500, 160000);
     prev = { ...level, index: i, width, thick, base, top, extent, dir: i % 2 ? 'y' : 'x' };
     return prev;
   });
@@ -53,7 +57,7 @@ export const STACK_TOP = LEVELS.at(-1).top;
  * first, the order of fabrication; the two thick top levels rise around the camera as it climbs
  * into the reveal. growth(u) -> array of 0..1 per level.
  */
-export const BUILD = [.19, .21, .23, .25, .27, .29, .31, .33, .35, .45, .5].map((start, i) => [start, start + (i < 9 ? .05 : .08)]);
+export const BUILD = [.19, .21, .23, .25, .27, .29, .31, .33, .35, .4, .46].map((start, i) => [start, start + (i < 9 ? .05 : .07)]);
 export function growth(u) {
   return BUILD.map(([a, b]) => smoothstep(a, b, u));
 }
@@ -66,7 +70,6 @@ export function buildHeight(u) {
 }
 
 // ---- camera -----------------------------------------------------------------------------------
-const AVENUE_Z = LEVELS.at(-1).base + .4 * LEVELS.at(-1).thick;
 /** Model die: rectangle in nm (4 x 3 mm, an illustrative size) and its thickness. */
 export const DIE = { x: [-3.5e6, .5e6], y: [-.45e6, 2.55e6], thickness: 3e5 };
 
@@ -81,7 +84,7 @@ function fromPose({ position, target, fov, shift }) {
  * reveal (low over the top metal), exit (the die as an object).
  * az, el: direction from the target to the camera (as in transistorCamera).
  */
-export const KEYS = [0, .16, .3, .64, .82, 1];
+export const KEYS = [0, .16, .3, .6, .8, 1];
 export function keyframes(framing = 'desktop') {
   const m = framing === 'mobile';
   return [
@@ -90,13 +93,14 @@ export function keyframes(framing = 'desktop') {
     // Above the deposition front, looking down across the crossing middle levels; the thick top
     // levels then rise around the camera as it climbs.
     { target: [-200, 100, 700], d: 2000, az: .75, el: .78, fov: m ? 52 : 40, shift: m ? [0, -.25] : [.16, 0], aperture: .035 },
-    // Reveal: eye level inside an avenue of the thick top metal, below its roofline: walls and via
-    // columns tower on both sides, the canyon floor drops away to the levels below, the avenue
-    // runs to a vanishing point. The low sun comes from the left (+y): shadow side under the heading.
-    { target: [-14000 + 14000 * Math.cos(.12), 0, AVENUE_Z - 14000 * Math.sin(.12)], d: 14000, az: Math.PI / 2, el: .12, fov: m ? 66 : 52, shift: m ? [0, -.3] : [.18, -.04], aperture: .02 },
+    // Reveal: an oblique view from just above the top straps, about 23 degrees down: two or three
+    // thick straps cross the near third, through the openings the eye falls past the middle levels
+    // to the fine ones; the structure repeats to a horizon at the top of the frame. The sun comes
+    // from the right, so the left (under the heading) is the shadow side.
+    { target: [2500, 2000, 3500], d: 15000, az: .95, el: .5, fov: m ? 60 : 50, shift: m ? [0, -.5] : [.2, .02], aperture: .012 },
     // The die corner: pad ring, seal ring, floorplan blocks, the real stack somewhere inside.
-    { target: [-1.2e5, 2.6e5, STACK_TOP], d: m ? 2.4e6 : 1.6e6, az: .9, el: .78, fov: m ? 36 : 30, shift: m ? [0, -.42] : [.24, 0], aperture: .008 },
-    { target: [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2, 0], d: m ? 1.5e7 : 9e6, az: 1.0, el: .95, fov: m ? 36 : 30, shift: m ? [0, -.42] : [.24, 0], aperture: .012 },
+    { target: [-1.2e5, 2.6e5, STACK_TOP], d: m ? 2.4e6 : 1.6e6, az: .9, el: .78, fov: m ? 36 : 30, shift: m ? [0, -.55] : [.24, 0], aperture: .008 },
+    { target: [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2, 0], d: m ? 1.6e7 : 9e6, az: 1.0, el: .95, fov: m ? 36 : 30, shift: m ? [0, -.5] : [.24, 0], aperture: .012 },
   ];
 }
 
@@ -144,19 +148,20 @@ export function scaleCamera(u = 0, framing = 'desktop', drift = 0) {
 
 // ---- routing ----------------------------------------------------------------------------------
 /** Clearance around the camera path: metal never comes closer than this (nm). */
-function clearance(cam) { return Math.min(.28 * cam.d, 700); }
+/** Clearance around the camera path: metal never comes closer than this (nm); wide lines keep more. */
+function clearance(cam, level) { return Math.min(.45 * cam.d, 1500) + level.width; }
 
 /** Camera samples along the whole path (both framings), for clearing a street through the stack. */
 function cameraSamples() {
   const out = [];
-  for (const framing of ['desktop', 'mobile']) for (let i = 0; i <= 600; i++) out.push({ ...scaleCamera(i / 600, framing), u: i / 600 });
+  for (const framing of ['desktop', 'mobile']) for (let i = 0; i <= 300; i++) out.push({ ...scaleCamera(i / 300, framing), u: i / 300 });
   return out;
 }
 /** Metal the camera passes close to is deposited only after it has passed: last u it is near, plus a margin. */
 export const AFTER = { margin: .03, span: .04 };
-function after(box, near) {
+function after(box, near, level) {
   let last = -1;
-  for (const c of near) if (boxDistance(c.position, box.min, box.max) <= clearance(c)) last = Math.max(last, c.u);
+  for (const c of near) if (boxDistance(c.position, box.min, box.max) <= clearance(c, level)) last = Math.max(last, c.u);
   return last < 0 ? 0 : Math.min(1, last + AFTER.margin);
 }
 
@@ -181,9 +186,10 @@ export function route(seed = 3, samples = cameraSamples()) {
     const K = Math.floor(E / pitch);
     const segments = [];
     for (let k = -K; k < K; k++) {
+      if (level.every && ((k - 1) % level.every + level.every) % level.every) continue;
       const c = (k + .5) * pitch;
-      const rail = (k & 7) === 3;
-      const w = rail ? Math.min(width * 1.6, pitch - width * .6) : width;
+      const rail = level.continuous || (k & 7) === 3;
+      const w = rail && !level.continuous ? Math.min(width * 1.6, pitch - width * .6) : width;
       let s = -E + rand() * level.gap[1] * pitch;
       while (s < E) {
         const len = rail ? 2 * E : (level.len[0] + rand() * (level.len[1] - level.len[0])) * pitch;
@@ -201,8 +207,8 @@ export function route(seed = 3, samples = cameraSamples()) {
   // The camera's street: metal it would pass through is deposited behind it (only samples at this
   // level's height matter), so the finished stack has no holes.
   for (const level of levels) {
-    const near = samples.filter(c => c.position[2] > level.base - clearance(c) && c.position[2] < level.top + clearance(c));
-    for (const sg of level.segments) sg.after = after(sg, near);
+    const near = samples.filter(c => c.position[2] > level.base - clearance(c, level) && c.position[2] < level.top + clearance(c, level));
+    for (const sg of level.segments) sg.after = after(sg, near, level);
   }
   // Vias at crossings of adjacent levels where both have metal.
   for (let i = 1; i < levels.length; i++) {
@@ -226,8 +232,8 @@ export function route(seed = 3, samples = cameraSamples()) {
       vias.push({ min: [x - size / 2, y - size / 2, lo.top], max: [x + size / 2, y + size / 2, hi.base], after: Math.max(a.after, b.after) });
     }
     // Vias in the street likewise come after the camera (and never before the metal they join).
-    const near = samples.filter(c => c.position[2] > lo.top - clearance(c) && c.position[2] < hi.base + clearance(c));
-    for (const v of vias) v.after = Math.max(v.after, after(v, near));
+    const near = samples.filter(c => c.position[2] > lo.top - clearance(c, hi) && c.position[2] < hi.base + clearance(c, hi));
+    for (const v of vias) v.after = Math.max(v.after, after(v, near, hi));
     hi.vias = vias;
   }
   levels[0].vias = [];

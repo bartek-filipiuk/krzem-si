@@ -92,7 +92,7 @@ function update() {
   if (motionFull()) {
     root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));
     // Chapter 03's heading lands only after the perspective shift (the reveal frame).
-    root.style.setProperty('--scale-copy', (index < 3 ? 0 : index > 3 ? 1 : smoothstep(.56, .64, progress)).toFixed(3));
+    root.style.setProperty('--scale-copy', (index < 3 ? 0 : index > 3 ? 1 : smoothstep(.52, .6, progress)).toFixed(3));
   }
   dirty = false;
 }
