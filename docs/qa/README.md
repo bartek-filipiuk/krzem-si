@@ -9,4 +9,4 @@
   handover + chapter 01 at 0-100 %, cinematic/balanced on the RTX 3070, balanced on the AMD iGPU,
   calm posters), frames `docs/qa/after/lattice-*.webp`, recording
   `docs/qa/after/lattice-scroll-desktop.webm` (hero -> end of chapter 01 -> back -> forward),
-  GPU times in `docs/PERFORMANCE.md` ("Chapter 01"). Browser report updated (137 checks).
+  GPU times in `docs/PERFORMANCE.md` ("Chapter 01"). Browser report updated (137 checks). Before/after of the polish round: `lattice-v1-cinematic-desktop-{h088,050,100}.webp` (first version) next to `lattice-cinematic-desktop-{h088,050,100}.webp`.

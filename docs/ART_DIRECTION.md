@@ -71,11 +71,17 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 ## 01 materia: sieć krzemu (`scenes/lattice.js`, `scenes/lattice-math.js`)
 
 - **Obraz:** prawdziwa struktura diamentu krzemu (a = 0,5431 nm), model kulkowo-pręcikowy: małe
-  srebrnoszare atomy (impostory kul, oświetlone tym samym HDR studia co bryłka), cienkie pręty,
-  głębia przez mgłę do `#0b0e12` (sieć kończy się ok. 4,4 nm przed kamerą, w balanced 3,8 nm).
-  Wokół kamery jest „polana” ok. 1 nm: najbliższe atomy znikają, zamiast wypełniać obiektyw.
-- **Ruch:** postęp rozdziału przesuwa płaszczyznę frontu krystalizacji z lewej na prawą stronę
-  kadru. Przed frontem ziarna (ta sama sieć obrócona wokół środka ziarna, seed 14, granice jako
+  srebrnoszare atomy (0,022 nm, impostory kul, oświetlone tym samym HDR studia co bryłka), bardzo
+  cienkie pręty, głębia przez mgłę do `#0b0e12` (sieć kończy się ok. 4,4 nm przed kamerą, w
+  balanced 3,8 nm). Wokół kamery jest „polana” ok. 1 nm: najbliższe atomy znikają.
+- **Głębia ostrości:** jedna ostra płaszczyzna 2 nm przed kamerą (ta sama, dla której prawdziwa
+  jest podziałka). Atomy poza nią są miękkimi krążkami, których światło rozkłada się na rozmycie
+  (rysowane od dalszych do bliższych), pręty poza nią cienieją i znikają. Dzięki temu środek
+  rozdziału to spokojna, głęboka struktura, a nie gąszcz. Przy wyłanianiu się sieci ostrość
+  przechodzi z najbliższego ziarna (1,1 nm) na 2 nm, zanim pojawi się podziałka.
+- **Ruch:** postęp rozdziału przesuwa prawie poziomą płaszczyznę frontu krystalizacji od dołu
+  kadru do góry; jej gorąca krawędź przecina całą szerokość kadru (w ostrej płaszczyźnie: dolna
+  część przy postępie 0,25, górna przy 0,5, test w `tests/core.test.mjs`). Przed frontem ziarna (ta sama sieć obrócona wokół środka ziarna, seed 14, granice jako
   szczeliny) są przygaszone; za frontem atomy wracają do jednej orientacji i jaśnieją. Wąskie pasmo
   przy froncie świeci bursztynem i lekko drga: jedyny ciepły akcent rozdziału. Kamera płynie wzdłuż
   kanału [110] i hamuje do zera, a jednocześnie obraca się z ukosa na oś kanału.
@@ -85,7 +91,10 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
   przyciemnione w shaderze (welon do koloru tła), więc tekst zostaje czytelny i ten sam welon jest
   w posterze.
 - **Ambient:** powolny dryf kamery (setne części nm, okres ok. 70 s) na zegarze ambientu.
-- **Wyjście do 02:** sieć cofa się w mgłę, a scena v0.1 rozdziału 02 przenika nad nią.
+- **Wyjście do 02:** sieć cofa się w mgłę, a scena v0.1 rozdziału 02 przenika nad nią. Odjazd
+  kamery do lustrzanej powierzchni płytki („Płytka” w pasku etapów) nie jest zrobiony: wersja,
+  która byłaby prawdziwa w skali i przekonująca, wymaga osobnej sceny powierzchni (patrz raport).
+- **Pasek etapów** nad siecią ma grafitową poświatę pod tekstem i mocniejszy welon dołu kadru.
 - **Poster (calm, bez JS, błędy):** zrzut działającej sceny w kadrze końcowym, bez tekstu strony
   (`python tests/screens.py posters`).
 - **Podziałka:** element DOM pod tekstem, liczony co klatkę z kamery (piksele na nm w płaszczyźnie
