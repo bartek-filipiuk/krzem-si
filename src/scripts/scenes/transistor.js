@@ -15,15 +15,12 @@
  * The device sits on a wafer slab that falls off into the background; depth of field in one pass.
  */
 import {
-  AdditiveBlending, NormalBlending, BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, DoubleSide, Mesh,
-  DepthTexture, HalfFloatType, Matrix4, PointLight, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PlaneGeometry, Points, Scene, ShaderMaterial,
-  Vector2, Vector3, WebGLRenderTarget,
+  AdditiveBlending, NormalBlending, BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, DoubleSide, Mesh, Matrix4, PointLight, MeshStandardMaterial, PerspectiveCamera, Points, Scene, ShaderMaterial, Vector2, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { components, transistorCamera, CUT_EPI, CUT_GATE, FRONT_FIN, GATE_CUT_K, DIM } from './transistor-math.js';
 import { scaleBar } from './lattice-math.js';
 
-const BG_SRGB = [11 / 255, 14 / 255, 18 / 255];
 const AMBER = new Color('#e09a50');
 /** Depth of field: blur radius as a share of the frame height per unit of |z - focus| / z. */
 const APERTURE = .06;
@@ -204,8 +201,7 @@ function buildCarriers(ghost, count = 46) {
   return points;
 }
 
-export async function createTransistor({ renderer, environment, msaa = true, taps = 24 }) {
-  let settings = { msaa, taps };
+export async function createTransistor({ renderer, environment, dof }) {
   const scene = new Scene();
   scene.environment = environment;
   scene.environmentIntensity = 1.4;
@@ -237,64 +233,16 @@ export async function createTransistor({ renderer, environment, msaa = true, tap
   const carriers = [buildCarriers(false), buildCarriers(true)];
   scene.add(...carriers);
 
-  // Depth of field: the scene is drawn into a linear HDR target with depth, then one full-screen
-  // pass blurs by the thin-lens circle of confusion around the focal plane (the plane the scale
-  // bar is true for), tone maps, and composites over the page background (also the fade).
-  const makeTarget = () => new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: settings.msaa ? 4 : 0, depthTexture: new DepthTexture(1, 1) });
-  let target = makeTarget();
-  const post = new Scene();
-  const composite = new Mesh(new PlaneGeometry(2, 2), new ShaderMaterial({
-    uniforms: {
-      tColor: { value: target.texture }, tDepth: { value: target.depthTexture }, uTexel: { value: new Vector2() },
-      uNear: { value: 1 }, uFar: { value: 1 }, uFocus: { value: 1 }, uCoc: { value: 0 }, uFade: { value: 1 }, uBg: { value: new Color().setRGB(...BG_SRGB) },
-      uTaps: { value: settings.taps },
-    },
-    depthTest: false, depthWrite: false,
-    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-    fragmentShader: /* glsl */`
-      uniform sampler2D tColor, tDepth; uniform vec2 uTexel; uniform float uNear, uFar, uFocus, uCoc, uFade, uTaps; uniform vec3 uBg; varying vec2 vUv;
-      float depthAt(vec2 uv) { float d = texture2D(tDepth, uv).x; return uNear * uFar / (uFar - d * (uFar - uNear)); }
-      float cocAt(float z) { return min(uCoc * abs(z - uFocus) / z, 12.0); }
-      void main() {
-        float z0 = depthAt(vUv), c0 = cocAt(z0);
-        vec4 sum = texture2D(tColor, vUv); float wsum = 1.0;
-        // Tap count is a uniform (up to 24), so a profile change needs no recompile.
-        for (int i = 0; i < 24; i++) {
-          if (float(i) >= uTaps) break;
-          float r = sqrt((float(i) + .5) / uTaps), a = float(i) * 2.39996;
-          vec2 o = vec2(cos(a), sin(a)) * r * c0;
-          vec2 uv = vUv + o * uTexel;
-          float z = depthAt(uv);
-          // A sharper sample in front of this pixel must not smear over it; samples behind may.
-          float w = z >= z0 - 4.0 ? 1.0 : clamp(cocAt(z) - r * c0 + 1.0, 0.0, 1.0);
-          sum += texture2D(tColor, uv) * w; wsum += w;
-        }
-        vec4 c = sum / wsum;
-        gl_FragColor = vec4(c.rgb / max(c.a, 1e-4), 1.0);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-        gl_FragColor = vec4(mix(uBg, gl_FragColor.rgb, clamp(c.a, 0.0, 1.0) * uFade), 1.0);
-      }`,
-  }));
-  composite.frustumCulled = false;
-  post.add(composite);
-  const postCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
   const camera = new PerspectiveCamera(30, 1, 5, 4000);
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
   await renderer.compileAsync(scene, camera);
 
   return {
-    /** next: { msaa, taps } of the current profile; follows a runtime demotion. */
-    resize(width, height, nextFraming, next = settings) {
-      size = [width, height]; framing = nextFraming;
-      if (next.msaa !== settings.msaa) { target.dispose(); settings = next; target = makeTarget(); }
-      settings = next;
-      composite.material.uniforms.uTaps.value = settings.taps;
-    },
+    resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
     /**
-     * state: { progress, time (ambient s), power (0..1), fade (0..1, 1 = fully visible) }.
+     * state: { progress, time (ambient s), power (0..1), fade (0..1, 1 = fully visible: drawn
+     * with that opacity over what the canvas holds) }.
      * Returns the scale bar for the focal plane (the camera target), or null when faded out.
      */
     render({ progress, time, power, fade = 1 }) {
@@ -312,33 +260,19 @@ export async function createTransistor({ renderer, environment, msaa = true, tap
       uniforms.uViewProjection.value.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
       uniforms.uPower.value = power;
       glow.intensity = 900 * power;
-      const buffer = renderer.getDrawingBufferSize(new Vector2());
-      if (target.width !== buffer.x || target.height !== buffer.y) target.setSize(buffer.x, buffer.y);
-      composite.material.uniforms.tColor.value = target.texture;
-      composite.material.uniforms.tDepth.value = target.depthTexture;
+      const height = renderer.getDrawingBufferSize(new Vector2()).y;
       for (const c of carriers) {
         const cu = c.material.uniforms;
-        cu.uTime.value = time; cu.uPower.value = power; cu.uScale.value = buffer.y / 2 / Math.tan(cam.fov * Math.PI / 360);
+        cu.uTime.value = time; cu.uPower.value = power; cu.uScale.value = height / 2 / Math.tan(cam.fov * Math.PI / 360);
       }
-      const pu = composite.material.uniforms;
-      pu.uTexel.value.set(1 / buffer.x, 1 / buffer.y);
-      pu.uNear.value = camera.near; pu.uFar.value = camera.far; pu.uFocus.value = focus; pu.uFade.value = fade;
-      // Blur radius in pixels per unit of |z - focus| / z (aperture as a share of the frame height).
-      pu.uCoc.value = APERTURE * buffer.y;
       renderer.toneMappingExposure = .85;
-      renderer.setRenderTarget(target);
-      renderer.setClearColor(0x000000, 0);
-      renderer.clear();
-      renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-      renderer.render(post, postCamera);
+      dof.render(scene, camera, { focus, aperture: APERTURE, opacity: fade });
       return fade > .6 ? scaleBar(size[1], cam.fov, focus, 90) : null;
     },
     dispose() {
       for (const g of Object.values(geometries)) g.dispose();
       for (const m of materials) m.dispose();
       for (const c of carriers) { c.geometry.dispose(); c.material.dispose(); }
-      target.dispose(); composite.geometry.dispose(); composite.material.dispose();
     },
   };
 }

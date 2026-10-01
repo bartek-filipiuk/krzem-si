@@ -11,6 +11,9 @@ import { createHero } from '../scenes/hero.js';
 import { createLegacyScenes } from '../scenes/legacy.js';
 import { createLattice } from '../scenes/lattice.js';
 import { createTransistor } from '../scenes/transistor.js';
+import { createDof } from './dof.js';
+
+const dofSettings = p => ({ msaa: p.antialias, taps: p.antialias ? 24 : 12 });
 
 export async function createGpuLayer({ canvas, profile, framing, signal, invalidate, gpuTimer = false }) {
   const settings = PROFILES[profile];
@@ -19,15 +22,16 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, lattice = null, transistor = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, transistor = null, dof = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     lattice = await createLattice({ renderer, environment: hero.environment });
-    transistor = await createTransistor({ renderer, environment: hero.environment, msaa: settings.antialias, taps: settings.antialias ? 24 : 12 });
+    dof = createDof(renderer, dofSettings(settings));
+    transistor = await createTransistor({ renderer, environment: hero.environment, dof });
     signal?.throwIfAborted();
     legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
-    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); assets.dispose(); renderer.dispose();
+    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
   }
 
@@ -39,7 +43,8 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.resize(width, height, current.framing);
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
-    transistor.resize(width, height, current.framing, { msaa: p.antialias, taps: p.antialias ? 24 : 12 });
+    transistor.resize(width, height, current.framing);
+    dof.configure(dofSettings(p));
     legacy.resize(width, height, p.lod);
   }
 
@@ -52,6 +57,8 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     frame(state) {
       const started = performance.now();
       timer?.begin();
+      // Scenes that composite with an opacity draw over the canvas: start from a clear page.
+      renderer.setRenderTarget(null); renderer.setClearColor(0x000000, 0); renderer.clear();
       const u = latticeProgress(state);
       scale = null;
       if (state.index === 0) {
@@ -94,7 +101,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); lattice.dispose(); transistor.dispose(); legacy.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); transistor.dispose(); dof.dispose(); legacy.dispose(); assets.dispose();
       renderer.dispose();
     },
   };
