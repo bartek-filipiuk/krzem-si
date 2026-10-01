@@ -113,19 +113,3 @@ export function computer(phone=false) {
   if(!phone) {box(out,0,-1.16,0,.2,.48,.25);box(out,0,-1.4,.15,1.05,.06,.5);}
   return {out,screen,marks};
 }
-export function compute() {
-  const out=[],traces=[],matrix=[];
-  box(out,0,-.12,0,2,.18,2,[.1,.15,.17]);
-  bevelBox(out,0,.025,0,1.36,.15,1.36,[.4,.48,.55]);
-  for(let i=0;i<16;i++) {
-    const q=-1.8+i*.24;
-    box(traces,q,-.02,0,.015,.02,4.4,[.52,.36,.19]);
-    box(traces,0,-.03,q,4.4,.02,.012,[.40,.48,.52]);
-  }
-  const rand=seeded(66);
-  for(let x=0;x<12;x++) for(let z=0;z<12;z++) {
-    const k=.25+rand()*.4;
-    box(matrix,(x-5.5)*.12,.45,(z-5.5)*.12,.066,.022,.066,[k*.8,k,k]);
-  }
-  return {out,traces,matrix};
-}

@@ -10,6 +10,7 @@ import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, cov
 import { readFileSync } from 'node:fs';
 import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows, DIE as DIE_NM } from '../src/scripts/scenes/scale-math.js';
 import { ORDER, ASSEMBLY, LAYERS, placement, activeWord, leibniz, boardLayout, worldCamera } from '../src/scripts/scenes/world-math.js';
+import { X as AI_X, W as AI_W, B as AI_B, forward, demoLines, fmt, STAGES, STAGE_AT, stageAt, demoProgress, acceleratorLayout, aiCamera } from '../src/scripts/scenes/ai-math.js';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -467,6 +468,42 @@ test('hand-over 03 -> 04: the same camera on the die, in nm and in mm; no jumps 
     for (let i = 1; i <= 2000; i++) {
       const c = worldCamera(i / 2000, framing);
       assert.ok(dist(c.position, prev.position) < .06 * Math.min(c.d, prev.d) && Math.abs(Math.log(c.d / prev.d)) < .05, `jump at ${i / 2000}`);
+      prev = c;
+    }
+  }
+});
+
+test('AI demo: the layer above the chip shows the true product, the DOM prints the same numbers', () => {
+  // y = sigmoid(W x + b), recomputed here by hand.
+  const y = AI_W.map((row, i) => 1 / (1 + Math.exp(-(row.reduce((s, w, j) => s + w * AI_X[j], 0) + AI_B[i]))));
+  assert.ok(forward().y.every((v, i) => Math.abs(v - y[i]) < 1e-12));
+  assert.equal(AI_W.length, AI_X.length); assert.ok(AI_W.every(r => r.length === AI_X.length && r.every(w => Math.abs(w) <= 1)));
+  assert.equal(fmt(-.456), '−0.46'); assert.equal(fmt(.4), '\u20070.40');
+  const html = readFileSync(new URL('../src/index.html', import.meta.url), 'utf8');
+  const spans = [...html.match(/<div class="computation"[^>]*>(.*?)<\/div>/)[1].matchAll(/<span>(.*?)<\/span>/g)].map(m => m[1]);
+  assert.deepEqual(spans, demoLines(), 'static demo text differs from the computed numbers');
+  assert.match(html, /DEMONSTRACJA · BEZ POŁĄCZENIA Z MODELEM/);
+  // Stages: prompt, numbers, operations, hardware, answer; rows before the pulse, the pulse before the answer.
+  assert.deepEqual(STAGES, ['prompt', 'numbers', 'operations', 'hardware', 'answer']);
+  assert.deepEqual(STAGE_AT.map(stageAt), [0, 1, 2, 3, 4]);
+  assert.deepEqual(STAGE_AT.slice().sort((a, b) => a - b), STAGE_AT);
+  const at = t => demoProgress(t);
+  assert.ok(at(STAGE_AT[2]).rows === 0 && at(STAGE_AT[3]).rows === AI_W.length && at(STAGE_AT[3]).pulse === 0);
+  assert.ok(at(STAGE_AT[4]).pulse === 1 && at(STAGE_AT[4]).answer === 0 && at(99).answer === 1);
+  const layout = acceleratorLayout();
+  assert.equal(JSON.stringify(acceleratorLayout()), JSON.stringify(layout), 'seeded');
+  for (const c of layout.caps) assert.ok(Math.abs(c.x) >= 24 || Math.abs(c.y) >= 22, 'part under the package');
+});
+
+test('hand-over 04 -> 05: the same die close-up; no jumps through chapter 05', () => {
+  for (const framing of ['desktop', 'mobile']) {
+    const a = worldCamera(1, framing), b = aiCamera(0, framing);
+    assert.ok(dist(a.position, b.position) < 1e-9 && dist(a.target, b.target) < 1e-9 && a.fov === b.fov && near(a.shift, b.shift, 1e-12));
+    let prev = b;
+    for (let i = 1; i <= 2000; i++) {
+      const c = aiCamera(i / 2000, framing);
+      assert.ok(dist(c.position, prev.position) < .06 * Math.min(c.d, prev.d) && Math.abs(Math.log(c.d / prev.d)) < .05, `jump at ${i / 2000}`);
+      assert.ok(c.position[2] > 3, 'camera below the board');
       prev = c;
     }
   }

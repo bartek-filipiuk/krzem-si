@@ -109,6 +109,10 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 
 ## Czego nie robimy
 
+Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
+chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
+Rozdział 06 wciąż korzysta ze sceny v0.1 i czeka na etap C.
+
 ## 02 przełącznik: FinFET (`scenes/transistor.js`, `scenes/transistor-math.js`)
 
 - **Bohater to kanał, nie obudowa:** bramka, jej warstwy (złoty TiN, jasny dielektryk), dystanse,
@@ -160,6 +164,16 @@ granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitow
   po polsku i wskaźnik zasięgu). Na końcu kamera wraca do chipu przez szkło: kadr wejścia
   rozdziału 05.
 
-Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
-chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
-Rozdziały 04–06 wciąż korzystają ze scen v0.1 i czekają na etap C.
+## 05 inteligencja: akcelerator (`scenes/ai.js`, `scenes/ai-math.js`, `scenes/parts.js`)
+
+- Wejście z kadru końcowego rozdziału 04 (ten sam zbliżony kadr chipu, przenikanie). Ten sam chip
+  siedzi w obudowie pod szklaną pokrywą, obok sześć modułów pamięci, na płytce akceleratora:
+  ścieżki do złącza krawędziowego, rzędy stopni zasilania z dławikami, kondensatory, złocone styki.
+- Nad chipem półprzezroczysta warstwa z arytmetyką demonstracji: wektor wejściowy, macierz wag
+  (komórki od chłodnego niebieskiego do bursztynu według wartości), kolumna wyników σ(Wx + b).
+  To te same liczby co w okienku DOM (test). Warstwa wisi w scenie nad płytką i jest zwrócona do
+  kamery; nie jest nakładką HUD na ekran.
+- Etapy demonstracji (prompt, liczby, operacje, sprzęt, odpowiedź) sterują warstwą: wiersze macierzy
+  zapalają się po kolei, impulsy schodzą do chipu i biegną ścieżkami, potem pojawia się odpowiedź.
+- Kamera odjeżdża: płytka jest jedną z wielu, rzędy takich samych płytek gasną we mgle. Bez
+  świecących mózgów i bez „myśli” modelu.

@@ -72,3 +72,17 @@ Uproszczenia:
 ## Urządzenie w rozdziale 04 (`src/scripts/scenes/world-math.js`)
 
 Ogólny, umowny model urządzenia podobnego do telefonu, bez marki i bez wzorowania się na konkretnym produkcie. W skali jest tylko chip (4 × 3 mm, ten sam co w rozdziale 03); obudowa chipu, płytka, części, bateria, rama, ekran i szkło mają przybliżone, typowe wymiary (NIEZWERYFIKOWANE jako wymiary żadnego produktu). Ścieżki, pola lutownicze, układy i elementy bierne na płytce są wygenerowane (ziarno), nie są projektem prawdziwej płytki. Kolejność składania jest umowna (rozłożony widok, nie proces montażu). Ekran pokazuje prawdziwe obliczenie (szereg Leibniza dla π liczony na żywo w przeglądarce), plakat strony odsłaniany wiersz po wierszu i przykładową wymianę wiadomości. Podziałka jest prawdziwa dla płaszczyzny ostrości (od setek µm do kilku cm).
+
+## Akcelerator i obliczenie w rozdziale 05 (`src/scripts/scenes/ai-math.js`)
+
+Demonstracja nie łączy się z żadnym modelem. Liczby w okienku i w warstwie nad chipem to jedna mała,
+prawdziwie policzona warstwa sieci: y = σ(W·x + b), sześć wejść, macierz 6 × 6 i przesunięcia
+wygenerowane z ziarna (nie są wagami żadnego modelu). Test sprawdza, że wynik liczy się tak samo
+niezależnie i że tekst w HTML (dla czytelników bez JS) jest identyczny z wyliczonym. Odpowiedź
+(„Wszystko zaczęło się od rzeczy…”) jest zapisana na stałe; nie wynika z tych liczb. Etapy
+(prompt, liczby, operacje, sprzęt, odpowiedź) pokazują kolejność, nie czasy prawdziwego modelu.
+Płytka jest ogólną, umowną płytką akceleratora (obudowa z pokrywą, sześć modułów pamięci obok
+układu, stopnie zasilania, kondensatory, złącze krawędziowe), bez marki i bez wymiarów konkretnego
+produktu (NIEZWERYFIKOWANE). W skali jest tylko chip (4 × 3 mm, ten sam co w rozdziałach 03 i 04).
+Impulsy na ścieżkach są ilustracją przepływu danych, nie symulacją sygnałów. Podziałka jest
+prawdziwa dla płaszczyzny ostrości.

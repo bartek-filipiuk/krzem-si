@@ -392,3 +392,12 @@ html[data-renderer=webgl] #skala .lattice-legend{text-shadow:0 0 6px #0b0e12,0 0
 html[data-renderer=webgl][data-motion=full] #world-title [data-word]{opacity:.32;transition:opacity .4s}
 html[data-renderer=webgl][data-motion=full] #world-title [data-word].is-active{opacity:1}
 html[data-renderer=webgl] #swiat .chapter-copy,html[data-renderer=webgl] #swiat .lattice-legend{text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}
+
+/* Chapter 05 demo stages (app.js sets data-stage while the demo runs; without JS the full result). */
+.ai-stages{display:none;list-style:none;margin:14px 0 0;padding:0;gap:10px;font:8px var(--mono);letter-spacing:1px;text-transform:uppercase;color:#6f7780}
+.ai-interface.is-open .ai-stages{display:flex;flex-wrap:wrap}
+.ai-stages li{transition:color .3s}
+.ai-interface[data-stage="0"] .ai-stages li:nth-child(1),.ai-interface[data-stage="1"] .ai-stages li:nth-child(-n+2),.ai-interface[data-stage="2"] .ai-stages li:nth-child(-n+3),.ai-interface[data-stage="3"] .ai-stages li:nth-child(-n+4),.ai-interface[data-stage="4"] .ai-stages li{color:#d0ad79}
+.ai-interface[data-stage="0"] .computation span,.ai-interface[data-stage="1"] .computation span:nth-child(n+2),.ai-interface[data-stage="2"] .computation span:nth-child(3),.ai-interface[data-stage="3"] .computation span:nth-child(3){visibility:hidden}
+.ai-interface.is-open[data-stage="4"] .ai-answer{display:block}
+html[data-renderer=webgl] #inteligencja .chapter-copy,html[data-renderer=webgl] #inteligencja .lattice-legend{text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}

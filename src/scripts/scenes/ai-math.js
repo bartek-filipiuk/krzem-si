@@ -17,7 +17,7 @@ export function forward(x = X) {
   const z = W.map((row, i) => row.reduce((s, w, j) => s + w * x[j], 0) + B[i]);
   return { z, y: z.map(sigmoid) };
 }
-/** Number formatting used by the DOM and the scene: two decimals, a real minus sign. */
+/** Number formatting used by the DOM and the scene: two decimals, a real minus sign, a figure space for positives. */
 export const fmt = v => (v < 0 ? '−' : ' ') + Math.abs(v).toFixed(2);
 export function demoLines() {
   const { y } = forward();
@@ -47,8 +47,25 @@ export function acceleratorLayout(seed = 21) {
     if (Math.abs(Math.abs(y) - 42) < 4) continue;
     caps.push({ x, y, w: r() < .5 ? 1 : 1.6, h: r() < .5 ? .5 : .8, t: .5 });
   }
-  return { memory, power, caps };
+  // Traces from the package edge out across the board (Manhattan), most of them to the edge
+  // connector at the bottom; a few carry the hardware pulses of the demo.
+  const traces = [];
+  for (let i = 0; i < 160; i++) {
+    const side = Math.floor(r() * 4), a = (r() - .5) * 46;
+    let x = side < 2 ? (side ? -24 : 24) : a, y = side < 2 ? a : (side === 2 ? 24 : -24);
+    const pts = [[x, y]];
+    for (let s = 0; s < 3; s++) {
+      if (s % 2 === (side < 2 ? 0 : 1)) x = Math.max(-62, Math.min(62, x + (side === 1 ? -1 : 1) * (6 + r() * 26) * (side < 2 ? 1 : (r() < .5 ? 1 : -1))));
+      else y = Math.max(-52, Math.min(52, y + (side === 3 || r() < .6 ? -1 : 1) * (6 + r() * 24)));
+      pts.push([x, y]);
+    }
+    if (r() < .5) { pts.push([pts.at(-1)[0], -53]); }
+    traces.push({ pts, w: r() < .15 ? .4 : .16 });
+  }
+  return { memory, power, caps, traces };
 }
+/** Board size (mm) and the edge connector. */
+export const BOARD = { size: [130, 112, 1.6], fingers: 48 };
 
 const KEYS = [0, .25, .55, .8, 1];
 const paths = {};
@@ -57,8 +74,8 @@ export function aiCamera(u, framing = 'desktop', drift = 0) {
   const m = framing === 'mobile';
   paths[framing] ??= cameraPath(KEYS, [
     dieClose(framing),
-    { target: [0, 0, 6], d: m ? 110 : 70, az: .7, el: .7, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.24, -.04], aperture: .012 },
-    { target: [0, 0, 8], d: m ? 230 : 150, az: .55, el: .62, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.04], aperture: .01 },
+    { target: [2, 4, 7], d: m ? 120 : 88, az: .7, el: .7, fov: m ? 40 : 32, shift: m ? [0, -.3] : [.24, .12], aperture: .012 },
+    { target: [0, 0, 8], d: m ? 230 : 150, az: .55, el: .62, fov: m ? 40 : 32, shift: m ? [0, -.35] : [.26, .08], aperture: .01 },
     { target: [40, 60, 10], d: m ? 520 : 360, az: .62, el: .38, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .008 },
     { target: [60, 140, 20], d: m ? 800 : 560, az: .6, el: .3, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .006 },
   ]);

@@ -146,8 +146,15 @@
       <div class="chapter-copy"><p class="eyebrow">05 / INTELIGENCJA</p><h2 id="ai-title">Od Si<br>do <em>SI.</em></h2><p class="hero-subtitle smaller">Model jest matematyczny.<br>Obliczenia są fizyczne.</p>
       <p class="body-copy">Za odpowiedzią modelu stoją liczby i operacje. A pod nimi: układy, energia, dane i praca ludzi.</p>
       <button class="text-link" id="ai-toggle" type="button" aria-expanded="false" aria-controls="ai-demo" disabled><span class="circle-arrow" aria-hidden="true">↗</span> Zajrzyj pod odpowiedź</button></div>
-      <img class="scene-poster" src="./assets/scene-5.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
-      <div class="ai-interface" id="ai-demo"><div class="ai-interface-top"><i class="status-dot"></i><span>DEMONSTRACJA · BEZ POŁĄCZENIA Z MODELEM</span></div><p class="prompt">Napisz pierwszy wers opowieści.<span aria-hidden="true">↗</span></p><div class="computation" aria-hidden="true"><span>[ 0.14　−0.08　0.91 ]</span><span>　× W　+ b　→　f(x)</span><span>[ 0.62　 0.37　0.28 ]</span></div><p class="ai-answer">„Wszystko zaczęło się od rzeczy,<br>której nikt nie zauważał.”</p></div>
+      <picture class="scene-poster full-poster">
+        <source media="(max-width: 759px)" srcset="./assets/posters/ai-mobile.webp" width="900" height="1400">
+        <img src="./assets/posters/ai-desktop.webp" width="1600" height="1000" alt="Ten sam chip na płytce akceleratora z modułami pamięci, nad nim siatka wag i wektory z demonstracji" loading="lazy" decoding="async">
+      </picture>
+      <div class="lattice-legend ai-legend">
+        <p class="lattice-scale" id="ai-scale" hidden><i></i><span>1 mm</span></p>
+        <p class="lattice-note">Wizualizacja arytmetyki z demonstracji: te same liczby co w okienku obok. Płytka i chip są umowne; to nie są „myśli” modelu.</p>
+      </div>
+      <div class="ai-interface" id="ai-demo" data-stage="4"><div class="ai-interface-top"><i class="status-dot"></i><span>DEMONSTRACJA · BEZ POŁĄCZENIA Z MODELEM</span></div><p class="prompt">Napisz pierwszy wers opowieści.<span aria-hidden="true">↗</span></p><ol class="ai-stages" aria-hidden="true"><li>Prompt</li><li>Liczby</li><li>Operacje</li><li>Sprzęt</li><li>Odpowiedź</li></ol><div class="computation" aria-hidden="true"><span>[  0.14 −0.08  0.91  0.33 −0.45  0.27 ]</span><span>× W + b → σ</span><span>[  0.46  0.67  0.40  0.29  0.57  0.65 ]</span></div><p class="ai-answer">„Wszystko zaczęło się od rzeczy,<br>której nikt nie zauważał.”</p></div>
       <div class="chapter-footer"><span>WIZUALIZACJA OBLICZEŃ, NIE „MYŚLI” MODELU</span><span>05 — 06</span></div>
     </div>
   </section>

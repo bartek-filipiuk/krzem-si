@@ -7,6 +7,7 @@ import { clamp, createScrollReader, entryPhases, smoothstep } from './story/time
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
 import { activeWord } from './scenes/world-math.js';
+import { stageAt } from './scenes/ai-math.js';
 import { ANCHORS, MOBILE_LABELS, POSTER, SWITCH_MS, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
@@ -23,7 +24,7 @@ const progressBar = document.querySelector('#reading-progress-bar');
 const wordItems = [...document.querySelectorAll('#world-title [data-word]')];
 const partLabels = document.querySelector('.part-labels');
 const labelItems = [...partLabels.querySelectorAll('[data-part]')];
-const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale'), scale: document.querySelector('#scale-scale'), world: document.querySelector('#world-scale') };
+const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale'), scale: document.querySelector('#scale-scale'), world: document.querySelector('#world-scale'), ai: document.querySelector('#ai-scale') };
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reader = createScrollReader(sections, document.querySelector('#zrodla'));
 const controller = new QualityController();
@@ -76,6 +77,21 @@ function measure() {
 function switchProgress(now) { return clamp(switchFrom + seqDir * (now - switchAt) / SWITCH_MS); }
 /** What the scene shows: { on, s } of the running sequence; a frozen QA frame shows the settled state. */
 function switchView(now) { return qa.freeze ? { on: !!lastPower, s: 1 } : { on: seqOn, s: switchProgress(now) }; }
+/** The AI demo: opening it starts its stages (prompt, numbers, operations, hardware, answer). */
+let aiAt = -Infinity;
+function setAI(open) {
+  if (aiPanel.classList.contains('is-open') === open) return;
+  aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open));
+  aiAt = performance.now();
+}
+/** Seconds since the demo opened (a frozen QA frame and calm mode show the finished demo). */
+function aiTime(now) { return qa.freeze || !motionFull() ? 99 : (now - aiAt) / 1000; }
+function aiView(now) {
+  const open = aiPanel.classList.contains('is-open'), t = aiTime(now), stage = String(open ? stageAt(t) : 4);
+  if (aiPanel.dataset.stage !== stage) aiPanel.dataset.stage = stage;
+  return { open, t };
+}
+
 function setPower(power) {
   if (lastPower === power) return;
   const now = performance.now();
@@ -107,7 +123,7 @@ function update() {
   if (index === 1) { const step = Math.min(3, Math.floor(progress * 4)); document.querySelectorAll('[data-process]').forEach((li, i) => li.dataset.active = String(i <= step)); }
   if (index === 2) setPower(manualPower ?? (progress > .35));
   if (index === 4) { const w = activeWord(progress); wordItems.forEach((el, i) => el.classList.toggle('is-active', i === w)); }
-  if (index === 5) { const open = manualAI ?? (progress > .23 && progress < .66); aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open)); }
+  if (index === 5) setAI(manualAI ?? (progress > .23 && progress < .66));
   if (motionFull()) {
     root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));
     // Chapter 03's heading lands only after the perspective shift (the reveal frame).
@@ -138,7 +154,7 @@ function tick(now) {
   let cpu = 0;
   try {
     // The switch plays its sequence in real time; a frozen QA frame shows the settled state.
-    cpu = layer.frame({ ...story, time: ambient, parallax, power: switchView(now) });
+    cpu = layer.frame({ ...story, time: ambient, parallax, power: switchView(now), ai: aiView(now) });
   } catch (error) { fail('Render error', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE'); return; }
   showScale(layer.scale);
   placeLabels();
@@ -290,7 +306,7 @@ function begin() {
 
 powerButton.disabled = false; aiButton.disabled = false; motionButton.hidden = false;
 powerButton.addEventListener('click', () => { manualPower = !(lastPower ?? false); setPower(manualPower); dirty = true; schedule(); });
-aiButton.addEventListener('click', () => { manualAI = !aiPanel.classList.contains('is-open'); aiPanel.classList.toggle('is-open', manualAI); aiButton.setAttribute('aria-expanded', String(manualAI)); });
+aiButton.addEventListener('click', () => { manualAI = !aiPanel.classList.contains('is-open'); setAI(manualAI); dirty = true; schedule(); });
 motionButton.addEventListener('click', () => {
   if (root.dataset.motion === 'static') { choice = 'motion'; persist('motion'); reason = 'user'; start('cinematic'); }
   else { choice = 'calm'; persist('calm'); stop(); }

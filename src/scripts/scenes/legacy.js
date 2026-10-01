@@ -113,7 +113,7 @@ export function createLegacyScenes(gl) {
   function mesh(name){
     if(meshes.has(name))return meshes.get(name);
     if(name==='rock')return upload(name,geometry.crystal());
-    const makers={computer:()=>geometry.computer(false),phone:()=>geometry.computer(true),compute:geometry.compute};
+    const makers={computer:()=>geometry.computer(false)};
     const group=name.split(':')[0];
     for(const [part,data] of Object.entries(makers[group]()))upload(`${group}:${part}`,data);
     return meshes.get(name);
@@ -148,18 +148,13 @@ export function createLegacyScenes(gl) {
     const s=mobile?.61:1.30;
     const px=mobile?0:pointer[0]*.07,py=mobile?0:pointer[1]*.06;
     function compose(index,p){
-    if(index===5){
-      const mat=model(x,y-.25,0,.57+py,-.24+px,-.11,s*.98);
-      draw('compute:out',mat);draw('compute:traces',mat,3,1,.55+.45*smoothstep(.2,.7,p));
-      const rise=lerp(.2,.7,smoothstep(.1,.8,p));
-      draw('compute:matrix',model(x,y+rise,0,.57+py,-.24+px,-.11,s*.98),3,.7,1);
-    }else{
+    {
       const fade=smoothstep(.12,.44,p),mat=model(x,y+.08,0,0,-.13,0,s*.86);
       draw('computer:out',mat,0,1-fade);draw('computer:screen',mat,2,1-fade);draw('computer:marks',mat,3,1-fade);
       draw('rock',model(x,y,0,.12,t*.025,-.14,s*.88),5,fade);
     }
     }
-    const blend=smoothstep(0,1,transition);sceneAlpha=1-blend;if(index>=5)compose(index,p);
+    const blend=smoothstep(0,1,transition);sceneAlpha=1-blend;if(index>=6)compose(index,p);
     if(blend>0&&index<6){gl.clear(gl.DEPTH_BUFFER_BIT);sceneAlpha=blend;compose(index+1,0);}
     sceneAlpha=1;
   }
