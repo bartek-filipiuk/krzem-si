@@ -18,6 +18,7 @@ import {
 } from 'three';
 import { AFTER, DIE, FEOL_EXTENT, LEVELS, STACK_TOP, buildHeight, floorplan, growth, route, scaleCamera, transistorRows } from './scale-math.js';
 import { scaleBar } from './lattice-math.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { smoothstep } from '../story/timeline.js';
 
 const BG = new Color('#0b0e12');
@@ -61,8 +62,10 @@ float depthShade(float z) { return mix(.2, 1.0, exp(-max(uTop - z, 0.0) / uShade
 `;
 
 /** Instanced boxes: growth from the base, rounded edges, liner edges, wear, depth shading, dither. */
-function boxMaterial(params, uniforms) {
+function boxMaterial(params, uniforms, dither) {
   const material = new MeshStandardMaterial({ ...params });
+  // A shader with discard loses early depth testing; only the variant used during a hand-over has it.
+  if (dither) material.defines = { DITHER: 1 };
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
@@ -79,7 +82,9 @@ vWorldP = (instanceMatrix * vec4(transformed, 1.0)).xyz;`);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>\n${COMMON}`)
       .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+#ifdef DITHER
 if (hash2(gl_FragCoord.xy) >= uVis) discard;
+#endif
 float r = min(min(vHalf.x, vHalf.y), vHalf.z) * .2;
 vec3 q = max(abs(vLocal) - (vHalf - r), 0.0);
 vec3 nb = sign(vLocal) * q;
@@ -107,7 +112,7 @@ float ao = depthShade(vWorldP.z) * (abs(nWorld.z) < .5 ? mix(.55, 1.0, smoothste
       .replace('#include <aomap_fragment>', '#include <aomap_fragment>\nreflectedLight.indirectDiffuse *= ao * uCool; reflectedLight.indirectSpecular *= ao * uCool; reflectedLight.directDiffuse *= mix(1.0, ao, .6); reflectedLight.directSpecular *= mix(1.0, ao, .6);')
       .replace('#include <fog_fragment>', FOG);
   };
-  material.customProgramCacheKey = () => 'scale-box';
+  material.customProgramCacheKey = () => `scale-box-${dither ? 1 : 0}`;
   return material;
 }
 
@@ -129,7 +134,9 @@ transformed.z = (transformed.z + .5) * grow - .5;`);
 
 function boxes(list, { cap = 0, ...params }, { liner = 0, shadows } = {}) {
   const uniforms = { uVis: { value: 1 }, uGrow: { value: 1 }, uTop: { value: 1000 }, uShadeScale: { value: 300 }, uLiner: { value: liner }, uCap: { value: cap }, ...LIGHT };
-  const mesh = new InstancedMesh(new BoxGeometry(1, 1, 1), boxMaterial(params, uniforms), Math.max(1, list.length));
+  const variants = [boxMaterial(params, uniforms, false), boxMaterial(params, uniforms, true)];
+  const mesh = new InstancedMesh(new BoxGeometry(1, 1, 1), variants[0], Math.max(1, list.length));
+  mesh.userData.variants = variants;
   const m = new Matrix4(), p = new Vector3(), s = new Vector3();
   list.forEach((b, i) => {
     p.set((b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2);
@@ -147,7 +154,7 @@ function boxes(list, { cap = 0, ...params }, { liner = 0, shadows } = {}) {
 
 // ---- flat surfaces ----------------------------------------------------------------------------
 const SURFACE = /* glsl */`
-uniform float uVis, uGrow, uTop, uShadeScale, uHole, uPitch, uWidth, uDir, uInner, uU;
+uniform float uVis, uGrow, uTop, uShadeScale, uPitch, uWidth, uDir, uU;
 uniform vec3 uSunDir, uHaze, uDeep, uCool;
 uniform sampler2D uTopMap;
 uniform vec4 uBlocks[24];
@@ -173,14 +180,15 @@ float breaks(float along, float track, float P) { return step(.22, hash2(vec2(fl
  * 1: the transistor rows continued (fins and gates); 2: the die surface (floorplan, top metal,
  * pads, seal ring). Holes are complementary-dithered against the real geometry inside them.
  */
-function surface(mode, { size, center = [0, 0], z, uniforms: extra = {} }) {
-  const uniforms = { ...LIGHT, uVis: { value: 1 }, uGrow: { value: 1 }, uTop: { value: 1000 }, uShadeScale: { value: 300 }, uHole: { value: 0 }, uPitch: { value: 1 }, uWidth: { value: .5 },
-    uDir: { value: 0 }, uInner: { value: 0 }, uBlocks: { value: Array.from({ length: 24 }, () => new Vector4(0, 0, 0, 0)) },
+function surface(mode, { rect, hole = 0, z, inner = false, uniforms: extra = {} }) {
+  const uniforms = { ...LIGHT, uVis: { value: 1 }, uGrow: { value: 1 }, uTop: { value: 1000 }, uShadeScale: { value: 300 }, uPitch: { value: 1 }, uWidth: { value: .5 },
+    uDir: { value: 0 }, uBlocks: { value: Array.from({ length: 24 }, () => new Vector4(0, 0, 0, 0)) },
     uKinds: { value: new Array(24).fill(-1) }, uTopMap: { value: null }, ...extra };
+  const make = dither => {
   const material = new MeshStandardMaterial({ color: '#ffffff', metalness: .5, roughness: .5, side: DoubleSide });
+  material.defines = { MODE: mode, ...(dither ? { DITHER: 1 } : {}), ...(inner ? { INNER: 1 } : {}) };
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms);
-    shader.defines = { ...shader.defines, MODE: mode };
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vWorldP;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorldP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
@@ -189,10 +197,13 @@ function surface(mode, { size, center = [0, 0], z, uniforms: extra = {} }) {
       .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
 vec2 w = vWorldP.xy;
 float h = hash2(gl_FragCoord.xy);
-bool inHole = abs(w.x) < uHole && abs(w.y) < uHole;
-// Inside the hole the real geometry owns the pixels it keeps (h < uVis); this surface the rest.
-if (inHole && h < uVis) discard;
+#ifdef INNER
+// Over the real geometry: it owns the pixels it keeps (h < uVis), this surface the rest.
+if (h < uVis) discard;
+#endif
+#ifdef DITHER
 if (hash2(gl_FragCoord.yx + 17.0) >= uGrow) discard;
+#endif
 vec3 col; float metal, rough;
 #if MODE == 0
   float c = stripe(uDir < .5 ? w.y : w.x, uPitch, uWidth);
@@ -238,8 +249,6 @@ vec3 col; float metal, rough;
   col = mix(col, vec3(.55, .58, .62), ring * .8);
   col = mix(col, vec3(.7, .56, .44), pads);
   metal = mix(.5 + .4 * top, .75, nearStack); rough = mix(.35, .4, nearStack);
-  // Over the real 3D stack the die surface takes over only as the stack goes below a pixel.
-  if (abs(w.x) < ${LEVELS.at(-1).extent.toFixed(1)} && abs(w.y) < ${LEVELS.at(-1).extent.toFixed(1)} && h >= uInner) discard;
 #endif
 float ao = depthShade(vWorldP.z);`)
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = col;')
@@ -247,11 +256,19 @@ float ao = depthShade(vWorldP.z);`)
       .replace('#include <aomap_fragment>', '#include <aomap_fragment>\nreflectedLight.indirectDiffuse *= ao * uCool; reflectedLight.indirectSpecular *= ao * uCool; reflectedLight.directDiffuse *= mix(1.0, ao, .6);')
       .replace('#include <fog_fragment>', FOG);
   };
-  material.customProgramCacheKey = () => `scale-surface-${mode}`;
-  const mesh = new Mesh(new PlaneGeometry(size[0], size[1]), material);
-  mesh.position.set(center[0], center[1], z);
+  material.customProgramCacheKey = () => `scale-surface-${mode}-${dither ? 1 : 0}-${inner ? 1 : 0}`;
+  return material;
+  };
+  // A ring (rect minus the square hole, as four rectangles) or, for `inner`, the hole itself:
+  // no discard is needed for the shape, so the plain variant keeps early depth testing.
+  const [x0, y0, x1, y1] = inner ? [-hole, -hole, hole, hole] : rect;
+  const parts = inner || !hole ? [[x0, y0, x1, y1]] : [[x0, hole, x1, y1], [x0, y0, x1, -hole], [x0, -hole, -hole, hole], [hole, -hole, x1, hole]];
+  const geometry = mergeGeometries(parts.filter(([a, b, c, d]) => c > a && d > b).map(([a, b, c, d]) => new PlaneGeometry(c - a, d - b).translate((a + c) / 2, (b + d) / 2, 0)));
+  const variants = [make(false), make(true)];
+  const mesh = new Mesh(geometry, variants[0]);
+  mesh.position.z = z;
   mesh.receiveShadow = true;
-  mesh.userData.uniforms = uniforms;
+  mesh.userData = { uniforms, variants };
   return mesh;
 }
 
@@ -296,18 +313,24 @@ export async function createScale({ renderer, environment, dof, shadows = true }
   // Flat continuations: transistor rows on the oxide, each level beyond its square, the die.
   const E = LEVELS.at(-1).extent;
   const surfaces = [];
-  const ground = surface(1, { size: [2 * E, 2 * E], z: 0, uniforms: { uHole: { value: FEOL_EXTENT } } });
-  surfaces.push({ mesh: ground, level: -1, pitch: 42 });
+  // Each continuation is a ring around the real geometry plus an inner part that takes over pixel
+  // by pixel as that geometry goes below a pixel.
+  const addSurface = (mode, opts, info) => {
+    surfaces.push({ ...info, inner: false, mesh: surface(mode, opts) });
+    if (opts.hole) surfaces.push({ ...info, inner: true, mesh: surface(mode, { ...opts, inner: true }) });
+  };
+  addSurface(1, { rect: [-E, -E, E, E], hole: FEOL_EXTENT, z: 0 }, { level: -1, pitch: 42 });
   for (let k = 0; k < LEVELS.length - 1; k++) {
     const l = LEVELS[k], outer = LEVELS[k + 1].extent;
     if (outer <= l.extent) continue;
-    surfaces.push({ level: k, pitch: l.pitch, mesh: surface(0, { size: [2 * outer, 2 * outer], z: l.top, uniforms: {
-      uHole: { value: l.extent }, uPitch: { value: l.pitch }, uWidth: { value: l.width }, uDir: { value: l.dir === 'x' ? 0 : 1 } } }) });
+    const uniforms = () => ({ uPitch: { value: l.pitch }, uWidth: { value: l.width }, uDir: { value: l.dir === 'x' ? 0 : 1 } });
+    addSurface(0, { rect: [-outer, -outer, outer, outer], hole: l.extent, z: l.top, uniforms: uniforms() }, { level: k, pitch: l.pitch });
   }
   const dieSize = [DIE.x[1] - DIE.x[0], DIE.y[1] - DIE.y[0]], dieCenter = [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2];
-  const die = surface(2, { size: dieSize, center: dieCenter, z: STACK_TOP + 2, uniforms: { uTopMap: { value: bakeTop(levels) } } });
-  floorplan().forEach((b, i) => { die.userData.uniforms.uBlocks.value[i].set(b[0], b[1], b[2], b[3]); die.userData.uniforms.uKinds.value[i] = b[4]; });
-  surfaces.push({ mesh: die, level: LEVELS.length - 1, pitch: LEVELS.at(-1).pitch, die: true });
+  const topMap = bakeTop(levels);
+  addSurface(2, { rect: [DIE.x[0], DIE.y[0], DIE.x[1], DIE.y[1]], hole: E, z: STACK_TOP + 2, uniforms: { uTopMap: { value: topMap } } },
+    { level: LEVELS.length - 1, pitch: LEVELS.at(-1).pitch, die: true });
+  for (const s of surfaces) if (s.die) floorplan().forEach((b, i) => { s.mesh.userData.uniforms.uBlocks.value[i].set(b[0], b[1], b[2], b[3]); s.mesh.userData.uniforms.uKinds.value[i] = b[4]; });
   for (const s of surfaces) scene.add(s.mesh);
   // The die body under it all (its top hidden below the oxide), for the edges in the far view.
   const body = new Mesh(new BoxGeometry(dieSize[0], dieSize[1], DIE.thickness), new MeshStandardMaterial({ color: '#3a4048', metalness: .6, roughness: .5 }));
@@ -323,7 +346,9 @@ export async function createScale({ renderer, environment, dof, shadows = true }
   const camera = new PerspectiveCamera(30, 1, 1, 10);
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
-  await renderer.compileAsync(scene, camera);
+  // Compile both variants of everything now, so a hand-over never stalls on a shader compile.
+  const all = [...groups, ...surfaces].map(g => g.mesh);
+  for (const v of [1, 0]) { for (const m of all) m.material = m.userData.variants[v]; await renderer.compileAsync(scene, camera); }
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
@@ -358,14 +383,15 @@ export async function createScale({ renderer, environment, dof, shadows = true }
         const u = mesh.userData.uniforms, grow = level < 0 ? 1 : g[level];
         u.uGrow.value = Math.max(grow, 1e-3); u.uVis.value = level === LEVELS.length - 1 ? visTop : vis(pitch); u.uTop.value = top; u.uShadeScale.value = shade;
         mesh.visible = grow > 1e-3 && u.uVis.value > 1e-3;
+        mesh.material = mesh.userData.variants[u.uVis.value < 1 ? 1 : 0];
       }
       for (const s of surfaces) {
         const u = s.mesh.userData.uniforms;
         u.uTop.value = top; u.uShadeScale.value = shade;
-        u.uVis.value = vis(s.pitch);
+        u.uVis.value = s.die ? visTop : vis(s.pitch);
         u.uGrow.value = s.level < 0 ? 1 : g[s.level];
-        if (s.die) u.uInner.value = 1 - visTop;
-        s.mesh.visible = u.uGrow.value > 1e-3;
+        s.mesh.visible = u.uGrow.value > 1e-3 && (!s.inner || u.uVis.value < 1);
+        s.mesh.material = s.mesh.userData.variants[u.uGrow.value < 1 ? 1 : 0];
       }
       sun.target.position.set(...cam.target);
       sun.position.copy(sun.target.position).addScaledVector(SUN, d * 4);
@@ -378,9 +404,10 @@ export async function createScale({ renderer, environment, dof, shadows = true }
       return opacity > .6 ? { ...scaleBar(size[1], cam.fov, d, 90), scene: 'scale' } : null;
     },
     dispose() {
-      for (const { mesh } of groups) { mesh.geometry.dispose(); mesh.material.dispose(); mesh.customDepthMaterial.dispose(); }
-      for (const { mesh } of surfaces) { mesh.geometry.dispose(); mesh.material.dispose(); }
-      body.geometry.dispose(); body.material.dispose(); sun.shadow.map?.dispose(); die.userData.uniforms.uTopMap.value.dispose();
+      for (const { mesh } of groups) { mesh.geometry.dispose(); mesh.customDepthMaterial.dispose(); }
+      for (const { mesh } of surfaces) mesh.geometry.dispose();
+      for (const m of all) for (const v of m.userData.variants) v.dispose();
+      body.geometry.dispose(); body.material.dispose(); sun.shadow.map?.dispose(); topMap.dispose();
     },
   };
 }
