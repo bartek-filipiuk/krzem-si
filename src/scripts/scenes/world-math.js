@@ -19,14 +19,17 @@ export const LAYERS = {
 };
 /** Where each layer comes from (offset added while it is not yet in place) and when it arrives. */
 export const ASSEMBLY = {
-  package: { from: [0, 0, -9], at: [.06, .18] },
-  board: { from: [0, 0, -26], at: [.14, .3] },
-  parts: { from: [0, 0, 6], at: [.24, .38] },
-  battery: { from: [0, 0, -40], at: [.32, .46] },
-  frame: { from: [0, 0, -60], at: [.4, .54] },
-  display: { from: [0, 0, 45], at: [.16, .5] },
-  glass: { from: [0, 0, 80], at: [.5, .62] },
+  package: { from: [0, 0, -9], at: [.04, .14] },
+  board: { from: [0, 0, -26], at: [.06, .2] },
+  parts: { from: [0, 0, 6], at: [.14, .26] },
+  battery: { from: [0, 0, -40], at: [.18, .32] },
+  frame: { from: [0, 0, -60], at: [.22, .38] },
+  // The display hovers above the device while it shows the words, the gap closing slowly.
+  display: { from: [0, 0, 45], at: [.16, .6] },
+  glass: { from: [0, 0, 30], at: [.5, .66] },
 };
+/** At the end the device turns to a ghost (x-ray) so the camera can return to the die through it. */
+export const XRAY = [.78, .86];
 /** 0 = not yet visible, 1 = in place; with the eased offset. */
 export function placement(layer, u) {
   const a = ASSEMBLY[layer], k = smoothstep(a.at[0], a.at[1], u);
@@ -37,7 +40,7 @@ export function placement(layer, u) {
 export const ORDER = Object.entries(ASSEMBLY).sort((a, b) => a[1].at[1] - b[1].at[1]).map(([k]) => k);
 
 /** The three words of the heading drive the display: 0 Liczyć, 1 Tworzyć, 2 Łączyć. */
-export const WORDS = [.2, .45, .68];
+export const WORDS = [.2, .42, .62];
 export function activeWord(u) { return u < WORDS[1] ? 0 : u < WORDS[2] ? 1 : 2; }
 
 /** Leibniz series for pi, n terms: a real computation for the "Liczyć" screen. */
@@ -100,19 +103,22 @@ export function dieClose(framing = 'desktop') {
   const m = framing === 'mobile';
   return { target: [0, 0, 0], d: m ? 26 : 16, az: .9, el: .82, fov: m ? 36 : 30, shift: m ? [0, -.5] : [.24, 0], aperture: .012 };
 }
-const KEYS = [0, .16, .32, .5, .7, .88, 1];
+const KEYS = [0, .1, .27, .52, .74, .86, .95, 1];
 const paths = {};
 /** Camera for chapter progress u (from chapter 03's exit frame to the die close-up). */
 export function worldCamera(u, framing = 'desktop', drift = 0) {
   const m = framing === 'mobile';
+  const word = (target, d, az, el) => ({ target, d: m ? d * 1.4 : d, az, el, fov: m ? 40 : 30, shift: m ? [0, -.46] : [.3, -.02], aperture: .003 });
   paths[framing] ??= cameraPath(KEYS, [
     dieExitFrame(framing, 1e-6),
     { target: [0, 0, -1], d: m ? 90 : 55, az: .75, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.24, -.02], aperture: .012 },
-    // Exploded: the lit display hovers above the board ("Liczyć").
-    { target: [0, 22, 22], d: m ? 560 : 350, az: .58, el: .5, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.04], aperture: .01 },
-    { target: [0, 28, 8], d: m ? 520 : 330, az: .62, el: .58, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.04], aperture: .01 },
-    { target: [0, 30, 0], d: m ? 470 : 300, az: .45, el: .86, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.02], aperture: .01 },
-    { target: [0, 26, 0], d: m ? 440 : 280, az: .7, el: .84, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.02], aperture: .01 },
+    // The words: the lit display faces the camera, in the focal plane, the device large in frame.
+    word([0, 34, 24], 400, .55, .98), // Liczyć: the display hovers about 25 mm above the device
+    word([0, 30, 9], 360, .42, 1.08), // Tworzyć
+    word([0, 30, 3], 350, .62, 1.02), // Łączyć: the device closed
+    { ...word([0, 12, 1], 250, .72, .98), aperture: .006 }, // the device turns to a ghost
+    // Then the camera descends towards the die.
+    { target: [0, 2, 0], d: m ? 110 : 70, az: .82, el: .9, fov: m ? 38 : 30, shift: m ? [0, -.48] : [.24, 0], aperture: .01 },
     dieClose(framing),
   ]);
   return paths[framing](u, drift);

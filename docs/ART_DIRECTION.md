@@ -158,11 +158,17 @@ granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitow
 - Chip z końca rozdziału 03 zostaje w kadrze (ta sama kamera, przenikanie). Wokół niego, w jednym
   ruchu, składa się ogólne urządzenie w rozłożonym widoku: obudowa chipu z kulkami lutowia, płytka
   (wygenerowane ścieżki, pola, układy, elementy bierne), bateria, anodyzowana rama z tyłem, ekran,
-  szkło. Ekran nad chipem ma w dolnej części ciemne okno, przez które chip i płytka są widoczne.
-- Trzy słowa nagłówka sterują ekranem i są podświetlane w DOM: „Liczyć” (π z szeregu Leibniza
-  liczone na żywo), „Tworzyć” (plakat bryłki odsłaniany wiersz po wierszu), „Łączyć” (rozmowa
-  po polsku i wskaźnik zasięgu). Na końcu kamera wraca do chipu przez szkło: kadr wejścia
-  rozdziału 05.
+  szkło. Warstwy przychodzą po kolei (płytka z chipem, bateria, rama, ekran, szkło), szczeliny
+  między nimi widać i się zamykają. Cienka bursztynowa obwódka wokół chipu prowadzi oko przez
+  warstwy (znacznik, nie część urządzenia).
+- Światło jak w zdjęciu produktowym: miękki klucz od strony kamery, twardy kontur od tyłu po
+  krawędziach ramy i szkła, ciepłe wypełnienie; włączony ekran rzuca trochę światła pod siebie.
+- Trzy słowa nagłówka sterują ekranem i są podświetlane w DOM. Ekran jest wtedy zwrócony do
+  kamery, w płaszczyźnie ostrości, duży w kadrze: „Liczyć” (duże cyfry π z szeregu Leibniza
+  liczone na żywo i wykres zbieżności), „Tworzyć” (bryłka z plakatu strony odsłaniana wiersz po
+  wierszu), „Łączyć” (rozmowa po polsku, wskaźnik zasięgu). Ekran jest nieprzezroczysty.
+- Na końcu całe urządzenie zamienia się w ducha (prześwietlenie: rama, bateria i szkło gasną do
+  zarysu, ekran znika), a kamera zjeżdża przez nie do chipu: kadr wejścia rozdziału 05.
 
 ## 05 inteligencja: akcelerator (`scenes/ai.js`, `scenes/ai-math.js`, `scenes/parts.js`)
 

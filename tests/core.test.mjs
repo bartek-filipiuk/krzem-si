@@ -443,7 +443,7 @@ test('scale bar labels run from nanometres to millimetres', () => {
 
 // ---- device (chapter 04) ---------------------------------------------------------------------
 test('device assembly: order, every part in place at the end, absent at the start', () => {
-  assert.deepEqual(ORDER, ['package', 'board', 'parts', 'battery', 'display', 'frame', 'glass']);
+  assert.deepEqual(ORDER, ['package', 'board', 'parts', 'battery', 'frame', 'display', 'glass']);
   for (const name of Object.keys(ASSEMBLY)) {
     assert.equal(placement(name, 0).appear, 0, `${name} visible at the start`);
     assert.ok(placement(name, 1).k === 1 && placement(name, 1).offset.every(v => v === 0), `${name} not home`);

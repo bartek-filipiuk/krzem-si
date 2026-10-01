@@ -8,10 +8,10 @@
  */
 import {
   BoxGeometry, CanvasTexture, Color, DirectionalLight, ExtrudeGeometry, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial,
-  MeshStandardMaterial, PerspectiveCamera, Scene, Shape, SphereGeometry, SRGBColorSpace,
+  MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Shape, SphereGeometry, SRGBColorSpace,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { LAYERS, WORDS, activeWord, boardLayout, leibniz, placement, worldCamera } from './world-math.js';
+import { LAYERS, WORDS, XRAY, activeWord, boardLayout, leibniz, placement, worldCamera } from './world-math.js';
 import { createDie, boxes, boardTexture } from './parts.js';
 import { scaleBar } from './lattice-math.js';
 import { smoothstep } from '../story/timeline.js';
@@ -41,85 +41,110 @@ function frameRing(w, h, r, wall, t) {
   return g;
 }
 
-/** The display content, drawn into a canvas (portrait, the display's aspect). */
+/** The display content, drawn into a canvas (portrait, the display's aspect). Opaque: the screen is on. */
 function createScreen() {
   const W = 700, H = 1480, c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
   const tex = new CanvasTexture(c);
   tex.colorSpace = SRGBColorSpace; tex.anisotropy = 8;
-  const hero = new Image(); hero.decoding = 'async'; hero.src = HERO;
+  // Decoded once, off the frame: drawing an undecoded image decodes it on the main thread.
+  let hero = null;
+  const img = new Image(); img.src = HERO;
+  img.decode().then(() => createImageBitmap(img)).then(b => { hero = b; key = ''; }).catch(() => {});
   let key = '';
-  const font = (px, w = 400, f = 'Inter, "Segoe UI", Arial, sans-serif') => `${w} ${px}px ${f}`;
-  const serif = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif', mono = '"SFMono-Regular", Consolas, "Liberation Mono", monospace';
-  // The lower third stays a dark window: the die below shows through the glass there.
-  const CONTENT = H * .64;
+  const sans = 'Inter, "Segoe UI", Arial, sans-serif', mono = '"SFMono-Regular", Consolas, "Liberation Mono", monospace';
+  const AMBER = '#e2b276', INK = '#f2eee6', DIM = '#8e959d';
+  const font = (px, w = 400, f = sans) => `${w} ${px}px ${f}`;
+  const wrap = (text, width) => {
+    const out = [''];
+    for (const w of text.split(' ')) { const t = out.at(-1) ? `${out.at(-1)} ${w}` : w; if (g.measureText(t).width > width && out.at(-1)) out.push(w); else out[out.length - 1] = t; }
+    return out;
+  };
 
   function draw(u, time) {
     const word = activeWord(u), local = word === 0 ? (u - WORDS[0]) / (WORDS[1] - WORDS[0]) : word === 1 ? (u - WORDS[1]) / (WORDS[2] - WORDS[1]) : (u - WORDS[2]) / (1 - WORDS[2]);
     // 120 terms a second, redrawn (and re-uploaded) 15 times a second.
     const n = (40 + Math.floor(time * 15) * 8) % 5000 + 1;
-    const k = `${word}/${Math.round(local * 200)}/${word === 0 ? n : word === 2 ? Math.floor(time * 2) : 0}/${hero.complete}`;
+    const k = `${word}/${Math.round(local * 120)}/${word === 0 ? n : word === 2 ? Math.floor(time * 2) : 0}/${!!hero}`;
     if (k === key) return false;
     key = k;
-    g.clearRect(0, 0, W, H);
-    g.fillStyle = 'rgba(9,12,16,.97)'; g.fillRect(0, 0, W, CONTENT);
-    const fade = g.createLinearGradient(0, CONTENT - 120, 0, CONTENT + 40);
-    fade.addColorStop(0, 'rgba(9,12,16,0)'); fade.addColorStop(1, 'rgba(9,12,16,.97)');
-    g.fillStyle = 'rgba(9,12,16,.22)'; g.fillRect(0, CONTENT, W, H - CONTENT);
+    g.fillStyle = '#07090c'; g.fillRect(0, 0, W, H);
     // Status line.
-    g.fillStyle = '#7f8790'; g.font = font(33, 500, mono); g.fillText('12:04', 48, 80);
-    g.fillStyle = '#d0ad79'; g.fillText(['LICZYĆ', 'TWORZYĆ', 'ŁĄCZYĆ'][word], W - 48 - g.measureText(['LICZYĆ', 'TWORZYĆ', 'ŁĄCZYĆ'][word]).width, 80);
+    g.fillStyle = DIM; g.font = font(34, 600, mono); g.fillText('12:04', 52, 86);
+    const label = ['LICZYĆ', 'TWORZYĆ', 'ŁĄCZYĆ'][word];
+    g.fillStyle = AMBER; g.fillText(label, W - 52 - g.measureText(label).width, 86);
     if (word === 0) {
-      // A real computation: pi from the Leibniz series, the digits that are already right in amber.
-      const pi = leibniz(n), s = pi.toFixed(8), exact = Math.PI.toFixed(8);
+      // A real computation: pi from the Leibniz series; the digits that are already right in amber.
+      const pi = leibniz(n), s = pi.toFixed(6), exact = Math.PI.toFixed(6);
       let ok = 0; while (ok < s.length && s[ok] === exact[ok]) ok++;
-      g.fillStyle = '#7f8790'; g.font = font(39, 500, mono); g.fillText('π = 4·(1 − 1/3 + 1/5 − …)', 48, 190);
-      g.font = font(180, 400, serif); g.fillStyle = '#d0ad79'; g.fillText(s.slice(0, ok), 40, 400);
-      g.fillStyle = '#eeeae2'; g.fillText(s.slice(ok), 40 + g.measureText(s.slice(0, ok)).width, 400);
-      g.font = font(42, 500, mono); g.fillStyle = '#a3a6ab'; g.fillText(`n = ${n.toLocaleString('pl-PL')} wyrazów`, 48, 480);
-      // The last partial sums, converging.
-      for (let i = 0; i < 6; i++) {
-        const m = Math.max(1, n - i * 3), v = leibniz(m);
-        g.fillStyle = `rgba(200,205,210,${(.85 - i * .08).toFixed(2)})`; g.font = font(39, 400, mono);
-        g.fillText(`${String(m).padStart(5, ' ')}  ${v.toFixed(8)}`, 48, 580 + i * 56);
+      const shown = s.replace('.', ',');
+      g.fillStyle = DIM; g.font = font(36, 500, mono); g.fillText('π = 4 · (1 − ⅓ + ⅕ − …)', 52, 200);
+      g.font = font(150, 700); let x = 44;
+      for (let i = 0; i < shown.length; i++) { g.fillStyle = i < ok ? AMBER : INK; g.fillText(shown[i], x, 390); x += g.measureText(shown[i]).width; }
+      g.fillStyle = INK; g.font = font(46, 600, mono); g.fillText(`${n.toLocaleString('pl-PL')} wyrazów`, 52, 480);
+      // The partial sums converging on pi (every term up to n, log scale along x).
+      const top = 580, bottom = 1360, mid = (top + bottom) / 2, sy = (bottom - top) / 2 / .6;
+      g.strokeStyle = 'rgba(226,178,118,.55)'; g.lineWidth = 3; g.setLineDash([14, 12]);
+      g.beginPath(); g.moveTo(52, mid); g.lineTo(W - 52, mid); g.stroke(); g.setLineDash([]);
+      g.fillStyle = AMBER; g.font = font(40, 600, mono); g.fillText('π', W - 84, mid - 18);
+      g.strokeStyle = INK; g.lineWidth = 5; g.lineJoin = 'round'; g.beginPath();
+      let sum = 0;
+      const X = k => 52 + (W - 104) * Math.log(k) / Math.log(5001);
+      for (let k = 1; k <= n; k++) {
+        sum += ((k - 1) % 2 ? -4 : 4) / (2 * k - 1);
+        if (k > 60 && k % Math.ceil(k / 60)) continue;
+        const y = Math.max(top, Math.min(bottom, mid - (sum - Math.PI) * sy));
+        if (k === 1) g.moveTo(X(k), y); else g.lineTo(X(k), y);
       }
+      g.stroke();
+      g.fillStyle = INK; g.beginPath(); g.arc(X(n), Math.max(top, Math.min(bottom, mid - (sum - Math.PI) * sy)), 12, 0, 7); g.fill();
     } else if (word === 1) {
-      // The hero image builds up line by line (the page's own poster).
-      if (hero.complete && hero.naturalWidth) {
-        // The chunk sits in the lower half of the portrait poster: build up that crop.
-        const rows = Math.floor(smoothstep(.02, .9, local) * 64);
-        const y0 = hero.naturalHeight * .4, x0 = hero.naturalWidth * .05, sw = hero.naturalWidth * .9;
-        const sh = (hero.naturalHeight * .58) / 64, dh = (CONTENT - 160) / 64;
-        for (let r = 0; r < rows; r++) g.drawImage(hero, x0, y0 + r * sh, sw, sh, 24, 110 + r * dh, W - 48, dh + .6);
-        g.fillStyle = '#d0ad79'; g.fillRect(40, 100 + rows * dh, W - 80, 2);
+      // The page's own hero image (the silicon chunk) resolving line by line, large on the screen.
+      const p = smoothstep(.02, .85, local), rows = 80, done = Math.floor(p * rows);
+      const size = W - 40, y0 = 250;
+      g.fillStyle = '#0d1116'; g.fillRect(20, y0, size, size);
+      if (hero) {
+        const sx = hero.width * .19, sw = hero.width * .54, sy = hero.height * .54; // the chunk
+        g.filter = 'brightness(1.15) contrast(1.08)';
+        for (let r = 0; r < done; r++) g.drawImage(hero, sx, sy + r * sw / rows, sw, sw / rows + .5, 20, y0 + r * size / rows, size, size / rows + .6);
+        g.filter = 'none';
       }
-      g.fillStyle = '#a3a6ab'; g.font = font(36, 500, mono); g.fillText(`renderowanie · ${Math.round(smoothstep(.02, .9, local) * 100)}%`, 48, CONTENT - 20);
+      g.fillStyle = AMBER; g.fillRect(20, y0 + done * size / rows - 2, size, 5);
+      g.fillStyle = INK; g.font = font(50, 700); g.fillText('Krzem.', 52, 190);
+      g.fillStyle = DIM; g.font = font(40, 500, mono); g.fillText('plakat · 1600 × 1000', 52, y0 + size + 90);
+      g.fillStyle = '#1a2129'; g.fillRect(52, y0 + size + 140, W - 104, 14);
+      g.fillStyle = AMBER; g.fillRect(52, y0 + size + 140, (W - 104) * p, 14);
+      g.fillStyle = INK; g.font = font(46, 600, mono); g.fillText(`renderowanie ${Math.round(p * 100)}%`, 52, y0 + size + 240);
     } else {
       // A short message exchange and a signal indicator.
       const msgs = [['in', 'Jesteś już?'], ['out', 'Za 5 minut. Wysyłam zdjęcie.'], ['in', 'Widzę. Piękne światło.'], ['out', 'To ten sam kawałek krzemu.']];
-      const shown = Math.floor(smoothstep(.02, .8, local) * msgs.length + .001);
-      let y = 140;
-      g.font = font(45, 400);
-      msgs.slice(0, Math.max(1, shown)).forEach(([dir, text]) => {
-        const w = Math.min(W - 96, g.measureText(text).width + 56), x = dir === 'in' ? 48 : W - 48 - w;
-        g.fillStyle = dir === 'in' ? '#1f2833' : '#5a4630';
-        g.beginPath(); g.roundRect(x, y, w, 96, 30); g.fill();
-        g.fillStyle = '#eeeae2'; g.fillText(text, x + 28, y + 62); y += 124;
+      const shown = Math.max(1, Math.floor(smoothstep(0, .4, local) * msgs.length + .001));
+      g.fillStyle = INK; g.font = font(50, 700); g.fillText('Ola', 52, 200);
+      g.fillStyle = '#5fbf86'; g.beginPath(); g.arc(160, 184, 10, 0, 7); g.fill();
+      let y = 270;
+      g.font = font(52, 500);
+      msgs.slice(0, shown).forEach(([dir, text]) => {
+        const lines = wrap(text, W - 230), w = Math.max(...lines.map(l => g.measureText(l).width)) + 64, h = 40 + lines.length * 64, x = dir === 'in' ? 44 : W - 44 - w;
+        g.fillStyle = dir === 'in' ? '#222c37' : '#a07438';
+        g.beginPath(); g.roundRect(x, y, w, h, 36); g.fill();
+        g.fillStyle = INK; lines.forEach((l, i) => g.fillText(l, x + 32, y + 72 + i * 64)); y += h + 34;
       });
       const bars = 1 + Math.floor(time * 2) % 4;
-      for (let i = 0; i < 4; i++) { g.fillStyle = i < bars ? '#d0ad79' : '#3a4048'; g.fillRect(W - 140 + i * 22, 112 - (i + 1) * 10, 14, (i + 1) * 10); }
+      for (let i = 0; i < 4; i++) { g.fillStyle = i < bars ? AMBER : '#3a4048'; g.fillRect(W - 250 + i * 24, 72 - (i + 1) * 11, 16, (i + 1) * 11); }
+      g.fillStyle = '#161c23'; g.beginPath(); g.roundRect(44, H - 170, W - 88, 104, 52); g.fill();
+      g.fillStyle = DIM; g.font = font(42, 500); g.fillText('Wiadomość', 88, H - 104);
     }
     tex.needsUpdate = true;
     return true;
   }
-  return { texture: tex, draw, dispose: () => tex.dispose() };
+  return { texture: tex, draw, dispose: () => { tex.dispose(); hero?.close(); } };
 }
 
 export async function createWorld({ renderer, environment, dof }) {
   const scene = new Scene();
   scene.environment = environment;
-  scene.environmentIntensity = 1.2;
+  scene.environmentIntensity = 1.5;
   scene.environmentRotation.set(Math.PI / 2, 0, -.6);
   const disposers = [];
   const own = (o, ...extra) => { disposers.push(() => { o.geometry?.dispose(); [o.material].flat().forEach(m => m?.dispose()); }, ...extra); return o; };
@@ -127,13 +152,19 @@ export async function createWorld({ renderer, environment, dof }) {
   const die = createDie(); scene.add(die); disposers.push(die.userData.dispose);
   // Package: laminate substrate with a gold pad ring, underfill fillet, solder balls under it.
   const pkg = new Mesh(new RoundedBoxGeometry(...LAYERS.package.size, 2, .4), new MeshStandardMaterial({ color: '#1d2a26', metalness: .3, roughness: .5 }));
-  const underfill = new Mesh(new RoundedBoxGeometry(4.8, 3.8, .3, 2, .15), new MeshStandardMaterial({ color: '#3a3f44', metalness: .1, roughness: .7 }));
+  const underfill = new Mesh(new RoundedBoxGeometry(4.8, 3.8, .3, 2, .15), new MeshStandardMaterial({ color: '#202428', metalness: .1, roughness: .7 }));
   const ballGeo = new SphereGeometry(.22, 10, 8), balls = new InstancedMesh(ballGeo, new MeshStandardMaterial({ color: '#b7bcc2', metalness: 1, roughness: .25 }), 144);
   { const m = new Matrix4(); let i = 0; for (let a = 0; a < 12; a++) for (let b = 0; b < 12; b++) balls.setMatrixAt(i++, m.makeTranslation(-6.05 + a * 1.1, -6.05 + b * 1.1, 0)); }
   pkg.userData.home = [0, 0, LAYERS.package.center[2]];
-  underfill.userData.home = [0, 0, -.3];
+  underfill.position.z = -.3; scene.add(own(underfill)); // stays under the die
   balls.userData.home = [0, 0, LAYERS.package.center[2] - LAYERS.package.size[2] / 2 - .2];
-  const pkgGroup = [own(pkg), own(underfill), own(balls)];
+  const pkgGroup = [own(pkg), own(balls)];
+  // A thin amber ring around the die: the eye follows the same piece of silicon through the layers.
+  // It stays with the die (not the package), fading in after chapter 03 and out before chapter 05.
+  const ringShape = roundedRect(4.75, 3.75, .4); ringShape.holes.push(roundedRect(4.5, 3.5, .28));
+  const ring = own(new Mesh(new ExtrudeGeometry(ringShape, { depth: .08, bevelEnabled: false, curveSegments: 6 }), new MeshStandardMaterial({ color: '#000', emissive: '#e2a65c', emissiveIntensity: 1.1, transparent: true, depthWrite: false })));
+  ring.position.z = -.3;
+  scene.add(ring);
   pkgGroup.forEach(o => scene.add(o));
 
   // Board with its texture, chips and passives.
@@ -149,32 +180,37 @@ export async function createWorld({ renderer, environment, dof }) {
   const partsGroup = [chips, passives];
   for (const p of partsGroup) board.add(p);
   // Battery, frame (with its back), display, cover glass.
-  const battery = own(new Mesh(new RoundedBoxGeometry(...LAYERS.battery.size, 3, 1.4), new MeshStandardMaterial({ color: '#2b2f35', metalness: .25, roughness: .55 })));
-  const alu = new MeshStandardMaterial({ color: '#8d949c', metalness: .9, roughness: .34 });
+  const battery = own(new Mesh(new RoundedBoxGeometry(...LAYERS.battery.size, 3, 1.4), new MeshStandardMaterial({ color: '#454b53', metalness: .55, roughness: .38 })));
+  const alu = new MeshStandardMaterial({ color: '#b4bac1', metalness: 1, roughness: .26 });
   const f = LAYERS.frame;
   const frame = own(new Mesh(frameRing(f.size[0], f.size[1], f.radius, 1.6, f.size[2]), alu));
-  const back = own(new Mesh(slab(f.size[0] - 1, f.size[1] - 1, .9, f.radius - .5, .3), new MeshStandardMaterial({ color: '#3c4148', metalness: .85, roughness: .4 })));
+  const back = own(new Mesh(slab(f.size[0] - 1, f.size[1] - 1, .9, f.radius - .5, .3), new MeshStandardMaterial({ color: '#4a5058', metalness: .9, roughness: .32 })));
   back.position.z = -f.size[2] / 2 + .45;
   frame.add(back);
   const screen = createScreen();
   disposers.push(screen.dispose);
   const d = LAYERS.display;
   const display = own(new Mesh(slab(d.size[0], d.size[1], d.size[2], d.radius, .2), new MeshStandardMaterial({
-    color: '#000000', emissive: '#ffffff', emissiveMap: screen.texture, map: screen.texture, transparent: true, depthWrite: false, metalness: .2, roughness: .2,
+    color: '#000000', emissive: '#ffffff', emissiveMap: screen.texture, transparent: true, metalness: .3, roughness: .15,
   })));
   // The extruded slab's UVs are in mm: map them onto the canvas.
   { const uv = display.geometry.getAttribute('uv'); for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / d.size[0] + .5, uv.getY(i) / d.size[1] + .5); }
   const gl = LAYERS.glass;
   const glass = own(new Mesh(slab(gl.size[0], gl.size[1], gl.size[2], gl.radius, .3), new MeshPhysicalMaterial({
-    color: '#0d1116', metalness: 0, roughness: .04, transparent: true, opacity: .22, clearcoat: 1, clearcoatRoughness: .05, depthWrite: false, envMapIntensity: 1.4,
+    color: '#0d1116', metalness: 0, roughness: .03, transparent: true, opacity: .2, clearcoat: 1, clearcoatRoughness: .04, depthWrite: false, envMapIntensity: 2.2,
   })));
   glass.renderOrder = 20; display.renderOrder = 19;
   const layers = { package: pkgGroup, board: [board], battery: [battery], frame: [frame], display: [display], glass: [glass] };
   for (const [name, list] of Object.entries(layers)) for (const o of list) { o.userData.home ??= LAYERS[name].center.slice(); o.position.set(...o.userData.home); scene.add(o); }
 
-  const key = new DirectionalLight('#f1ece4', 1.6); key.position.set(-120, -80, 220);
-  const warm = new DirectionalLight('#ffb070', .6); warm.position.set(200, 40, 50);
-  scene.add(key, warm);
+  // Product-shot light: a soft key from the camera side, a hard rim from behind along the frame
+  // and glass edges, a warm fill; the lit screen spills a little light on the layers around it.
+  const key = new DirectionalLight('#f1ece4', 1.7); key.position.set(-120, -80, 220);
+  const rim = new DirectionalLight('#eef2f6', 3.2); rim.position.set(160, 240, 45);
+  const warm = new DirectionalLight('#ffb070', .7); warm.position.set(200, -40, 50);
+  const spill = new PointLight('#ffe4bf', 0, 140, 1.4);
+  for (const o of [battery, frame, back]) o.material.transparent = true;
+  scene.add(key, rim, warm, spill);
 
   const camera = new PerspectiveCamera(30, 1, .1, 4000);
   camera.up.set(0, 0, 1);
@@ -204,9 +240,19 @@ export async function createWorld({ renderer, environment, dof }) {
       // Parts settle onto the board one after another (seeded order).
       const pp = placement('parts', u);
       for (const p of partsGroup) { p.visible = pp.appear > .001; p.position.z = pp.offset[2]; p.scale.set(1, 1, Math.max(.001, pp.k)); }
-      const lit = smoothstep(WORDS[0], WORDS[0] + .06, u) * placement('display', u).appear;
+      // The screen switches on with the first word and the device turns to a ghost at the end.
+      const xray = smoothstep(XRAY[0], XRAY[1], u);
+      const lit = smoothstep(WORDS[0] - .04, WORDS[0] + .02, u) * placement('display', u).appear * (1 - xray);
       display.material.opacity = lit;
-      display.material.emissiveIntensity = 1.7 * lit;
+      display.material.emissiveIntensity = 1.5 * lit;
+      spill.position.set(0, 30, display.position.z - 3); // below the screen: lights the layers, no glare on it spill.intensity = 2600 * lit;
+      // (transparent from the start: switching it would build another program mid-scroll)
+      for (const o of [battery, frame, back]) {
+        o.material.opacity = 1 - .85 * xray; o.material.depthWrite = xray < .5;
+      }
+      // Fades in as it lands: a floating dark slab with its reflections read as a smear.
+      glass.material.opacity = .2 * placement('glass', u).k ** 2 * (1 - .5 * xray);
+      ring.material.opacity = smoothstep(.06, .14, u) * (1 - smoothstep(.93, 1, u));
       screen.draw(u, time);
       renderer.toneMappingExposure = 1;
       dof.render(scene, camera, { focus: cam.d, aperture: cam.aperture, opacity });
