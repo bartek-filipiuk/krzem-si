@@ -57,7 +57,9 @@ export const STACK_TOP = LEVELS.at(-1).top;
  * first, the order of fabrication; the two thick top levels rise around the camera as it climbs
  * into the reveal. growth(u) -> array of 0..1 per level.
  */
-export const BUILD = [.19, .21, .23, .25, .27, .29, .31, .33, .35, .4, .46].map((start, i) => [start, start + (i < 9 ? .05 : .07)]);
+// The upper levels are deposited only once the climbing camera is above them, so nothing grows
+// around the lens; the top straps come after the reveal, as the camera pulls out.
+export const BUILD = [.19, .21, .23, .25, .27, .29, .31, .33, .47, .53, .63].map((start, i) => [start, start + (i < 8 ? .05 : .06)]);
 export function growth(u) {
   return BUILD.map(([a, b]) => smoothstep(a, b, u));
 }
@@ -93,11 +95,10 @@ export function keyframes(framing = 'desktop') {
     // Above the deposition front, looking down across the crossing middle levels; the thick top
     // levels then rise around the camera as it climbs.
     { target: [-200, 100, 700], d: 2000, az: .75, el: .78, fov: m ? 52 : 40, shift: m ? [0, -.25] : [.16, 0], aperture: .035 },
-    // Reveal: just above the top straps, about 15 degrees down, looking along them: they recede as
-    // rails to a horizon in the upper third, the nearest one quiet on the left under the heading;
-    // between them the eye drops past the middle levels to the fine ones. The low sun from the right
-    // throws long shadows of the straps across the level below.
-    { target: [15000, 4500, 5000], d: 18000, az: 1.45, el: .26, fov: m ? 60 : 50, shift: m ? [0, -.5] : [.2, -.3], aperture: .012 },
+    // Reveal: in the spirit of the "inside the layers" frame, from higher up: a steep oblique view
+    // (about 52 degrees down) onto many levels at once, copper straps above cool steel below,
+    // openings dropping several levels, the pattern repeating to the far edge in haze.
+    { target: [1200, 900, 1400], d: 12000, az: .75, el: .9, fov: m ? 56 : 46, shift: m ? [0, -.45] : [.2, -.04], aperture: .02 },
     // The die corner: pad ring, seal ring, floorplan blocks, the real stack somewhere inside.
     { target: [-1.2e5, 2.6e5, STACK_TOP], d: m ? 2.4e6 : 1.6e6, az: .9, el: .78, fov: m ? 36 : 30, shift: m ? [0, -.55] : [.24, 0], aperture: .008 },
     { target: [(DIE.x[0] + DIE.x[1]) / 2, (DIE.y[0] + DIE.y[1]) / 2, 0], d: m ? 1.6e7 : 9e6, az: 1.0, el: .95, fov: m ? 36 : 30, shift: m ? [0, -.5] : [.24, 0], aperture: .012 },

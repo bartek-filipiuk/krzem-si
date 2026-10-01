@@ -146,10 +146,10 @@ w skali logarytmicznej):
 - **0,16, powtórzenie:** rzędy żeber i bramek do horyzontu.
 - **0,3, wewnątrz warstw:** nad frontem osadzania, w dół na krzyżujące się poziomy: chłodne, stalowe
   niskie poziomy w głębi, miedziane środkowe w niskim słońcu. Poziomy narastają w kolejności produkcji.
-- **0,6, odsłona:** tuż nad najwyższymi pasami zasilania, ok. 15° w dół, wzdłuż nich: pasy uciekają
-  do horyzontu w górnej trzeciej kadru, mgła przy horyzoncie jaśniejsza i cieplejsza (niskie słońce),
-  wyżej tło strony. Najbliższy pas nisko po lewej, pod nagłówkiem. Niskie słońce z prawej, silniejsze
-  tylko w okolicy odsłony. Dopiero tu pojawia się nagłówek „To nie jest miasto.”.
+- **0,6, odsłona:** w duchu klatki 0,3, ale wyżej: stromo, ok. 52° w dół, na wiele poziomów naraz:
+  miedziane linie u góry, stalowe i grafitowe niżej, prześwity w dół o kilka poziomów, wzór aż po
+  brzeg kadru w mgle. Wyższe poziomy osadzają się dopiero, gdy kamera jest już nad nimi (żadnej
+  belki przy obiektywie), najwyższe pasy dopiero po odsłonie. Tu pojawia się nagłówek.
 - **0,8, róg chipu:** pierścień padów, pierścienie uszczelniające, bloki; **1, wyjście:** chip jako
   obiekt: bloki pamięci z delikatnym połyskiem zależnym od kąta, logika jako rzędy komórek wypełnione
   prawdziwym routingiem w zmniejszeniu, bloki analogowe/IO przy krawędzi, siatka zasilania co 100 µm

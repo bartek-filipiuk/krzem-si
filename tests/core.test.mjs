@@ -405,7 +405,7 @@ test('scale camera: starts on the chapter 02 end frame, continuous, never inside
     }
   }
   assert.deepEqual(KEYS, [0, .16, .3, .6, .8, 1]);
-  assert.deepEqual(growth(0).every(g => g === 0), true); assert.deepEqual(growth(.7).every(g => g === 1), true);
+  assert.deepEqual(growth(0).every(g => g === 0), true); assert.deepEqual(growth(.75).every(g => g === 1), true);
   const rows = transistorRows();
   assert.ok(rows.fins.some(f => f.min[1] <= -4 && f.max[1] >= 4) && rows.gates.some(g => g.min[0] < 0 && g.max[0] > 0 && g.min[1] < -42 && g.max[1] > 42), 'the chapter 02 device is one of the rows');
 });
