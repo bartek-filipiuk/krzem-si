@@ -106,7 +106,6 @@ html[data-renderer=webgl] .scene-poster{visibility:hidden}
 .switch-demo[aria-pressed=true]{border-color:#c9a57266}
 .switch-state{font:19px var(--mono);margin-left:10px;color:#a8b2bf}
 .switch-demo[aria-pressed=true] .switch-state{color:var(--amber)}
-.technical-legend{position:absolute;right:16%;bottom:23%;display:flex;gap:45px;font:9px var(--mono);letter-spacing:1.5px;color:#9aa5b1;z-index:3}
 .scale-marker{position:absolute;right:12%;bottom:18%;display:flex;align-items:center;gap:18px;font:8px var(--mono);letter-spacing:1.4px;color:#96a2b0;z-index:3}
 .scale-marker i{display:block;height:1px;width:110px;background:linear-gradient(90deg,#414b55,#c4a174)}
 
@@ -168,7 +167,6 @@ html[data-motion=static] .process-strip li:before{background:var(--amber)}
 .body-copy{font-size:13px;max-width:290px}
 .chapter-copy{width:46%}
 .eyebrow{font-size:9px}
-.technical-legend{gap:25px;right:13%}
 .process-strip{right:8%;left:48%;font-size:9px}
 .ai-interface{width:38%;right:8%;padding:14px 17px}
 .ai-interface-top{font-size:6px;letter-spacing:.8px}
@@ -220,7 +218,6 @@ h2{font-size:54px;line-height:1.02;letter-spacing:-.06em}
 .process-strip{left:var(--pad);right:var(--pad);bottom:12.5%;font-size:9px}
 .process-strip li span{font-size:7px}
 .switch-demo{margin-top:20px;padding:10px 12px;min-width:240px;font-size:10px}
-.technical-legend{right:0;left:0;justify-content:center;bottom:16%;gap:32px;font-size:8px}
 .scale-marker{left:var(--pad);right:auto;bottom:14%;font-size:7px;gap:12px}
 .scale-marker i{width:75px}
 .ai-interface{width:calc(100% - 2 * var(--pad));max-width:440px;left:var(--pad);right:auto;bottom:12%;padding:14px 17px;background:#111b26f0}
@@ -281,7 +278,7 @@ h2{font-size:60px}
 *,*:before,*:after{animation:none!important;transition:none!important}
 }
 
-@media print{.header,.chapter-nav,.chapter-footer,.hero-poster,.ambient,#scene-canvas,.reading-progress,.scene-poster,.ai-interface,.element-card,.scene-caption,.technical-legend,.process-strip,.scale-marker,.final-wordmark,.text-link,.switch-demo{display:none!important}
+@media print{.header,.chapter-nav,.chapter-footer,.hero-poster,.ambient,#scene-canvas,.reading-progress,.scene-poster,.ai-interface,.element-card,.scene-caption,.process-strip,.scale-marker,.final-wordmark,.text-link,.switch-demo{display:none!important}
 body{background:white;color:black}
 .chapter,.hero,.chapter#skala,.chapter#inteligencja,.stage{height:auto;min-height:0;position:relative;overflow:visible}
 .chapter{padding:25px 0;break-inside:avoid}
@@ -300,7 +297,6 @@ button{display:none}
    material fill the frame, so they are not masked. */
 html:not([data-chapter="0"]):not([data-chapter="1"]) #scene-canvas{mask-image:linear-gradient(90deg,transparent 12%,#0002 28%,#000b 44%,#000 63%);-webkit-mask-image:linear-gradient(90deg,transparent 12%,#0002 28%,#000b 44%,#000 63%)}
 
-html[data-motion=static][data-power=off] #tranzystor .scene-poster{filter:saturate(.15)}
 
 @media(max-width:759px){#scene-canvas{mask-image:none;-webkit-mask-image:none}
 }
@@ -347,8 +343,8 @@ html[data-motion=full][data-compact=true] .stage{height:100vh;height:100svh;min-
 /* Chapter 01: the lattice. The poster (calm, no JS, fallbacks) is captured from the live scene's
    final frame and fills the stage; its veil keeps the heading side dark. The scale bar is only
    shown while a live camera computes it (app.js showScale). */
-.scene-poster.lattice-poster{inset:0;width:100%;height:100%;max-width:none;opacity:1;mix-blend-mode:normal}
-.lattice-poster img{width:100%;height:100%;object-fit:cover}
+.scene-poster.full-poster{inset:0;width:100%;height:100%;max-width:none;opacity:1;mix-blend-mode:normal}
+.full-poster img{width:100%;height:100%;object-fit:cover}
 .lattice-legend{position:absolute;z-index:4;left:var(--pad);bottom:92px;width:340px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;font:9px/1.7 var(--mono);letter-spacing:.6px;color:#8f969f}
 .lattice-scale{display:flex;align-items:center;gap:12px;font-size:10px;letter-spacing:1.2px;color:#c4c8cc}
 .lattice-scale[hidden]{display:none}
@@ -356,3 +352,28 @@ html[data-motion=full][data-compact=true] .stage{height:100vh;height:100svh;min-
 /* The stage strip sits over the moving lattice: a graphite halo keeps its labels legible. */
 html[data-renderer=webgl] #materia .process-strip{text-shadow:0 0 3px #0b0e12,0 1px 12px #0b0e12,0 0 24px #0b0e12}
 @media(max-width:759px){.lattice-legend{right:var(--pad);width:auto;bottom:calc(12.5% + 52px);font-size:8px}}
+
+/* Chapter 02: the FinFET. Two posters (OFF/ON) follow the switch in calm mode. Part labels sit
+   in a box that crops like the posters (object-fit: cover), so their percentages fit the poster
+   without JS; the live scene rewrites them every frame from its own camera (app.js). Leaders are
+   drawn from the label to its anchor with CSS hypot()/atan2(). */
+.transistor-poster[data-state=on],html[data-power=on] .transistor-poster[data-state=off]{display:none}
+html[data-power=on] .transistor-poster[data-state=on]{display:block}
+#tranzystor .stage{container-type:size}
+.part-frame{position:absolute;z-index:3;left:50%;top:50%;translate:-50% -50%;width:max(100cqw,160cqh);height:max(100cqh,62.5cqw);container-type:size;pointer-events:none}
+.part-labels{list-style:none;margin:0;padding:0}
+.part-label{--px:var(--x);--py:var(--y);--pax:var(--ax);--pay:var(--ay);position:absolute;left:calc(var(--px) * 1%);top:calc(var(--py) * 1%);font:9px/1 var(--mono);letter-spacing:1.4px;text-transform:uppercase;color:#cfd4d8}
+.part-label span{position:absolute;top:0;translate:10px -50%;white-space:nowrap;text-shadow:0 0 6px #0b0e12,0 0 2px #0b0e12}
+.part-label[data-side=left] span{translate:calc(-100% - 10px) -50%}
+.part-label i{position:absolute;left:0;top:0;height:1px;background:#cfd4d899;transform-origin:0 50%;
+  width:hypot(calc((var(--pax) - var(--px)) * 1cqw),calc((var(--pay) - var(--py)) * 1cqh));
+  rotate:atan2(calc((var(--pay) - var(--py)) * 1cqh),calc((var(--pax) - var(--px)) * 1cqw))}
+.part-label i:after{content:"";position:absolute;right:-2px;top:-2px;width:5px;height:5px;border-radius:50%;background:#e8ecef}
+html[data-renderer=webgl] .part-labels:not([data-live]){visibility:hidden}
+@media(max-width:759px){
+ .part-frame{width:max(100cqw,64.2857cqh);height:max(100cqh,155.556cqw)}
+ .part-label{--px:var(--mx);--py:var(--my);--pax:var(--max);--pay:var(--may);font-size:7px;letter-spacing:.9px}
+ .part-label[data-side-mobile=left] span{translate:calc(-100% - 6px) -50%}
+ .part-label[data-side-mobile=right] span{translate:6px -50%}
+ #tranzystor .lattice-legend{bottom:58px}
+}

@@ -64,7 +64,7 @@
       <div class="chapter-copy"><p class="eyebrow">01 / MATERIA</p><h2 id="material-title">Od natury.<br>Do <em>precyzji.</em></h2>
       <p class="body-copy">W przyrodzie krzem jest związany z innymi pierwiastkami. Elektronika potrzebuje czegoś innego: niezwykle czystego, uporządkowanego materiału.</p>
       <p class="small-note">Redukcja. Oczyszczanie. Krystalizacja.<br>To proces — nie magia.</p></div>
-      <picture class="scene-poster lattice-poster">
+      <picture class="scene-poster full-poster">
         <source media="(max-width: 759px)" srcset="./assets/posters/lattice-mobile.webp" width="900" height="1400">
         <img src="./assets/posters/lattice-desktop.webp" width="1600" height="1000" alt="Sieć krystaliczna krzemu widziana wzdłuż kierunku [110]: rzędy atomów otaczają sześciokątne kanały" loading="lazy" decoding="async">
       </picture>
@@ -85,9 +85,29 @@
       <button class="switch-demo" id="transistor-toggle" type="button" aria-pressed="false" disabled><span class="switch-track" aria-hidden="true"><i></i></span><span id="switch-label">Włącz przewodzenie</span><span class="switch-state" aria-hidden="true">0</span></button>
       <p id="switch-description" class="small-note" aria-live="polite">Kanał nie przewodzi w tym uproszczonym modelu.</p>
       <noscript><p class="small-note">Włącz JavaScript, aby użyć przełącznika. Opowieść pozostaje dostępna poniżej.</p></noscript></div>
-      <img class="scene-poster" src="./assets/scene-2.webp" alt="" width="860" height="850" loading="lazy" decoding="async">
-      <div class="technical-legend"><span>ŹRÓDŁO</span><span>BRAMKA</span><span>DREN</span></div>
-      <div class="chapter-footer"><span>MODEL POGLĄDOWY MOSFET · NIE W SKALI</span><span>02 — 06</span></div>
+      <picture class="scene-poster full-poster transistor-poster" data-state="off">
+        <source media="(max-width: 759px)" srcset="./assets/posters/finfet-off-mobile.webp" width="900" height="1400">
+        <img src="./assets/posters/finfet-off-desktop.webp" width="1600" height="1000" alt="Przekrój tranzystora FinFET: bramka obejmuje krzemowe żebro z trzech stron, kanał wyłączony" loading="lazy" decoding="async">
+      </picture>
+      <picture class="scene-poster full-poster transistor-poster" data-state="on">
+        <source media="(max-width: 759px)" srcset="./assets/posters/finfet-on-mobile.webp" width="900" height="1400">
+        <img src="./assets/posters/finfet-on-desktop.webp" width="1600" height="1000" alt="Ten sam przekrój z włączonym kanałem: świecąca warstwa pod bramką i umowny przepływ ładunków od źródła" loading="lazy" decoding="async">
+      </picture>
+      <div class="part-frame">
+        <ul class="part-labels" aria-label="Elementy tranzystora">
+          <li class="part-label" data-part="contact" data-side="left" data-side-mobile="left" style="--x:54.15;--y:39.59;--ax:58.94;--ay:40.08;--mx:42.99;--my:68.77;--max:46.46;--may:68.99"><span>Kontakt</span><i></i></li>
+          <li class="part-label" data-part="gate" data-side="right" data-side-mobile="right" style="--x:79.6;--y:42.6;--ax:71.82;--ay:43.23;--mx:67.67;--my:70.02;--max:60.61;--may:70.35"><span>Bramka</span><i></i></li>
+          <li class="part-label" data-part="drain" data-side="right" data-side-mobile="right" style="--x:79.6;--y:45.6;--ax:75.22;--ay:44.34;--mx:67.67;--my:71.38;--max:64.78;--may:70.71"><span>Dren</span><i></i></li>
+          <li class="part-label" data-part="source" data-side="left" data-side-mobile="left" style="--x:54.15;--y:51.54;--ax:58.52;--ay:52.03;--mx:42.99;--my:74.02;--max:45.88;--may:74.24"><span>Źródło</span><i></i></li>
+          <li class="part-label" data-part="fin" data-side="left" data-side-mobile="left" style="--x:54.15;--y:54.54;--ax:66.83;--ay:53.56;--mx:42.99;--my:75.37;--max:55.24;--may:74.93"><span>Żebro (kanał)</span><i></i></li>
+          <li class="part-label" data-part="oxide" data-side="right" data-side-mobile="right" style="--x:79.6;--y:70.53;--ax:71.08;--ay:71.16;--mx:67.67;--my:82.72;--max:60.13;--may:83.05"><span>Izolator</span><i></i></li>
+        </ul>
+      </div>
+      <div class="lattice-legend transistor-legend">
+        <p class="lattice-scale" id="transistor-scale" hidden><i></i><span>20 nm</span></p>
+        <p class="lattice-note">Przekrój uproszczony. Żebra, rozstaw bramek i ścieżek jak w procesie 14 nm; cienkie warstwy pogrubione. Przepływ ładunków to umowna wizualizacja.</p>
+      </div>
+      <div class="chapter-footer"><span>MODEL FINFET · ŻEBRA, BRAMKI I ŚCIEŻKI W SKALI 14 NM</span><span>02 — 06</span></div>
     </div>
   </section>
   <section class="chapter" id="skala" data-scene="3" aria-labelledby="scale-title">

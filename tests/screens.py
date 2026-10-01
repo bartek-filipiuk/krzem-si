@@ -131,19 +131,23 @@ def lattice_board():
 
 
 def posters(browser):
-    """Calm/no-JS posters of chapter 01: the live scene's final monocrystal frame, text hidden.
-    Same pixel sizes as the hero posters (1600x1000 desktop, 900x1400 mobile)."""
+    """Calm/no-JS posters from the running scenes, page text hidden. Same pixel sizes as the hero
+    posters (1600x1000 desktop, 900x1400 mobile). Chapter 01: the final monocrystal frame;
+    chapter 02: the FinFET OFF and ON at the frame transistor-math.js POSTER names (progress .5)."""
     out = ROOT / 'src/assets/posters'
+    shots_ = [('lattice', 'scene=materia&progress=1'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
+              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on')]
     for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
                       'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
         page = browser.new_page(**ctx)
-        page.goto(f'{URL}?scene=materia&progress=1&quality=cinematic&freeze=1', wait_until='networkidle')
-        ready(page, 'cinematic')
-        page.add_style_tag(content='main,.header,.chapter-nav,.reading-progress{visibility:hidden!important}')
-        page.wait_for_timeout(300)
-        with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
-            page.screenshot(path=tmp.name)
-            webp(Path(tmp.name), out / f'lattice-{name}.webp', 84)
+        for prefix, query in shots_:
+            page.goto(f'{URL}?{query}&quality=cinematic&freeze=1', wait_until='networkidle')
+            ready(page, 'cinematic')
+            page.add_style_tag(content='main,.header,.chapter-nav,.reading-progress{visibility:hidden!important}')
+            page.wait_for_timeout(300)
+            with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
+                page.screenshot(path=tmp.name)
+                webp(Path(tmp.name), out / f'{prefix}-{name}.webp', 84)
         page.close()
 
 

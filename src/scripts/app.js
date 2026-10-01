@@ -6,6 +6,7 @@
 import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
+import { ANCHORS, POSTER, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
 const canvas = document.querySelector('#scene-canvas');
@@ -18,7 +19,9 @@ const powerButton = document.querySelector('#transistor-toggle');
 const aiButton = document.querySelector('#ai-toggle');
 const aiPanel = document.querySelector('#ai-demo');
 const progressBar = document.querySelector('#reading-progress-bar');
-const scaleBox = document.querySelector('#lattice-scale');
+const partLabels = document.querySelector('.part-labels');
+const labelItems = [...partLabels.querySelectorAll('[data-part]')];
+const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale') };
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reader = createScrollReader(sections, document.querySelector('#zrodla'));
 const controller = new QualityController();
@@ -33,6 +36,8 @@ const qa = {
   freeze: params.get('freeze') === '1',
   // Seeded ambient phase in seconds; 0 (the default) is the poster's pose.
   phase: ((Math.imul(Number(params.get('seed')) >>> 0, 2654435761) >>> 0) / 2 ** 32) * 90,
+  // Chapter 02 state forced like a click on the switch: power=on | power=off.
+  power: params.has('power') ? params.get('power') === 'on' : null,
 };
 const debug = params.has('debug') || qaIndex >= 0 || params.has('quality');
 
@@ -45,7 +50,7 @@ try {
 let layer = null, profile = 'calm', reason = '', framing = framingFor(innerWidth);
 let raf = 0, dirty = true, destroyed = false, generation = 0, abort = null;
 let story = null, previousIndex = -1, lastFrame = 0, liveAt = 0, ambient = qa.phase;
-let pointer = [0, 0], parallax = [0, 0], manualPower = null, lastPower = null, manualAI = null;
+let pointer = [0, 0], parallax = [0, 0], manualPower = qa.power, lastPower = null, manualAI = null, powerLevel = 0;
 const intervals = [], logged = new Set();
 
 function warnOnce(kind, error) {
@@ -111,9 +116,13 @@ function tick(now) {
   }
   let cpu = 0;
   try {
-    cpu = layer.frame({ ...story, time: ambient, parallax, power: lastPower ?? false });
+    // The switch eases over ~0.4 s (real time); a frozen QA frame shows the end state at once.
+    const target = lastPower ? 1 : 0;
+    powerLevel = qa.freeze || !dt ? target : powerLevel + (target - powerLevel) * (1 - Math.exp(-Math.min(dt, 64) / 130));
+    cpu = layer.frame({ ...story, time: ambient, parallax, power: powerLevel });
   } catch (error) { fail('Render error', error, 'TRYB LEKKI · 3D NIEDOSTĘPNE'); return; }
   showScale(layer.scale);
+  placeLabels();
   if (!liveAt) {
     liveAt = now;
     root.dataset.renderer = 'webgl'; root.dataset.hero = 'live';
@@ -126,16 +135,44 @@ function tick(now) {
   if (!qa.freeze || wasDirty) schedule();
 }
 
+/**
+ * Chapter 02 part labels follow the live camera (same pure camera as scenes/transistor.js), laid
+ * out in the poster's cover box; outside the pinned chapter they are hidden (the stage scrolls,
+ * the canvas does not).
+ */
+function placeLabels() {
+  const live = story.index === 2 && story.transition === 0;
+  partLabels.toggleAttribute('data-live', live);
+  if (!live) return;
+  const W = innerWidth, H = innerHeight, [pw, ph] = POSTER[framing], A = pw / ph;
+  const box = [Math.max(W, H * A), Math.max(H, W / A)];
+  const cam = transistorCamera(story.progress, framing, ambient * 2 * Math.PI / 80);
+  const anchors = {};
+  for (const [key, point] of Object.entries(ANCHORS)) {
+    const [fx, fy] = project(point, cam, W / H) ?? [-1, -1];
+    anchors[key] = [(fx * W + (box[0] - W) / 2) / box[0] * 100, (fy * H + (box[1] - H) / 2) / box[1] * 100];
+  }
+  const layout = labelLayout(anchors, box, framing);
+  for (const li of labelItems) {
+    const l = layout[li.dataset.part];
+    li.style.setProperty('--px', l.x.toFixed(2)); li.style.setProperty('--py', l.y.toFixed(2));
+    li.style.setProperty('--pax', l.ax.toFixed(2)); li.style.setProperty('--pay', l.ay.toFixed(2));
+    li.dataset.side = l.side; li.dataset.sideMobile = l.side;
+  }
+}
+
 /** Scale bar under the lattice: only drawn from a live camera, so it never shows a stale value. */
 let shownScale = '';
 function showScale(scale) {
-  const key = scale ? `${scale.label}/${scale.px.toFixed(1)}` : '';
+  const key = scale ? `${scale.scene}/${scale.label}/${scale.px.toFixed(1)}` : '';
   if (key === shownScale) return;
   shownScale = key;
-  scaleBox.hidden = !scale;
-  if (!scale) return;
-  scaleBox.querySelector('i').style.width = `${scale.px.toFixed(1)}px`;
-  scaleBox.querySelector('span').textContent = scale.label;
+  for (const [scene, box] of Object.entries(scaleBoxes)) {
+    box.hidden = scene !== scale?.scene;
+    if (box.hidden) continue;
+    box.querySelector('i').style.width = `${scale.px.toFixed(1)}px`;
+    box.querySelector('span').textContent = scale.label;
+  }
 }
 
 function demote(next) {
@@ -161,7 +198,8 @@ function stop(message = 'TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ') {
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   layer?.dispose(); layer = null; liveAt = 0; lastFrame = 0; profile = 'calm';
   root.dataset.renderer = 'static'; root.dataset.quality = 'calm'; delete root.dataset.hero;
-  root.style.removeProperty('--hero-copy'); showScale(null);
+  root.style.removeProperty('--hero-copy'); showScale(null); partLabels.removeAttribute('data-live');
+  for (const li of labelItems) for (const v of ['--px', '--py', '--pax', '--pay']) li.style.removeProperty(v);
   status.textContent = message; motionLabel.textContent = 'Włącz animacje'; motionButton.setAttribute('aria-pressed', 'true');
   relayout('static');
   measure();

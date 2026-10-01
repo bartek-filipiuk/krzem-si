@@ -262,7 +262,7 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
         renderer.render(scene, camera);
         renderer.setClearColor(0x000000, 0);
       }
-      return emerge > .6 ? scaleBar(size[1], cam.fov) : null;
+      return emerge > .6 ? { ...scaleBar(size[1], cam.fov), scene: 'lattice' } : null;
     },
     dispose() {
       for (const mesh of meshes) mesh.geometry.dispose();

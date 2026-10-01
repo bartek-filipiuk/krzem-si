@@ -63,15 +63,43 @@ def poster_shown(page) -> bool:
       return img.complete&&img.naturalWidth>0&&s.visibility==='visible'&&Number(s.opacity)===1}''')
 
 
-def lattice_scale(page):
-    """The chapter 01 scale bar: (shown, label, bar width in px)."""
-    return page.evaluate('''()=>{const s=document.querySelector('#lattice-scale');
-      return [!s.hidden&&getComputedStyle(s).display!=='none',s.querySelector('span').textContent,s.querySelector('i').getBoundingClientRect().width]}''')
+def lattice_scale(page, selector='#lattice-scale'):
+    """A scale bar (chapter 01 by default): (shown, label, bar width in px)."""
+    return page.evaluate('''(sel)=>{const s=document.querySelector(sel);
+      return [!s.hidden&&getComputedStyle(s).display!=='none',s.querySelector('span').textContent,s.querySelector('i').getBoundingClientRect().width]}''', selector)
 
 
 def lattice_poster_shown(page) -> bool:
-    return page.evaluate('''()=>{const p=document.querySelector('.lattice-poster'),img=p.querySelector('img');
+    return page.evaluate('''()=>{const p=document.querySelector('#materia .full-poster'),img=p.querySelector('img');
       return getComputedStyle(p).visibility==='visible'&&img.getBoundingClientRect().width>=innerWidth*.9}''')
+
+
+LABEL_RECTS = '''()=>[...document.querySelectorAll('.part-label span')].map(s=>{const r=s.getBoundingClientRect();
+  return {part:s.parentElement.dataset.part,x:r.left,y:r.top,w:r.width,h:r.height,visible:getComputedStyle(s).visibility==='visible'&&r.width>0}})'''
+# The copy's ink, not its block boxes (a heading's box spans the whole column).
+COPY_RECTS = '''()=>[...document.querySelectorAll('#tranzystor .chapter-copy > *, #tranzystor .lattice-legend > *:not([hidden])')]
+  .map(e=>{let r=e.getBoundingClientRect();if(e.tagName!=='BUTTON'){const g=document.createRange();g.selectNodeContents(e);r=g.getBoundingClientRect();}
+    return {x:r.left,y:r.top,w:r.width,h:r.height}}).filter(r=>r.w>0)'''
+
+
+def overlaps(a, b, pad=2) -> bool:
+    return a['x'] < b['x'] + b['w'] + pad and b['x'] < a['x'] + a['w'] + pad and a['y'] < b['y'] + b['h'] + pad and b['y'] < a['y'] + a['h'] + pad
+
+
+def labels_ok(page) -> bool:
+    """Six part labels visible, inside the viewport, not on each other or on the chapter copy."""
+    labels, copy = page.evaluate(LABEL_RECTS), page.evaluate(COPY_RECTS)
+    w, h = page.viewport_size['width'], page.viewport_size['height']
+    return (len(labels) == 6 and all(l['visible'] for l in labels)
+            and all(0 <= l['x'] and l['x'] + l['w'] <= w and 0 <= l['y'] and l['y'] + l['h'] <= h for l in labels)
+            and not any(overlaps(a, b) for i, a in enumerate(labels) for b in labels[i + 1:])
+            and not any(overlaps(a, c) for a in labels for c in copy))
+
+
+def transistor_poster(page) -> str | None:
+    """Which chapter 02 poster is showing in static mode: 'off', 'on' or None."""
+    return page.evaluate('''()=>{const v=[...document.querySelectorAll('.transistor-poster')].filter(p=>getComputedStyle(p).display!=='none'&&getComputedStyle(p).visibility==='visible');
+      return v.length===1?v[0].dataset.state:null}''')
 
 
 def gpu_error(page) -> int:
@@ -113,12 +141,25 @@ with sync_playwright() as p:
     goto_chapter(desktop, 'poczatek', .1)
     check('Lattice: no scale bar over the hero', not lattice_scale(desktop)[0])
     goto_chapter(desktop, 'tranzystor')
+    desktop.wait_for_timeout(200)
+    check('FinFET: six part labels on screen, clear of each other and of the copy', labels_ok(desktop))
+    shown, label, width = lattice_scale(desktop, '#transistor-scale')
+    check('FinFET: live scale bar at the focal plane', shown and re.fullmatch(r'\d+ nm', label) is not None and 40 < width < 260)
     switch = desktop.locator('#transistor-toggle')
     before = switch.get_attribute('aria-pressed')
     switch.click()
     check('Transistor switches OFF/ON accessibly', switch.get_attribute('aria-pressed') != before)
+    desktop.mouse.wheel(0, 40)
+    desktop.wait_for_timeout(250)
+    check('Transistor: manual state survives a small scroll', switch.get_attribute('aria-pressed') != before)
     switch.click()
     check('Transistor switches back', switch.get_attribute('aria-pressed') == before)
+    switch.focus()
+    desktop.keyboard.press('Space')
+    check('Transistor: Space toggles it', switch.get_attribute('aria-pressed') != before)
+    desktop.keyboard.press('Enter')
+    check('Transistor: Enter toggles it back', switch.get_attribute('aria-pressed') == before)
+    check('Transistor: GPU returns NO_ERROR', gpu_error(desktop) == 0)
     goto_chapter(desktop, 'inteligencja')
     ai = desktop.locator('#ai-toggle')
     before = ai.get_attribute('aria-expanded')
@@ -133,6 +174,14 @@ with sync_playwright() as p:
     desktop.evaluate("document.getElementById('materia').scrollIntoView()")
     desktop.wait_for_timeout(300)
     check('Motion OFF: chapter 01 shows the lattice poster', lattice_poster_shown(desktop))
+    desktop.evaluate("document.getElementById('tranzystor').scrollIntoView()")
+    desktop.wait_for_timeout(300)
+    off_first = desktop.locator('#transistor-toggle').get_attribute('aria-pressed') == 'false'
+    check('Motion OFF: chapter 02 poster shows the switch state', transistor_poster(desktop) == ('off' if off_first else 'on'))
+    check('Motion OFF: part labels over the poster, clear of the copy', labels_ok(desktop))
+    desktop.locator('#transistor-toggle').click()
+    check('Motion OFF: the switch swaps the chapter 02 poster', transistor_poster(desktop) == ('on' if off_first else 'off'))
+    desktop.locator('#transistor-toggle').click()
     desktop.evaluate("document.getElementById('inteligencja').scrollIntoView()")
     desktop.wait_for_timeout(200)
     desktop.screenshot(path=str(OUT / '08-static-ai.png'))
@@ -203,6 +252,9 @@ with sync_playwright() as p:
         for chapter in CHAPTERS:
             goto_chapter(page, chapter, .5)
             check(f'{name}/{chapter}: heading visible', page.locator(f'#{chapter} h1,#{chapter} h2').is_visible())
+            if chapter == 'tranzystor' and name in ('mobile', 'no-javascript', 'reduced-motion', 'tablet'):
+                page.wait_for_timeout(200)
+                check(f'{name}: FinFET labels clear of each other and of the copy', labels_ok(page))
         page.close()
 
     # Explicit user choice beats reduced motion.
@@ -223,6 +275,9 @@ with sync_playwright() as p:
     load(qa, '?scene=poczatek&progress=0.95&quality=balanced&freeze=1')
     check('QA mode: hero handover frame lands in the lattice', abs(qa.evaluate('krzemDebug.hero') - .95) < .01 and lattice_scale(qa)[0]
           and gpu_error(qa) == 0)
+    load(qa, '?scene=tranzystor&progress=0.1&quality=balanced&freeze=1&power=on')
+    check('QA mode: power=on forces the switch before the auto-on point', qa.locator('#transistor-toggle').get_attribute('aria-pressed') == 'true'
+          and attr(qa, 'power') == 'on' and gpu_error(qa) == 0)
     load(qa, '#materia')
     check('Direct load at #materia lands on the material chapter', attr(qa, 'chapter') == '1')
     qa.close()

@@ -10,6 +10,7 @@ import { entryPhases, latticeProgress, smoothstep } from '../story/timeline.js';
 import { createHero } from '../scenes/hero.js';
 import { createLegacyScenes } from '../scenes/legacy.js';
 import { createLattice } from '../scenes/lattice.js';
+import { createTransistor } from '../scenes/transistor.js';
 
 export async function createGpuLayer({ canvas, profile, framing, signal, invalidate, gpuTimer = false }) {
   const settings = PROFILES[profile];
@@ -18,14 +19,15 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, lattice = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, transistor = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     lattice = await createLattice({ renderer, environment: hero.environment });
+    transistor = await createTransistor({ renderer, environment: hero.environment, msaa: settings.antialias, taps: settings.antialias ? 24 : 12 });
     signal?.throwIfAborted();
     legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
-    hero?.dispose(); lattice?.dispose(); assets.dispose(); renderer.dispose();
+    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
   }
 
@@ -37,6 +39,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.resize(width, height, current.framing);
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
+    transistor.resize(width, height, current.framing);
     legacy.resize(width, height, p.lod);
   }
 
@@ -58,8 +61,15 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         if (entry.lattice > 0) scale = lattice.render({ u, time: state.time, emerge: entry.lattice, fade: entry.dark, over: entry.hero });
         else if (!entry.hero) renderer.clear();
       } else if (state.index === 1) {
-        // The lattice recedes into the background while chapter 02 (legacy) fades in over it.
-        scale = lattice.render({ u, time: state.time, emerge: 1 - smoothstep(0, .8, state.transition) });
+        // Hand-over 01 -> 02 through the background: the lattice recedes into the fog, then the
+        // transistor comes up out of the graphite.
+        const blend = state.transition;
+        if (blend < .5) scale = lattice.render({ u, time: state.time, emerge: 1 - smoothstep(0, .5, blend) });
+        else transistor.render({ progress: 0, time: state.time, power: state.power, fade: smoothstep(.5, 1, blend) });
+      } else if (state.index === 2) {
+        // Chapter 02; on the way out it fades to the background and chapter 03 (legacy) fades in.
+        scale = transistor.render({ progress: state.progress, time: state.time, power: state.power, fade: 1 - smoothstep(0, .5, state.transition) });
+        if (scale) scale.scene = 'transistor';
         if (state.transition > 0) {
           renderer.resetState();
           legacy.render({ ...state, keep: true });
@@ -73,7 +83,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
       timer?.end();
       return performance.now() - started;
     },
-    /** Scale bar of the last frame ({ nm, px, label }), null when the lattice is not on screen. */
+    /** Scale bar of the last frame ({ nm, px, label, scene }), null when no true scale is on screen. */
     get scale() { return scale; },
     /** GPU time per rendered frame in ms (EXT_disjoint_timer_query_webgl2), only with gpuTimer. */
     gpuTimes: timer?.samples ?? null,
@@ -84,7 +94,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); lattice.dispose(); legacy.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); transistor.dispose(); legacy.dispose(); assets.dispose();
       renderer.dispose();
     },
   };

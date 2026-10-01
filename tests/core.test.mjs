@@ -6,6 +6,8 @@ import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
+import { components, DIM, NOTCH_Y, ANCHORS, LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
+import { readFileSync } from 'node:fs';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -298,7 +300,46 @@ test('scale bar is physically true at the focus distance and labelled in Polish'
   assert.ok(!/\./.test(scaleBar(400, 60, 2).label));
 });
 
-// ---- legacy chapters 2-6 (v0.1 renderer, kept until stages B/C) ------------------------------
+// ---- FinFET (chapter 02) ------------------------------------------------------------------------
+test('FinFET model keeps the sourced proportions and cuts through the front fin', () => {
+  const fins = components().filter(c => c.fin);
+  assert.deepEqual(fins.map(f => f.center[1]), [-DIM.finPitch, 0, DIM.finPitch], 'fin pitch 42 nm');
+  for (const f of fins) { assert.equal(f.half[1] * 2, DIM.finWidth); assert.equal(f.center[2] + f.half[2], DIM.finHeight); assert.equal(f.center[2] - f.half[2], 0); }
+  const gates = components().filter(c => c.kind === 'gate');
+  assert.deepEqual(gates.map(g => g.center[0]), [-DIM.gatePitch, 0, DIM.gatePitch], 'contacted gate pitch 70 nm');
+  for (const g of gates) assert.equal(g.half[0] * 2, DIM.gateLength);
+  const lines = components().filter(c => c.kind === 'copper' && c.half[0] > 50).map(c => c.center[1]);
+  assert.deepEqual(lines.slice(1).map((y, i) => y - lines[i]), [DIM.metalPitch, DIM.metalPitch, DIM.metalPitch], 'metal pitch 52 nm');
+  assert.equal(NOTCH_Y, -DIM.finPitch);
+  assert.ok(components().every(c => [...c.center, ...c.half].every(Number.isFinite) && c.half.every(v => v > 0)));
+});
+
+test('projection, cover crop and label layout: labels never overlap, static markup matches the poster', () => {
+  const cam = transistorCamera(.5, 'desktop');
+  assert.ok(near(project(cam.target, cam, 1.6), [(1 + cam.shift[0]) / 2, (1 - cam.shift[1]) / 2], 1e-12), 'target lands on the lens-shifted centre');
+  assert.equal(project(cam.position.map((v, i) => v + (v - cam.target[i])), cam, 1.6), null, 'behind the camera');
+  assert.ok(near(coverMap([.5, .5], 1.6, 1000, 1000), [.5, .5]) && near(coverMap([0, .5], 1.6, 1600, 1000), [0, .5]));
+  const html = readFileSync(new URL('../src/index.html', import.meta.url), 'utf8');
+  for (const framing of ['desktop', 'mobile']) {
+    const [w, h] = POSTER[framing], c = transistorCamera(POSTER.progress, framing);
+    const anchors = Object.fromEntries(Object.entries(ANCHORS).map(([k, p]) => [k, project(p, c, w / h).map(v => v * 100)]));
+    const layout = labelLayout(anchors, [w, h], framing);
+    const rows = Object.values(layout);
+    for (const a of rows) for (const b of rows) if (a !== b && a.side === b.side)
+      assert.ok(Math.abs(a.y - b.y) / 100 * h >= (framing === 'mobile' ? 19 : 30) - 1e-6, 'labels in one column keep their gap');
+    for (const [key, l] of Object.entries(layout)) {
+      assert.ok(l.x > 0 && l.x < 100 && l.y > 0 && l.y < 100, `${key} inside the poster`);
+      const m = html.match(new RegExp(`data-part="${key}"[^>]*style="([^"]+)"`));
+      assert.ok(m, `${key} label in index.html`);
+      const v = name => Number(m[1].match(new RegExp(`--${name}:([-\\d.]+)`))[1]);
+      const p = framing === 'mobile' ? ['mx', 'my', 'max', 'may'] : ['x', 'y', 'ax', 'ay'];
+      assert.ok(near([v(p[0]), v(p[1]), v(p[2]), v(p[3])], [l.x, l.y, l.ax, l.ay], .011), `${framing} ${key} static position = poster layout`);
+    }
+  }
+  assert.deepEqual(Object.keys(LABELS).sort(), Object.keys(ANCHORS).sort());
+});
+
+// ---- legacy chapters 3-6 (v0.1 renderer, kept until stages B/C) ------------------------------
 test('legacy matrices are column-major', () => {
   const m = model(2, 3, 4, .1, .2, .3, 2); assert.deepEqual(multiply(identity(), m), m);
   assert.deepEqual([...multiply(model(1, 2, 3), model(2, 3, 4))].slice(12, 15), [3, 5, 7]);

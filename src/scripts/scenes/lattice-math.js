@@ -187,6 +187,6 @@ export function buildLattice({ seed = 14, framing = 'desktop', far = 4.4, margin
  */
 export function scaleBar(height, fov, distance = FOCUS, target = 110) {
   const pxPerNm = height / 2 / Math.tan(fov * Math.PI / 360) / distance;
-  const nm = [.05, .1, .2, .5, 1, 2, 5].reduce((best, v) => Math.abs(v * pxPerNm - target) < Math.abs(best * pxPerNm - target) ? v : best);
+  const nm = [.05, .1, .2, .5, 1, 2, 5, 10, 20, 50, 100].reduce((best, v) => Math.abs(v * pxPerNm - target) < Math.abs(best * pxPerNm - target) ? v : best);
   return { nm, px: nm * pxPerNm, label: `${String(nm).replace('.', ',')} nm` };
 }
