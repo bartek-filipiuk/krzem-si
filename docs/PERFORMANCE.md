@@ -160,3 +160,38 @@ faces) and the frame then goes through one full-screen depth-of-field pass (24 t
 viewports, which is why balanced desktop is not cheaper than cinematic on the RTX 3070. On the AMD
 iGPU balanced desktop stays around 6 ms, well inside a 16.7 ms frame. Bytes: the renderer chunk is
 139.2 KiB brotli (+4 KiB); the four FinFET posters are 11-19 KiB each and replace `scene-2.webp`.
+
+## Chapter 03: interconnect stack and die (2026-10-01)
+
+`scale-perf` step (built site, port 4175): idle 4 s at the reveal (progress .6), then a sweep of the
+whole chapter and back. Raw data: `scale_perf` in `docs/qa/after/capture-*.json`.
+
+| GPU | profile / framing | buffer | idle interval | scroll interval | >50 | GPU idle | GPU scroll |
+|---|---|---|---|---|---|---|---|
+| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 16.51 / 20.72 | 16.2 / 18.66 / 23.4 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.7 / 33.3 | 0 | 5.61 / 6.54 | 4.29 / 8.83 / 13.2 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 16.8 | 0 | 16.53 / 17.57 | 15.61 / 18.41 / 21.7 |
+| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 2.82 / 2.88 | 1.82 / 4.69 / 7.6 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 10.41 / 10.5 | 5.35 / 15.3 / 16.0 |
+| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 2.31 / 2.59 | 1.49 / 4.12 / 5.0 |
+
+Short QA-mode runs right after load (`?scene=skala&progress=…&quality=balanced`, 1440×1000, GPU
+median ms): RTX 3070 1.95 inside the layers (.3), 4.47 at the reveal (.6), 1.67 on the die (1);
+AMD iGPU 13.1, 11.2 and 1.8.
+
+Caveat on the RTX numbers above: in the longer `scale-perf` runs the laptop GPU reports about
+16 ms per frame at desktop size while never missing a 16.7 ms frame and while the short runs show
+2-5 ms; the driver drops to low clocks when there is slack (the GPU read 210 MHz between runs), so
+the timer measures stretched work, not cost. The AMD numbers are consistent across runs and are the
+budget reference: balanced desktop at the reveal ~10-11 ms, inside the layers ~13 ms, scroll p95
+~15 ms. That is inside a 60 Hz frame but with little headroom; the next lever is a smaller real
+square for the lowest levels on balanced.
+
+Recording (`scale-record`, cinematic, RTX 3070, 02 -> 03 -> 04 with a reverse and a fling):
+38.9 s, 2342 frames, 16.7 / 16.7 / max 33.4 ms.
+
+Start-up: the routing (about 20 000 segments and vias, clearance along the camera path) takes about
+0.4 s in Node 22 on this laptop and runs once when the GPU layer starts; all shader variants are
+compiled for the depth-of-field target up front (compiling them for the canvas built the wrong
+variants and cost up to 380 ms on first view). A phone CPU will be slower (not measured).
+Bytes: renderer chunk 146.4 KiB brotli; chapter 03 posters replace `scene-3.webp`.

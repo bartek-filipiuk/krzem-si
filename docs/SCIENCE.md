@@ -46,3 +46,23 @@ Uproszczenia:
 - Kanał (włączony) to świecąca cienka warstwa przy powierzchni żebra pod bramką, po trzech stronach żebra; jasność i kolor są umowne. Ciemniejszy odcień krzemu pod źródłem i drenem oznacza silne domieszkowanie schematycznie, bez prawdziwego profilu.
 - Kulki płynące od źródła do drenu to umowna wizualizacja przepływu nośników, nie ich liczba, wielkość, prędkość ani tor. W stanie wyłączonym gromadzą się przed bramką; prądy upływu pominięto.
 - Głębia ostrości, wygaszanie krawędzi próbki i światła są środkami obrazu.
+
+## Połączenia nad tranzystorami w rozdziale 03 (`src/scripts/scenes/scale-math.js`)
+
+Źródła (sprawdzone 1 października 2026):
+
+12. Intel, M. Bohr, „14 nm Technology Announcement” (źródło 9): minimalny rozstaw połączeń 52 nm; przekrój SEM połączeń 14 nm z poziomami na przemian w poprzek i wzdłuż kadru.
+13. Microwave Journal, „Intel & IBM detail 14 nm FinFET strategies in late-news papers at IEDM 2014”: dwa poziomy połączeń z izolacją powietrzną o minimalnym rozstawie 80 i 160 nm; u IBM 15 poziomów miedzi. https://www.microwavejournal.com/articles/23268-intel-ibm-detail-14-nm-finfet-strategies-in-late-news-papers-at-iedm-2014
+14. Wikipedia, Interconnect (integrated circuits): najwyższe poziomy są najgrubsze, najszersze i najrzadziej rozstawione, najniższe cienkie i gęste; połączenia pionowe to przelotki (vias); między poziomami jest dielektryk; najbardziej złożone układy (2018) mają ponad 15 poziomów. https://en.wikipedia.org/wiki/Interconnect_(integrated_circuits)
+15. Semiconductor Digest (Chipworks), „IEDM 2017: Intel’s 10nm Platform Process”: 13 poziomów metalu, kobalt w dwóch najniższych. https://sst.semiconductor-digest.com/chipworks_real_chips_blog/2017/12/18/iedm-2017-intels-10nm-platform-process/
+
+W modelu (test w `tests/core.test.mjs`): 11 poziomów, rozstawy 52, 52, 52, 80, 80, 160, 160 nm z procesu 14 nm (źródła 12–13), kierunek ścieżek zmienia się z poziomu na poziom, rozstaw rośnie ku górze, przelotki tylko tam, gdzie oba sąsiednie poziomy mają metal. Podziałka pod sceną jest liczona z kamery dla płaszczyzny ostrości, od dziesiątek nanometrów do milimetrów.
+
+NIEZWERYFIKOWANE / założone: rozstawy powyżej 160 nm (320, 640, 1280, 4000 nm), wszystkie grubości (stosunek grubości do szerokości 1,5–2), wysokości przelotek, długości odcinków i przerw, gęstość przelotek, zajętość torów na trzech najwyższych poziomach (co drugi tor, na najwyższym co trzeci i bez przerw), wymiary chipu (4 × 3 mm, umowne), jego plan (bloki logiki i pamięci, pierścień padów) i grubość (0,3 mm).
+
+Uproszczenia:
+- Dielektryk wypełniający przestrzeń między ścieżkami jest usunięty (jak na zdjęciach SEM wytrawionych połączeń), bariery i nasadki pokazane tylko jako cienkie krawędzie i inny połysk wierzchu.
+- Poziomy „narastają” w kolejności produkcji; tempo i to, że metal na drodze kamery pojawia się dopiero za nią, są umowne.
+- Najniższe poziomy mają kolor stali/grafitu (kobalt lub wolfram w nowszych procesach, źródło 15), wyższe miedziany; kolory są przybliżone.
+- Poza kwadratem z prawdziwą geometrią każdy poziom jest płaską teksturą o tym samym rozstawie; z daleka powierzchnia chipu to tekstura z planem bloków. Plan, bloki i pady nie przedstawiają konkretnego układu.
+- Światło, mgła, przyciemnienie w głębi i głębia ostrości są środkami obrazu.

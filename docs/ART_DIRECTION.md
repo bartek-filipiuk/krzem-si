@@ -138,6 +138,26 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
   cztery najważniejsze. Bez JS i w trybie spokojnym te same pozycje leżą na posterach OFF/ON.
 - **Przejścia:** 01 → 02 i 02 → 03 przez tło.
 
+## 03 skala: połączenia (`scenes/scale.js`, `scenes/scale-math.js`)
+
+Jeden ciągły przelot sterowany scrollem (pięć klatek kontrolnych, interpolacja monotoniczna, odległość
+w skali logarytmicznej):
+- **0, wejście:** ta sama kamera co koniec rozdziału 02; FinFET przenika w jeden z rzędów tranzystorów.
+- **0,16, powtórzenie:** rzędy żeber i bramek do horyzontu.
+- **0,3, wewnątrz warstw:** nad frontem osadzania, w dół na krzyżujące się poziomy: chłodne, stalowe
+  niskie poziomy w głębi, miedziane środkowe w niskim słońcu. Poziomy narastają w kolejności produkcji.
+- **0,6, odsłona:** ukośnie, ok. 26° w dół, tuż nad najwyższymi pasami zasilania: jeden pas zamyka
+  lewą (cienistą) stronę pod nagłówkiem, przez środek idą linie poziomu niżej z przelotkami jak
+  kolumny, w prześwitach drobniejsze poziomy, wzór powtarza się aż po horyzont. Dopiero tu pojawia
+  się nagłówek „To nie jest miasto.”.
+- **0,8, róg chipu:** pierścień padów, pierścienie uszczelniające, bloki; **1, wyjście:** chip jako
+  obiekt, gotowy na rozdział 04 (przenikanie przez tło).
+
+Trzy reprezentacje (prawdziwe pudełka, płaskie przedłużenia z filtrowanym wzorem, powierzchnia chipu)
+przechodzą jedna w drugą komplementarnym ditherem; linie poniżej piksela uśredniają się zamiast
+migotać. Jedno niskie ciepłe słońce (cienie na cinematic), chłodne światło w cieniu, głębia w
+granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitowa poświata pod tekstem.
+
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
 chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
-Rozdziały 03–06 wciąż korzystają ze scen v0.1 i czekają na etapy B i C.
+Rozdziały 04–06 wciąż korzystają ze scen v0.1 i czekają na etap C.

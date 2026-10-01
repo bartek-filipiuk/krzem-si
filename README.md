@@ -86,7 +86,8 @@ python tests/screens.py --gpu amd shots perf   # zintegrowane GPU AMD (balanced)
 python tests/screens.py lattice lattice-perf lattice-record   # przejście hero -> sieć i rozdział 01:
                                        # lattice-board.webp, czasy GPU, lattice-scroll-desktop.webm
 python tests/screens.py transistor transistor-perf   # rozdział 02 OFF/ON 0-100 %: transistor-board.webp, czasy GPU
-python tests/screens.py posters        # postery rozdziałów 01 i 02 z działających scen -> src/assets/posters/
+python tests/screens.py scale scale-perf scale-record   # rozdział 03: scale-board.webp, czasy GPU, nagranie 02 -> 03 -> 04
+python tests/screens.py posters        # postery rozdziałów 01-03 z działających scen -> src/assets/posters/
 ```
 
 Na laptopie referencyjnym headless Chromium renderuje na RTX 3070 tylko z
@@ -136,7 +137,7 @@ wykonuje tylko `npm ci` i `npm run verify`.
   (współdzielone, anulowalne ładowanie i zwalnianie), `quality.js` (profile i kontroler).
 - `src/scripts/scenes/`: `hero.js` (bryłka), `lattice.js` + `lattice-math.js` (sieć krzemu, rozdział 01;
   matematyka sieci testowana w Node), `transistor.js` + `transistor-math.js` (FinFET, rozdział 02),
-  `legacy*.js` (sceny v0.1 rozdziałów 03–06).
+  `scale.js` + `scale-math.js` (połączenia i chip, rozdział 03), `legacy*.js` (sceny v0.1 rozdziałów 04–06).
 - `src/assets/`: modele, HDR, JSON kamery i postery z etapu A2 (`docs/ASSET_MANIFEST.md`).
 - `tools/`: pipeline Blendera (niepotrzebny do builda). `scripts/art/`: odtwarzanie posterów v0.1.
 - `tests/`: testy Node, smoke w Playwright, screeny i nagrania.
