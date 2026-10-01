@@ -111,29 +111,32 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 
 ## 02 przełącznik: FinFET (`scenes/transistor.js`, `scenes/transistor-math.js`)
 
-- **Obraz:** wycinek tranzystora FinFET wygenerowany w kodzie, w skali głównych wymiarów procesu
-  14 nm (żebra, bramki, ścieżki; `docs/SCIENCE.md`). Schodkowe cięcie: z przodu po stronie źródła
-  usunięta ćwiartka (płaszczyzna przez środek przedniego żebra i przez środek bramki), nad stroną
-  źródła zdjęty metal. Na przekroju widać, jak bramka (TiN złoty, wypełnienie szare, cienki jasny
-  dielektryk) obejmuje żebro z trzech stron; to główna myśl kadru. Przekroje są matowe i nieco
-  ciemniejsze od powierzchni, krawędzie zaokrąglone w normalnych, kontaktowe cienie analityczne.
-- **Światło i optyka:** HDR studia (obrócony do osi Z sceny), chłodne światło kluczowe z góry,
-  jedno niskie ciepłe z boku drenu. Głębia ostrości w jednym przebiegu pełnoekranowym, ostra
-  płaszczyzna na rogu cięcia (tej samej, dla której prawdziwa jest podziałka). Próbka wygasa do
-  tła na dalszych krawędziach i w dół, więc nie czyta się jako kostka.
-- **Stany:** OFF: brak kanału, punkty (nośniki) stoją po stronie źródła przed bramką. ON: cienka
-  bursztynowa warstwa kanału pod bramką, słaba poświata na bramce, punkty płyną od źródła przez
-  kanał. Różnicę niesie też kształt (obecność kanału, ruch) i tekst statusu, nie sam kolor.
-  Przełączenie trwa ok. 0,4 s (wygładzenie w `app.js`); pokaz z choreografią to następny krok.
-- **Kamera:** z przodu i z góry na róg cięcia, wolny obrót (ok. 9°) i lekki odjazd do końca
-  rozdziału (miejsce na odjazd do wielu tranzystorów w rozdziale 03). Mobile: dalej i niżej, pod
-  tekstem i przełącznikiem.
-- **Podpisy części:** prawdziwy tekst HTML (Źródło, Bramka, Dren, Żebro (kanał), Izolator,
-  Kontakt) w dwóch kolumnach obok grupy punktów, z cienkimi liniami do punktów. Pozycje liczy ta
-  sama czysta kamera co scena; bez JS i w trybie spokojnym te same pozycje leżą na posterach
-  OFF/ON (pudełko przycięte jak `object-fit: cover`).
-- **Przejścia:** 01 → 02 i 02 → 03 przez tło (sieć gaśnie w mgle, tranzystor wyłania się z
-  grafitu; potem scena v0.1 rozdziału 03).
+- **Obraz:** jeden tranzystor FinFET jako jeden obiekt na płycie podłoża: trzy żebra biegną z
+  lewej na prawo, po obu stronach wypukłe obszary źródła i drenu (symetryczne), w środku jedna
+  bramka okrakiem na żebrach, nad nimi kontakty. Sąsiednie bramki i poziomy metalu są pominięte,
+  żeby nic nie zasłaniało głównej myśli. Żebra w skali procesu 14 nm (`docs/SCIENCE.md`).
+- **Cięcie:** pionowa płaszczyzna pod 45° przez bramkę, przechodząca przez przednie żebro w środku
+  bramki: przekrój patrzy w kamerę i pokazuje bramkę (złoty TiN, jasny dielektryk, szare
+  wypełnienie) obejmującą żebro z trzech stron. Przednie połowy źródła i drenu przedniego żebra
+  są ścięte, więc żebro widać na całej długości. Przekroje są matowe, z cienkimi liniami na
+  granicach warstw.
+- **Powierzchnie:** drobne kierunkowe ziarno na materiał (wzdłuż osi, wzdłuż której powierzchnia
+  rosła lub była polerowana), lekkie wytarcie krawędzi, zaokrąglenia w normalnych, analityczne
+  cienie kontaktowe. Płyta podłoża biegnie w tył i gaśnie w tle (horyzont, nie winieta).
+- **Światło i optyka:** HDR studia (obrócony do osi Z sceny), chłodne światło z góry, jedno niskie
+  ciepłe z boku drenu. Głębia ostrości w jednym przebiegu, ostra płaszczyzna na przednim żebrze
+  przy bramce (tej samej, dla której prawdziwa jest podziałka). Liczba próbek i MSAA idą za
+  profilem, także po automatycznym obniżeniu.
+- **Stany:** OFF: brak kanału, nośniki (jasne kulki) stłoczone w źródle tuż przed bramką. ON:
+  bursztynowy kanał w żebrze pod bramką, słaba poświata, nośniki płyną ze źródła przez kanał do
+  drenu; tam, gdzie zasłania je materiał, widać ich słabe odbicie. Różnicę niosą kształt i ruch
+  oraz tekst statusu, nie sam kolor. Przełączenie trwa ok. 0,4 s.
+- **Kamera:** z przodu i z góry, wolny obrót i lekki odjazd do końca rozdziału (miejsce na odjazd
+  do wielu tranzystorów w rozdziale 03). Mobile: dalej, obiekt pod tekstem i przełącznikiem.
+- **Podpisy części:** prawdziwy tekst HTML z cienkimi liniami, pozycje z tej samej kamery co scena;
+  na desktopie sześć (Źródło, Bramka, Dren, Żebro (kanał), Izolator, Kontakt), na telefonie
+  cztery najważniejsze. Bez JS i w trybie spokojnym te same pozycje leżą na posterach OFF/ON.
+- **Przejścia:** 01 → 02 i 02 → 03 przez tło.
 
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
 chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.

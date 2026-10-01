@@ -147,16 +147,16 @@ whole chapter and back. Raw data: `transistor_perf` in `docs/qa/after/capture-*.
 
 | GPU | profile / framing | buffer | idle interval | scroll interval | >50 | GPU idle | GPU scroll |
 |---|---|---|---|---|---|---|---|
-| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 4.94 / 6.21 | 4.81 / 5.58 / 8.9 |
-| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 4.68 / 4.97 | 4.75 / 4.9 / 8.7 |
-| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.7 / 16.8 | 0 | 5.35 / 5.38 | 5.02 / 5.32 / 5.4 |
-| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.26 / 1.28 | 1.24 / 1.27 / 3.4 |
-| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.8 / 16.8 | 0 | 5.91 / 6.18 | 5.88 / 6.44 / 11.4 |
-| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.32 / 1.74 | 1.16 / 1.27 / 10.9 |
+| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 4.74 / 6.85 | 4.83 / 5.49 / 8.2 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 4.36 / 4.71 | 4.44 / 4.71 / 9.0 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.8 / 16.8 | 0 | 5.2 / 5.26 | 4.89 / 5.19 / 7.2 |
+| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.7 | 16.7 / 16.7 / 16.8 | 0 | 1.04 / 1.07 | 1.03 / 1.07 / 3.4 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.8 | 16.7 / 16.8 / 16.8 | 0 | 5.63 / 5.68 | 5.62 / 5.7 / 5.8 |
+| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.8 | 16.7 / 16.8 / 16.8 | 0 | 0.92 / 0.94 | 0.92 / 0.93 / 0.9 |
 
-The scene is ~120 boxes, but every fragment runs the cut-away test (and writes depth for section
+Numbers after the readability round (one gate, no metal levels). The scene is ~50 boxes, but every fragment runs the cut-away test (and writes depth for section
 faces) and the frame then goes through one full-screen depth-of-field pass (24 taps cinematic with
-4x MSAA on the scene target, 12 taps balanced without). That pass is most of the cost on large
+4x MSAA on the scene target, 12 taps balanced without; both follow a runtime demotion). That pass is most of the cost on large
 viewports, which is why balanced desktop is not cheaper than cinematic on the RTX 3070. On the AMD
 iGPU balanced desktop stays around 6 ms, well inside a 16.7 ms frame. Bytes: the renderer chunk is
 139.2 KiB brotli (+4 KiB); the four FinFET posters are 11-19 KiB each and replace `scene-2.webp`.

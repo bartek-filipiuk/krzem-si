@@ -36,13 +36,13 @@ Geometria tranzystora jest uproszczona i nie jest rysunkiem produkcyjnym. Strukt
 10. Intel, M. Bohr, „14 nm Process Technology: Opening New Horizons” (IDF 2014): „8 nm Fin Width, 42 nm Fin Pitch”. https://www.intel.com/content/dam/www/public/us/en/documents/technology-briefs/bohr-14nm-idf-2014-brief.pdf
 11. EE Times, „Intel, IBM Dueling 14nm FinFETs”: żebra 42 nm wysokości i 8 nm szerokości (potwierdzenie źródeł 9–10). https://www.eetimes.com/intel-ibm-dueling-14nm-finfets/
 
-W skali modelu (nm, test w `tests/core.test.mjs`): szerokość żebra 8, wysokość ponad izolacją 42, rozstaw żeber 42, rozstaw bramek 70, rozstaw ścieżek pierwszego metalu 52. Podziałka pod sceną jest liczona z kamery i jest prawdziwa dla płaszczyzny ostrości (punkt, na który patrzy kamera).
+W skali modelu (nm, test w `tests/core.test.mjs`): szerokość żebra 8, wysokość ponad izolacją 42, rozstaw żeber 42. Model ma jedną bramkę (w prawdziwym układzie bramki powtarzają się co 70 nm) i nie pokazuje poziomów metalu; podpis pod sceną twierdzi skalę tylko dla żeber. Podziałka pod sceną jest liczona z kamery i jest prawdziwa dla płaszczyzny ostrości (punkt, na który patrzy kamera).
 
-NIEZWERYFIKOWANE: długość bramki 20 nm (podana w streszczeniu artykułu IEDM 2014, Natarajan i in., „A 14nm logic technology featuring 2nd-generation FinFET…”, którego tekstu nie udało się otworzyć). Założone, bez źródła: grubość dielektryka bramki (2 nm) i warstwy TiN (1,5 nm), szerokość dystansów (8 nm), wysokość bramki i jej nasadki, kształt i wymiary epitaksjalnych obszarów źródła i drenu, wymiary kontaktów, przelotek i ścieżek (poza ich rozstawem), głębokość izolacji (40 nm).
+NIEZWERYFIKOWANE: długość bramki 20 nm (podana w streszczeniu artykułu IEDM 2014, Natarajan i in., „A 14nm logic technology featuring 2nd-generation FinFET…”, którego tekstu nie udało się otworzyć). Założone, bez źródła: grubość dielektryka bramki (2 nm) i warstwy TiN (1,5 nm), szerokość dystansów (8 nm), wysokość bramki i jej nasadki, kształt i wymiary epitaksjalnych obszarów źródła i drenu, wymiary kontaktów, głębokość izolacji (40 nm), położenie obszarów źródła i drenu (35 nm od środka bramki).
 
 Uproszczenia:
 - Wszystkie części to prostopadłościany (obszary źródła i drenu obrócone o 45°, by przypominały fasetowaną epitaksję). Prawdziwe żebra są lekko zwężone ku dołowi i zaokrąglone u góry; przekrój pokazuje tylko zaokrąglone krawędzie.
-- Dielektryk między poziomami metalu jest pominięty, żeby było widać elementy. Kolory materiałów są umowne (miedź i TiN zbliżone do prawdziwych barw, reszta rozróżniona dla czytelności).
+- Pominięto dielektryk wokół bramki i kontaktów, sąsiednie bramki oraz poziomy metalu, żeby było widać elementy. Kolory materiałów są umowne (TiN zbliżony do prawdziwej barwy, reszta rozróżniona dla czytelności). Cięcie przez bramkę jest ukośne (45°) dla czytelności kadru.
 - Kanał (włączony) to świecąca cienka warstwa przy powierzchni żebra pod bramką, po trzech stronach żebra; jasność i kolor są umowne. Ciemniejszy odcień krzemu pod źródłem i drenem oznacza silne domieszkowanie schematycznie, bez prawdziwego profilu.
-- Punkty płynące od źródła to umowna wizualizacja przepływu nośników, nie ich liczba, prędkość ani tor. W stanie wyłączonym zatrzymują się przed bramką; prądy upływu pominięto.
+- Kulki płynące od źródła do drenu to umowna wizualizacja przepływu nośników, nie ich liczba, wielkość, prędkość ani tor. W stanie wyłączonym gromadzą się przed bramką; prądy upływu pominięto.
 - Głębia ostrości, wygaszanie krawędzi próbki i światła są środkami obrazu.
