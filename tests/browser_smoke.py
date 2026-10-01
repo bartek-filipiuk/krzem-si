@@ -63,6 +63,17 @@ def poster_shown(page) -> bool:
       return img.complete&&img.naturalWidth>0&&s.visibility==='visible'&&Number(s.opacity)===1}''')
 
 
+def lattice_scale(page):
+    """The chapter 01 scale bar: (shown, label, bar width in px)."""
+    return page.evaluate('''()=>{const s=document.querySelector('#lattice-scale');
+      return [!s.hidden&&getComputedStyle(s).display!=='none',s.querySelector('span').textContent,s.querySelector('i').getBoundingClientRect().width]}''')
+
+
+def lattice_poster_shown(page) -> bool:
+    return page.evaluate('''()=>{const p=document.querySelector('.lattice-poster'),img=p.querySelector('img');
+      return getComputedStyle(p).visibility==='visible'&&img.getBoundingClientRect().width>=innerWidth*.9}''')
+
+
 def gpu_error(page) -> int:
     return page.evaluate('document.querySelector("canvas").getContext("webgl2").getError()')
 
@@ -93,6 +104,14 @@ with sync_playwright() as p:
         check(f'Chapter {i}: GPU returns NO_ERROR', gpu_error(desktop) == 0)
         if chapter != 'poczatek':
             desktop.screenshot(path=str(OUT / f'{i+1:02d}-desktop-{chapter}.png'))
+    # Chapter 01 is the live lattice: a scale bar computed from its camera, hidden elsewhere.
+    goto_chapter(desktop, 'materia', .5)
+    desktop.wait_for_timeout(200)
+    shown, label, width = lattice_scale(desktop)
+    check('Lattice: live scale bar in chapter 01', shown and re.fullmatch(r'\d+(,\d+)? nm', label) is not None and 40 < width < 260)
+    check('Lattice: live canvas, poster hidden', not lattice_poster_shown(desktop))
+    goto_chapter(desktop, 'poczatek', .1)
+    check('Lattice: no scale bar over the hero', not lattice_scale(desktop)[0])
     goto_chapter(desktop, 'tranzystor')
     switch = desktop.locator('#transistor-toggle')
     before = switch.get_attribute('aria-pressed')
@@ -110,6 +129,12 @@ with sync_playwright() as p:
     check('Motion OFF: static (calm) mode', attr(desktop, 'motion') == 'static' and attr(desktop, 'quality') == 'calm')
     check('Motion OFF: keeps current chapter', attr(desktop, 'chapter') == '5')
     check('Motion OFF: choice is persisted', desktop.evaluate("localStorage.getItem('krzem-motion')") == 'calm')
+    check('Motion OFF: no scale bar without a live camera', not lattice_scale(desktop)[0])
+    desktop.evaluate("document.getElementById('materia').scrollIntoView()")
+    desktop.wait_for_timeout(300)
+    check('Motion OFF: chapter 01 shows the lattice poster', lattice_poster_shown(desktop))
+    desktop.evaluate("document.getElementById('inteligencja').scrollIntoView()")
+    desktop.wait_for_timeout(200)
     desktop.screenshot(path=str(OUT / '08-static-ai.png'))
     desktop.locator('#motion-toggle').click()
     desktop.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=20000)
@@ -166,6 +191,7 @@ with sync_playwright() as p:
         check(f'{name}: no horizontal overflow', fits(page))
         if expect == 'static':
             check(f'{name}: starts in static mode', attr(page, 'motion') == 'static')
+            check(f'{name}: no scale bar without a live camera', not lattice_scale(page)[0])
             check(f'{name}: never downloads the GPU layer', not any(GPU_CHUNK.search(u) for u in requests))
             check(f'{name}: hero poster is the first frame', poster_shown(page))
         else:
@@ -194,6 +220,9 @@ with sync_playwright() as p:
     check('QA mode: frozen ambient clock', qa.evaluate('krzemDebug.ambient') == 0)
     requests = load(qa, '?quality=calm', live=False)
     check('QA calm: no GPU download', attr(qa, 'motion') == 'static' and not any(GPU_CHUNK.search(u) for u in requests))
+    load(qa, '?scene=poczatek&progress=0.95&quality=balanced&freeze=1')
+    check('QA mode: hero handover frame lands in the lattice', abs(qa.evaluate('krzemDebug.hero') - .95) < .01 and lattice_scale(qa)[0]
+          and gpu_error(qa) == 0)
     load(qa, '#materia')
     check('Direct load at #materia lands on the material chapter', attr(qa, 'chapter') == '1')
     qa.close()
@@ -219,8 +248,7 @@ with sync_playwright() as p:
     rough.wait_for_timeout(300)
     state = rough.evaluate('({hero:krzemDebug.hero,index:krzemDebug.index,dip:getComputedStyle(document.querySelector("canvas")).opacity})')
     check('Fling: state follows the last scroll position', state['index'] == 0 and abs(state['hero'] - .72) < .02)
-    check('Fling: canvas opacity matches the entry phase', abs(float(state['dip']) - rough.evaluate(
-        '(()=>{const t=krzemDebug.hero;const s=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)};return t<.84?1-s((t-.74)/.1):s((t-.84)/.13)})()')) < .01)
+    check('Fling: no CSS fade of the canvas, the dissolve into the lattice is drawn in WebGL', float(state['dip']) == 1)
     rough.evaluate('''()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
       document.dispatchEvent(new Event('visibilitychange'))}''')
     rough.wait_for_timeout(300)

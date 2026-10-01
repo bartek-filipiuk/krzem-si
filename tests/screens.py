@@ -1,11 +1,14 @@
-"""Hero QA captures from the running site (not from Blender): progress screenshots, comparison
-board, poster handover pixel difference, frame timings, transfer sizes and scroll recordings.
+"""QA captures from the running site (not from Blender): progress screenshots, comparison boards,
+poster handover pixel difference, frame timings, transfer sizes, scroll recordings, and the
+chapter 01 lattice posters.
 
 Serve the build first:  npm run build && npm run preview      (http://127.0.0.1:4174/)
     python tests/screens.py                       # everything on the NVIDIA GPU
     python tests/screens.py --gpu amd shots perf  # integrated AMD GPU: balanced shots + timings
-Steps: shots, board, handover, perf, transfer, record.  Output: docs/qa/after/
-The board also takes the AMD rows when they exist: run `--gpu amd shots perf` first, then the NVIDIA run.
+Steps: shots, board, handover, perf, transfer, record (hero, stage A); lattice, lattice-perf,
+lattice-record (hero -> lattice -> end of chapter 01); posters (writes src/assets/posters/lattice-*).
+Output: docs/qa/after/. The boards also take the AMD rows when they exist: run
+`--gpu amd shots lattice perf lattice-perf` first, then the NVIDIA run.
 """
 from __future__ import annotations
 import argparse
@@ -53,15 +56,17 @@ def webp(png: Path, dst: Path, quality=82):
     Image.open(png).convert('RGB').save(dst, 'WEBP', quality=quality, method=6)
 
 
-def shots(browser, gpu, profiles):
+def shots(browser, gpu, profiles, frames=None, prefix='hero'):
+    """frames: [(scene id, progress, file suffix)]; default: the hero at PROGRESS."""
+    frames = frames or [('poczatek', p, f'{int(p * 100):03d}') for p in PROGRESS]
     log = {}
     for profile in profiles:
         for name, ctx in VIEWPORTS.items():
             page = browser.new_page(**ctx)
-            for p in PROGRESS:
-                page.goto(f'{URL}?scene=poczatek&progress={p}&quality={profile}&freeze=1', wait_until='networkidle')
+            for scene, p, suffix in frames:
+                page.goto(f'{URL}?scene={scene}&progress={p}&quality={profile}&freeze=1', wait_until='networkidle')
                 ready(page, profile)
-                tag = f'hero-{"amd-" if gpu == "amd" else ""}{profile}-{name}-{int(p * 100):03d}'
+                tag = f'{prefix}-{"amd-" if gpu == "amd" else ""}{profile}-{name}-{suffix}'
                 with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
                     page.screenshot(path=tmp.name)
                     webp(Path(tmp.name), OUT / f'{tag}.webp')
@@ -92,6 +97,54 @@ def board():
         for i, t in enumerate(tiles):
             img.paste(t, (190 + i * cell, y))
     img.save(OUT / 'hero-board.webp', 'WEBP', quality=80, method=6)
+
+
+# Hero -> lattice handover (hero progress) and chapter 01 (pinned progress).
+LATTICE_FRAMES = [('poczatek', p, f'h{int(p * 100):03d}') for p in (.76, .82, .88, .94)] + \
+                 [('materia', p, f'{int(p * 100):03d}') for p in PROGRESS]
+LATTICE_ROWS = [('cinematic · RTX 3070', 'lattice-cinematic'), ('balanced · RTX 3070', 'lattice-balanced'),
+                ('balanced · AMD iGPU', 'lattice-amd-balanced'), ('calm · poster', 'lattice-calm')]
+
+
+def lattice_board():
+    """lattice-board.webp: handover columns (hero .76-.94) then chapter 01 at 0-100 %."""
+    h, gap, label_w = 230, 8, 190
+    rows = []
+    for label, prefix in LATTICE_ROWS:
+        for name in VIEWPORTS:
+            files = [OUT / f'{prefix}-{name}-{suffix}.webp' for _, _, suffix in LATTICE_FRAMES]
+            if all(f.exists() for f in files):
+                rows.append((f'{label}\n{name}', [(t := Image.open(f)).resize((round(t.width * h / t.height), h)) for f in files]))
+    if not rows:
+        return
+    cell = max(t.width for _, tiles in rows for t in tiles) + gap
+    img = Image.new('RGB', (label_w + cell * len(LATTICE_FRAMES), len(rows) * (h + 12) + 30), (11, 14, 18))
+    draw = ImageDraw.Draw(img)
+    for i, (scene, p, _) in enumerate(LATTICE_FRAMES):
+        draw.text((label_w + i * cell, 8), f'{"hero" if scene == "poczatek" else "01 materia"} {p:.2f}', fill=(200, 200, 200))
+    for r, (label, tiles) in enumerate(rows):
+        y = 30 + r * (h + 12)
+        draw.multiline_text((8, y + 100), label, fill=(210, 190, 150))
+        for i, t in enumerate(tiles):
+            img.paste(t, (label_w + i * cell, y))
+    img.save(OUT / 'lattice-board.webp', 'WEBP', quality=80, method=6)
+
+
+def posters(browser):
+    """Calm/no-JS posters of chapter 01: the live scene's final monocrystal frame, text hidden.
+    Same pixel sizes as the hero posters (1600x1000 desktop, 900x1400 mobile)."""
+    out = ROOT / 'src/assets/posters'
+    for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
+                      'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
+        page = browser.new_page(**ctx)
+        page.goto(f'{URL}?scene=materia&progress=1&quality=cinematic&freeze=1', wait_until='networkidle')
+        ready(page, 'cinematic')
+        page.add_style_tag(content='main,.header,.chapter-nav,.reading-progress{visibility:hidden!important}')
+        page.wait_for_timeout(300)
+        with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
+            page.screenshot(path=tmp.name)
+            webp(Path(tmp.name), out / f'lattice-{name}.webp', 84)
+        page.close()
 
 
 def before_after():
@@ -155,8 +208,9 @@ def handover(browser):
     return result
 
 
-SCROLL = '''async ([segments])=>{const hero=document.getElementById('poczatek'),mat=document.getElementById('materia');
-  const top=hero.getBoundingClientRect().top+scrollY,end=mat.getBoundingClientRect().top+scrollY;
+# Fractions of the way from the hero top to `endAt` of the material chapter (0: it pins, 1: its end).
+SCROLL = '''async ([segments,endAt=0])=>{const hero=document.getElementById('poczatek'),mat=document.getElementById('materia');
+  const top=hero.getBoundingClientRect().top+scrollY,end=mat.getBoundingClientRect().top+scrollY+endAt*(mat.offsetHeight-innerHeight);
   for(const [a,b,ms] of segments){const t0=performance.now();
     await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,top+(end-top)*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
 
@@ -193,6 +247,61 @@ def perf(browser, gpu, profiles):
                                         'pixel_ratio': info['gpu']['pixelRatio'] if info['gpu'] else None}
             page.close()
     return out
+
+
+def lattice_perf(browser, profiles):
+    """Chapter 01: idle on the final monocrystal frame (ambient drift), then scrolling hero -> end of
+    the chapter and back. GPU time per frame from EXT_disjoint_timer_query_webgl2."""
+    out = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            page.goto(f'{URL}?quality={profile}&debug', wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            page.evaluate(SCROLL, [[[0, 1, 300]], 1])
+            page.wait_for_timeout(2500)
+            page.evaluate('krzemDebug.reset()')
+            page.wait_for_timeout(4000)
+            idle = page.evaluate('krzemDebug.intervals')
+            idle_gpu = page.evaluate('krzemDebug.gpuMs') or []
+            page.evaluate(SCROLL, [[[1, 0, 600]], 1])
+            page.wait_for_timeout(1500)
+            page.evaluate('krzemDebug.reset()')
+            page.evaluate(SCROLL, [[[0, 1, 9000], [1, .5, 2500], [.5, 1, 2500]], 1])
+            moving = page.evaluate('krzemDebug.intervals')
+            gpu_ms = page.evaluate('krzemDebug.gpuMs') or []
+            info = page.evaluate(INFO)
+            out[f'{profile}/{name}'] = {'idle_lattice': stats(idle), 'gpu_time_idle': stats(idle_gpu), 'scroll': stats(moving),
+                                        'gpu_time_scroll': stats(gpu_ms), 'gl': info['gl'],
+                                        'buffer': info['gpu']['buffer'] if info['gpu'] else None,
+                                        'lattice': info['gpu']['lattice'] if info['gpu'] else None}
+            page.close()
+    return out
+
+
+def lattice_record(p, gpu):
+    """Desktop ~30 s: hero, entry into the face, dissolve into the lattice, the whole of chapter 01,
+    back up into the hero and down again."""
+    browser = launch(p, gpu)
+    ctx = VIEWPORTS['desktop']
+    segments = [[0, 0, 1500], [0, .45, 5000], [.45, .62, 5000], [.62, 1, 9000], [1, 1, 2000], [1, .4, 3500], [.4, .62, 2500], [.62, .9, 2500], [.9, .9, 1000]]
+    with tempfile.TemporaryDirectory() as tmp:
+        context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=ctx['viewport'])
+        page = context.new_page()
+        page.goto(URL + '?debug', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.wait_for_timeout(1500)
+        page.evaluate('krzemDebug.reset()')
+        # Fractions of hero top -> end of chapter 01; the hero alone is ~.45 of that distance.
+        page.evaluate(SCROLL, [segments, 1])
+        measured = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                    'gpu_time': stats(page.evaluate('krzemDebug.gpuMs') or []), 'seconds': round(sum(ms for _, _, ms in segments) / 1000, 1)}
+        video = page.video.path()
+        context.close()
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                        '-crf', '44', '-row-mt', '1', '-an', str(OUT / 'lattice-scroll-desktop.webm')], check=True)
+    browser.close()
+    return measured
 
 
 def transfer(browser):
@@ -276,7 +385,7 @@ def record(p, gpu):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--gpu', default='nvidia', choices=['nvidia', 'amd'])
-    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record'])
+    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record', 'lattice', 'lattice-perf', 'lattice-record'])
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     log_path = OUT / f'capture-{a.gpu}.json'
@@ -293,12 +402,22 @@ if __name__ == '__main__':
             log['perf'] = perf(browser, a.gpu, [x for x in profiles if x != 'calm'])
         if 'transfer' in a.steps and a.gpu == 'nvidia':
             log['transfer'] = transfer(browser)
+        if 'lattice' in a.steps:
+            log['lattice_shots'] = shots(browser, a.gpu, profiles, LATTICE_FRAMES, 'lattice')
+        if 'lattice-perf' in a.steps:
+            log['lattice_perf'] = lattice_perf(browser, [x for x in profiles if x != 'calm'])
+        if 'posters' in a.steps and a.gpu == 'nvidia':
+            posters(browser)
         browser.close()
+        if 'lattice' in a.steps or 'board' in a.steps:
+            lattice_board()
         if 'board' in a.steps or 'shots' in a.steps:
             board()
             if (OUT / 'hero-cinematic-desktop-000.webp').exists():
                 before_after()
         if 'record' in a.steps and a.gpu == 'nvidia':
             log['record'] = record(p, a.gpu)
+        if 'lattice-record' in a.steps and a.gpu == 'nvidia':
+            log['lattice_record'] = lattice_record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
-    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer')}, indent=1)[:6000])
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record')}, indent=1)[:8000])
