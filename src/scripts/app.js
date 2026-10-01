@@ -6,7 +6,7 @@
 import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
-import { ANCHORS, POSTER, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
+import { ANCHORS, MOBILE_LABELS, POSTER, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
 const canvas = document.querySelector('#scene-canvas');
@@ -149,12 +149,14 @@ function placeLabels() {
   const cam = transistorCamera(story.progress, framing, ambient * 2 * Math.PI / 80);
   const anchors = {};
   for (const [key, point] of Object.entries(ANCHORS)) {
+    if (framing === 'mobile' && !MOBILE_LABELS.includes(key)) continue;
     const [fx, fy] = project(point, cam, W / H) ?? [-1, -1];
     anchors[key] = [(fx * W + (box[0] - W) / 2) / box[0] * 100, (fy * H + (box[1] - H) / 2) / box[1] * 100];
   }
   const layout = labelLayout(anchors, box, framing);
   for (const li of labelItems) {
     const l = layout[li.dataset.part];
+    if (!l) continue;
     li.style.setProperty('--px', l.x.toFixed(2)); li.style.setProperty('--py', l.y.toFixed(2));
     li.style.setProperty('--pax', l.ax.toFixed(2)); li.style.setProperty('--pay', l.ay.toFixed(2));
     li.dataset.side = l.side; li.dataset.sideMobile = l.side;

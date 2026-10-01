@@ -87,10 +87,12 @@ def overlaps(a, b, pad=2) -> bool:
 
 
 def labels_ok(page) -> bool:
-    """Six part labels visible, inside the viewport, not on each other or on the chapter copy."""
-    labels, copy = page.evaluate(LABEL_RECTS), page.evaluate(COPY_RECTS)
+    """Part labels (six on desktop, the four that matter on a phone) visible, inside the viewport,
+    not on each other or on the chapter copy."""
     w, h = page.viewport_size['width'], page.viewport_size['height']
-    return (len(labels) == 6 and all(l['visible'] for l in labels)
+    labels = [l for l in page.evaluate(LABEL_RECTS) if l['visible']]
+    copy = page.evaluate(COPY_RECTS)
+    return (len(labels) == (4 if w < 760 else 6)
             and all(0 <= l['x'] and l['x'] + l['w'] <= w and 0 <= l['y'] and l['y'] + l['h'] <= h for l in labels)
             and not any(overlaps(a, b) for i, a in enumerate(labels) for b in labels[i + 1:])
             and not any(overlaps(a, c) for a in labels for c in copy))

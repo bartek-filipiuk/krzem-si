@@ -376,4 +376,6 @@ html[data-renderer=webgl] .part-labels:not([data-live]){visibility:hidden}
  .part-label[data-side-mobile=left] span{translate:calc(-100% - 6px) -50%}
  .part-label[data-side-mobile=right] span{translate:6px -50%}
  #tranzystor .lattice-legend{bottom:58px}
+ /* A phone keeps the four labels that carry the story. */
+ .part-label[data-part=oxide],.part-label[data-part=contact]{display:none}
 }

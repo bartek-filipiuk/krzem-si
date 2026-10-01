@@ -39,7 +39,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.resize(width, height, current.framing);
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
-    transistor.resize(width, height, current.framing);
+    transistor.resize(width, height, current.framing, { msaa: p.antialias, taps: p.antialias ? 24 : 12 });
     legacy.resize(width, height, p.lod);
   }
 

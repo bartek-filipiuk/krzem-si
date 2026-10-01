@@ -6,7 +6,7 @@ import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
 import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
-import { components, DIM, NOTCH_Y, ANCHORS, LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
+import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
 import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
@@ -306,11 +306,12 @@ test('FinFET model keeps the sourced proportions and cuts through the front fin'
   assert.deepEqual(fins.map(f => f.center[1]), [-DIM.finPitch, 0, DIM.finPitch], 'fin pitch 42 nm');
   for (const f of fins) { assert.equal(f.half[1] * 2, DIM.finWidth); assert.equal(f.center[2] + f.half[2], DIM.finHeight); assert.equal(f.center[2] - f.half[2], 0); }
   const gates = components().filter(c => c.kind === 'gate');
-  assert.deepEqual(gates.map(g => g.center[0]), [-DIM.gatePitch, 0, DIM.gatePitch], 'contacted gate pitch 70 nm');
+  assert.deepEqual(gates.map(g => g.center[0]), [0], 'one gate, straddling the fins in the middle');
   for (const g of gates) assert.equal(g.half[0] * 2, DIM.gateLength);
-  const lines = components().filter(c => c.kind === 'copper' && c.half[0] > 50).map(c => c.center[1]);
-  assert.deepEqual(lines.slice(1).map((y, i) => y - lines[i]), [DIM.metalPitch, DIM.metalPitch, DIM.metalPitch], 'metal pitch 52 nm');
-  assert.equal(NOTCH_Y, -DIM.finPitch);
+  // Source and drain are symmetric about the gate.
+  const epi = components().filter(c => c.kind === 'epi').map(c => c.center[0]).sort((a, b) => a - b);
+  assert.deepEqual(epi.slice(0, 3).map(x => -x), epi.slice(3));
+  assert.equal(FRONT_FIN, -DIM.finPitch);
   assert.ok(components().every(c => [...c.center, ...c.half].every(Number.isFinite) && c.half.every(v => v > 0)));
 });
 
@@ -322,7 +323,8 @@ test('projection, cover crop and label layout: labels never overlap, static mark
   const html = readFileSync(new URL('../src/index.html', import.meta.url), 'utf8');
   for (const framing of ['desktop', 'mobile']) {
     const [w, h] = POSTER[framing], c = transistorCamera(POSTER.progress, framing);
-    const anchors = Object.fromEntries(Object.entries(ANCHORS).map(([k, p]) => [k, project(p, c, w / h).map(v => v * 100)]));
+    const keys = framing === 'mobile' ? MOBILE_LABELS : Object.keys(ANCHORS);
+    const anchors = Object.fromEntries(keys.map(k => [k, project(ANCHORS[k], c, w / h).map(v => v * 100)]));
     const layout = labelLayout(anchors, [w, h], framing);
     const rows = Object.values(layout);
     for (const a of rows) for (const b of rows) if (a !== b && a.side === b.side)
