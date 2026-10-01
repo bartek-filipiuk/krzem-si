@@ -21,20 +21,32 @@ export function heroProgress(y, bounds) {
 
 /**
  * Hero -> material entry, in hero progress units.
- * start: camera leaves the hero pose; face: the fracture face fills the frame;
- * cut: the canvas has faded to the page background and the material scene takes over;
- * end: the material scene is fully in, just before the material chapter pins.
+ * start: camera leaves the hero pose; face: the fracture face fills the frame and the camera keeps
+ * pushing in; dark: the face starts to dim to the page background; lattice: the silicon lattice
+ * starts to emerge from that background; black: the face is gone (only the lattice is drawn);
+ * end: the lattice is fully in, just before the material chapter pins. No cut, no CSS fade.
  */
-export const ENTRY = { start: .2, face: .7, dip: .74, cut: .84, end: .97 };
+export const ENTRY = { start: .2, face: .7, dark: .72, lattice: .79, black: .87, end: .98 };
 
 export function entryPhases(t) {
-  const hero = t < ENTRY.cut;
   return {
     camera: smoothstep(ENTRY.start, ENTRY.face, t),
+    push: smoothstep(ENTRY.face, ENTRY.black, t),
     copy: 1 - smoothstep(ENTRY.start, ENTRY.start + .15, t),
-    canvas: hero ? 1 - smoothstep(ENTRY.dip, ENTRY.cut, t) : smoothstep(ENTRY.cut, ENTRY.end, t),
-    scene: hero ? 'hero' : 'material',
+    dark: smoothstep(ENTRY.dark, ENTRY.black, t),
+    lattice: smoothstep(ENTRY.lattice, ENTRY.end, t),
+    hero: t < ENTRY.black,
   };
+}
+
+/**
+ * Lattice progress u (scenes/lattice-math.js): 0 when the lattice starts to emerge in the hero,
+ * LATTICE_PIN when the material chapter pins, 1 at the end of the material chapter.
+ */
+export const LATTICE_PIN = .2;
+export function latticeProgress({ index, progress, hero }) {
+  if (index === 0) return clamp((hero - ENTRY.lattice) / (1 - ENTRY.lattice)) * LATTICE_PIN;
+  return index === 1 ? LATTICE_PIN + (1 - LATTICE_PIN) * progress : 1;
 }
 
 export function createScrollReader(sections, footer) {

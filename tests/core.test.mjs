@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chapterAt, heroProgress, positionOf, storyAt, entryPhases, ENTRY, clamp, smoothstep } from '../src/scripts/story/timeline.js';
+import { chapterAt, heroProgress, positionOf, storyAt, entryPhases, latticeProgress, ENTRY, LATTICE_PIN, clamp, smoothstep } from '../src/scripts/story/timeline.js';
+import { A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT } from '../src/scripts/scenes/lattice-math.js';
 import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG, rotateY } from '../src/scripts/story/camera-rig.js';
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
@@ -46,15 +47,24 @@ test('QA positions map back to the same chapter and progress', () => {
   assert.equal(storyAt(positionOf(0, 1, bounds, 1000), 1000, bounds).index, 1, 'hero progress 1 = material pinned');
 });
 
-test('entry phases: copy leaves first, camera arrives, canvas dips to the background at the cut only', () => {
+test('entry phases: copy leaves first, the face dims while the lattice emerges, no cut', () => {
   const at = t => entryPhases(t);
-  assert.deepEqual([at(0).camera, at(0).copy, at(0).canvas, at(0).scene], [0, 1, 1, 'hero']);
+  assert.deepEqual([at(0).camera, at(0).copy, at(0).dark, at(0).lattice, at(0).hero], [0, 1, 0, 0, true]);
   assert.equal(at(ENTRY.face).camera, 1);
-  assert.equal(at(ENTRY.cut - 1e-9).canvas < 1e-6, true);
-  assert.equal(at(ENTRY.cut).scene, 'material');
-  assert.equal(at(ENTRY.cut).canvas, 0, 'the cut happens while nothing is visible');
-  assert.equal(at(1).canvas, 1);
-  for (let t = 0; t < 1; t += .001) assert.ok(Math.abs(at(t + .001).canvas - at(t).canvas) < .02, `canvas jumps at ${t}`);
+  assert.ok(ENTRY.dark < ENTRY.lattice && ENTRY.lattice < ENTRY.black, 'the two images overlap: a dissolve, not a cut');
+  assert.equal(at(ENTRY.black).dark, 1, 'the face is fully dimmed before it stops being drawn');
+  assert.equal(at(ENTRY.black).hero, false);
+  assert.equal(at(1).lattice, 1);
+  for (let t = 0; t < 1; t += .001) for (const k of ['dark', 'lattice', 'push'])
+    assert.ok(Math.abs(at(t + .001)[k] - at(t)[k]) < .02, `${k} jumps at ${t}`);
+});
+
+test('lattice progress is continuous from the hero into the material chapter', () => {
+  assert.equal(latticeProgress({ index: 0, hero: ENTRY.lattice }), 0);
+  assert.equal(latticeProgress({ index: 0, hero: 1 }), LATTICE_PIN);
+  assert.equal(latticeProgress({ index: 1, progress: 0 }), LATTICE_PIN);
+  assert.equal(latticeProgress({ index: 1, progress: 1 }), 1);
+  assert.equal(latticeProgress({ index: 3, progress: .2 }), 1);
 });
 
 test('legacy cross-fade only runs in full motion and not for the hero', () => {
@@ -223,7 +233,63 @@ test('asset manager shares one fetch, disposes on last release, cancels on abort
   assert.equal(assets.size, 0, 'a failed load can be retried');
 });
 
-// ---- legacy chapters 1-6 (v0.1 renderer, kept until stages B/C) ------------------------------
+// ---- silicon lattice (chapter 01) ------------------------------------------------------------
+const distance3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+test('diamond cubic: 8 atoms per cell, every interior atom has exactly 4 neighbours at a*sqrt(3)/4', () => {
+  assert.ok(Math.abs(A - .5431020511) < 1e-12 && Math.abs(BOND - .2351707) < 1e-6);
+  const cell = diamondCubic([0, 0, 0], [A * .999, A * .999, A * .999]);
+  assert.equal(cell.length, 8);
+  const n = 3, quarters = diamondCubic([0, 0, 0], [n * A, n * A, n * A]);
+  const points = quarters.map(q => q.map(v => v * A / 4));
+  const interior = points.filter(p => p.every(v => v > BOND * 1.01 && v < n * A - BOND * 1.01));
+  assert.ok(interior.length > 50);
+  for (const p of interior) {
+    const near = points.map(o => distance3(p, o)).filter(d => d > 1e-9 && d < BOND * 1.5);
+    assert.equal(near.length, 4, `atom ${p} has ${near.length} neighbours`);
+    for (const d of near) assert.ok(Math.abs(d - BOND) < 1e-9);
+  }
+  // Bond list from the quarter-unit steps agrees with the geometry and is tetrahedral (cos = -1/3).
+  const list = bonds(quarters), count = new Map();
+  for (const [i, j] of list) {
+    assert.ok(Math.abs(distance3(points[i], points[j]) - BOND) < 1e-9);
+    for (const k of [i, j]) count.set(k, (count.get(k) ?? 0) + 1);
+  }
+  for (const p of interior) assert.equal(count.get(points.indexOf(p)), 4);
+  const centre = points.indexOf(interior[0]);
+  const arms = list.filter(b => b.includes(centre)).map(([i, j]) => points[i === centre ? j : i].map((v, k) => v - points[centre][k]));
+  for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++)
+    assert.ok(Math.abs(arms[a].reduce((s, v, k) => s + v * arms[b][k], 0) / BOND ** 2 + 1 / 3) < 1e-9);
+});
+
+test('lattice build is seeded and deterministic; the final camera looks down an open [110] channel', () => {
+  const a = buildLattice({ seed: 14, far: 3 }), b = buildLattice({ seed: 14, far: 3 }), c = buildLattice({ seed: 15, far: 3 });
+  assert.equal(a.positions.length, b.positions.length);
+  assert.deepEqual(a.grain, b.grain); assert.deepEqual(a.visible, b.visible); assert.deepEqual(a.hashes, b.hashes);
+  assert.notDeepEqual(a.grains, c.grains);
+  assert.ok(a.visible.some(v => !v) && a.visible.some(v => v), 'grain boundaries hide some atoms in the polycrystal');
+  const end = latticeCamera(1);
+  assert.ok(near(end.forward, CHANNEL_DIR, 1e-12) && near(end.position, CHANNEL_POINT, 1e-12));
+  // Distance from the channel axis to every atom: the six nearest columns sit at 3a/8.
+  const axis = p => { const d = p.map((v, i) => v - CHANNEL_POINT[i]); const t = d.reduce((s, v, i) => s + v * CHANNEL_DIR[i], 0); return Math.hypot(...d.map((v, i) => v - t * CHANNEL_DIR[i])); };
+  const closest = Math.min(...a.positions.map(axis));
+  assert.ok(Math.abs(closest - 3 * A / 8) < 1e-9, `closest column ${closest}`);
+  const front = [0, .3, .5, .82, 1].map(u => latticeFront(u).offset);
+  assert.ok(front.every((v, i) => !i || v >= front[i - 1]), 'the front only moves forward with u');
+  assert.equal(latticeFront(0).heat, 0); assert.ok(latticeFront(1).heat < 1e-6);
+});
+
+test('scale bar is physically true at the focus distance and labelled in Polish', () => {
+  const bar = scaleBar(1000, 44, 2);
+  const visible = 2 * 2 * Math.tan(22 * Math.PI / 180); // nm spanned by 1000 px at 2 nm
+  assert.ok(Math.abs(bar.px - bar.nm * 1000 / visible) < 1e-9);
+  assert.equal(scaleBar(1000, 44, 2).label, '0,2 nm');
+  assert.equal(scaleBar(4000, 44, 2).label, '0,05 nm');
+  assert.equal(scaleBar(400, 60, 2).label, '0,5 nm');
+  assert.ok(!/\./.test(scaleBar(400, 60, 2).label));
+});
+
+// ---- legacy chapters 2-6 (v0.1 renderer, kept until stages B/C) ------------------------------
 test('legacy matrices are column-major', () => {
   const m = model(2, 3, 4, .1, .2, .3, 2); assert.deepEqual(multiply(identity(), m), m);
   assert.deepEqual([...multiply(model(1, 2, 3), model(2, 3, 4))].slice(12, 15), [3, 5, 7]);
