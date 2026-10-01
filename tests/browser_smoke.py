@@ -307,6 +307,22 @@ with sync_playwright() as p:
     check('Direct load at #materia lands on the material chapter', attr(qa, 'chapter') == '1')
     qa.close()
 
+    # Regression: nothing may flicker frame to frame in the chapter 02 close view while idle (the
+    # carriers move a little; z-fighting at the oxide and a near-plane cut once lit up whole edges).
+    import io
+    from PIL import Image, ImageChops
+    idle = browser.new_page(viewport={'width': 1440, 'height': 1000})
+    load(idle, '?scene=tranzystor&progress=0.5&quality=cinematic&power=off')
+    idle.add_style_tag(content='.part-frame,.chapter-copy,.lattice-legend{visibility:hidden!important}')
+    idle.wait_for_timeout(1200)
+    shots_ = []
+    for _ in range(4):
+        shots_.append(Image.open(io.BytesIO(idle.screenshot())).convert('L'))
+        idle.wait_for_timeout(100)
+    changed = max(sum(1 for v in ImageChops.difference(a, b).getdata() if v > 40) for a, b in zip(shots_, shots_[1:]))
+    check(f'FinFET idle: frame-to-frame change stays small ({changed} px)', changed < 2500)
+    idle.close()
+
     # Keyboard: skip link, then a chapter link with Enter.
     keys = browser.new_page(viewport={'width': 1440, 'height': 1000})
     load(keys)

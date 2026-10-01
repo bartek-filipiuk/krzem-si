@@ -14,6 +14,8 @@ export const DIM = { finPitch: 42, finHeight: 42, finWidth: 8, gatePitch: 70, ga
 const FINS = [-1, 0, 1].map(i => i * DIM.finPitch);
 export const FRONT_FIN = FINS[0];
 export const FIN_LENGTH = 220;
+/** Gap between the glass parts and the isolation top (nm), see components(). */
+export const GHOST_LIFT = .5;
 
 /**
  * Fin cross-section used for the drawn fin (nm, y across, z up): tapered from 10 nm at the base to
@@ -35,28 +37,31 @@ export function components() {
   box('oxide', [0, 115, -20], [260, 205, 20], { round: 1 });
   for (const y of FINS) {
     box('silicon', [0, y, H / 2], [FIN_LENGTH / 2, W, H / 2], { fin: true, shape: 'fin' });
-    box('silicon', [0, y, -20], [FIN_LENGTH / 2, W + 2, 20], { round: 0 });
+    // The fin's root inside the isolation; its top stays below the oxide top (a coplanar strip
+    // along each fin base z-fought with the oxide and flickered).
+    box('silicon', [0, y, -20.25], [FIN_LENGTH / 2, W + 1, 19.75], { round: 0, root: true });
   }
   // One gate (real layouts repeat gates every 70 nm; the neighbours are left out so the device
   // reads as one object: source, gate, drain). Around each fin: high-k dielectric, then the
   // work-function metal (TiN), then the fill metal; a nitride cap on top; nitride spacers.
+  // Glass parts stand GHOST_LIFT above the isolation instead of sharing its plane: coplanar (and
+  // intersecting) transparent faces on the opaque oxide z-fought and flickered as the camera moved.
+  const lift = GHOST_LIFT, span = (z0, z1) => [(z0 + z1) / 2, (z1 - z0) / 2];
   for (const y of FINS) {
-    box('dielectric', [0, y, H / 2 + 1], [L, W + 2, H / 2 + 2], { round: 2, ghost: true });
-    box('tin', [0, y, H / 2 + 2], [L, W + 3.5, H / 2 + 3.5], { round: 3, ghost: true });
+    const [dz, dh] = span(lift, H + 2), [tz, th] = span(lift, H + 4);
+    box('dielectric', [0, y, dz], [L, W + 2, dh], { round: 2, ghost: true });
+    box('tin', [0, y, tz], [L, W + 3.5, th], { round: 3, ghost: true });
   }
-  box('dielectric', [0, 0, 1], [L, 76, 1], { round: 0, ghost: true });
-  box('tin', [0, 0, 2.75], [L, 76, .75], { round: 0, ghost: true });
-  box('gate', [0, 0, 37], [L, 76, 37], { round: 4, ghost: true, gate: true });
+  const [gz, gh] = span(lift, 74);
+  box('gate', [0, 0, gz], [L, 76, gh], { round: 4, ghost: true, gate: true });
   box('nitride', [0, 0, 79], [L, 76, 5], { round: 2, ghost: true });
-  for (const s of [-1, 1]) box('nitride', [s * (L + 4), 0, 42], [4, 76, 42], { round: 2, ghost: true });
+  const [sz, sh] = span(lift, 84);
+  for (const s of [-1, 1]) box('nitride', [s * (L + 4), 0, sz], [4, 76, sh], { round: 2, ghost: true });
   // Raised source/drain: faceted (diamond-profile) epitaxy around each fin between the spacers.
   for (const sx of [-1, 1]) for (const y of FINS) box('epi', [sx * 35, y, 36], [17, 9, 9], { angle: Math.PI / 4, shape: 'epi' });
   // Trench contacts on the source and drain, with a liner, and the gate contact.
-  for (const sx of [-1, 1]) {
-    box('liner', [sx * 35, 16, 72], [13.2, 51.2, 25.2], { round: 3, ghost: true });
-    box('tungsten', [sx * 35, 16, 72], [12, 50, 24], { round: 3, ghost: true });
-  }
-  box('liner', [0, 40, 95], [8.2, 7.2, 11.2], { round: 2, ghost: true });
+  // (Their barrier liners are thinner than a pixel at these views and are left out.)
+  for (const sx of [-1, 1]) box('tungsten', [sx * 35, 16, 72], [12, 50, 24], { round: 3, ghost: true });
   box('tungsten', [0, 40, 95], [7, 6, 10], { round: 2, ghost: true, gateContact: true });
   return out;
 }

@@ -419,7 +419,7 @@ export async function createScale({ renderer, environment, dof, shadows = true }
         s.mesh.material = s.mesh.userData.variants[u.uGrow.value < 1 ? 1 : 0];
       }
       sunDir.copy(SUN).lerp(SUN_LOW, reveal).normalize();
-      sun.intensity = 2.6 + 8 * reveal;
+      sun.intensity = 2.6 + 4.5 * reveal;
       scene.environmentIntensity = 1.3 + .6 * reveal;
       LIGHT.uHorizonMix.value = reveal;
       sun.target.position.set(...cam.target);
@@ -428,7 +428,7 @@ export async function createScale({ renderer, environment, dof, shadows = true }
       sc.left = -r; sc.right = r; sc.top = r; sc.bottom = -r; sc.near = d * .5; sc.far = d * 9;
       sc.updateProjectionMatrix();
       sun.shadow.bias = -.0004; sun.shadow.normalBias = d * .002;
-      renderer.toneMappingExposure = 1.05 + .5 * reveal;
+      renderer.toneMappingExposure = 1.05 + .25 * reveal;
       dof.render(scene, camera, { focus: d, aperture: cam.aperture, opacity, farMax: 3.5 });
       return opacity > .6 ? { ...scaleBar(size[1], cam.fov, d, 90), scene: 'scale' } : null;
     },

@@ -13,8 +13,7 @@
  * Lit by the studio HDR, a cool key and a low warm light; depth of field from rendering/dof.js.
  */
 import {
-  AdditiveBlending, BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, DoubleSide, ExtrudeGeometry,
-  Mesh, MeshStandardMaterial, PerspectiveCamera, Points, Scene, ShaderMaterial, Shape, Vector2, Vector3,
+  AdditiveBlending, BoxGeometry, BufferAttribute, Color, DirectionalLight, DoubleSide, ExtrudeGeometry, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, Shape, Vector2,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { components, finHalfWidth, switchState, transistorCamera, DIM, FIN_LENGTH } from './transistor-math.js';
@@ -29,12 +28,11 @@ const SOLIDS = {
 };
 // Ghost tint, base opacity, edge strength, glow when the gate is on.
 const GHOSTS = {
-  gate: { tint: '#5d5a56', alpha: .05, edge: .55, glow: .2 },
-  tin: { tint: '#a4834f', alpha: .06, edge: .6, glow: .6 },
-  dielectric: { tint: '#c9d3dc', alpha: .05, edge: .7, glow: 1 },
-  nitride: { tint: '#4a5157', alpha: .04, edge: .35, glow: 0 },
-  tungsten: { tint: '#8d949b', alpha: .06, edge: .65, glow: 0 },
-  liner: { tint: '#555a61', alpha: .03, edge: .4, glow: 0 },
+  gate: { tint: '#2e2d2c', alpha: .05, edge: .5, glow: .45 },
+  tin: { tint: '#8a6c3f', alpha: .04, edge: .55, glow: 1.1 },
+  dielectric: { tint: '#9aa6b0', alpha: .03, edge: .55, glow: 1.4 },
+  nitride: { tint: '#262b30', alpha: .04, edge: .3, glow: 0 },
+  tungsten: { tint: '#5f666d', alpha: .05, edge: .55, glow: 0 },
 };
 const L = DIM.gateLength / 2, H = DIM.finHeight;
 
@@ -79,7 +77,7 @@ reflectedLight.indirectDiffuse *= ao; reflectedLight.directDiffuse *= ao;`);
  * the back faces are drawn, so the thickness of each part shows). Glow: the gate's state.
  */
 function ghostMaterial({ tint, alpha, edge, glow }, uniforms) {
-  const m = new MeshStandardMaterial({ color: tint, metalness: .3, roughness: .25, transparent: true, depthWrite: false, side: DoubleSide, envMapIntensity: .45 });
+  const m = new MeshStandardMaterial({ color: tint, metalness: .3, roughness: .25, transparent: true, depthWrite: false, side: DoubleSide, envMapIntensity: .25 });
   m.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms, { uAlpha: { value: alpha }, uEdge: { value: edge }, uGlowK: { value: glow } });
     shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\n${BOX_VERTEX_HEAD}\nattribute float aContact; varying float vContact;`)
@@ -92,12 +90,14 @@ vec3 normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz) * faceDirection; vec3 
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
 float lineW = fwidth(edgeD) * 1.2 + .25;
 float edgeLine = 1.0 - smoothstep(0.0, lineW, edgeD);
-// The gate's state: a soft glow in the metal and its dielectric wrap; the pulse runs down the contact.
-float pulse = vContact > .5 && uPulse >= 0.0 ? exp(-pow((vWorld.z - mix(105.0, 85.0, uPulse)) / 2.5, 2.0)) : 0.0;
-totalEmissiveRadiance += uAmber * (uGlowK * uGate * (.35 + edgeLine) * .6 + pulse * 3.0);`)
+// The gate's state: a glow in the metal and its dielectric wrap; the pulse runs down the gate
+// contact and on down through the gate to the fins.
+float pulseZ = mix(105.0, 0.0, uPulse);
+float pulse = uPulse >= 0.0 && (vContact > .5 || uGlowK > 0.0) ? exp(-pow((vWorld.z - pulseZ) / 3.5, 2.0)) : 0.0;
+totalEmissiveRadiance += uAmber * (uGlowK * uGate * (.5 + 1.5 * edgeLine) + pulse * 4.0);`)
       .replace('#include <opaque_fragment>', `#include <opaque_fragment>
 float fres = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 3.0);
-gl_FragColor.a = clamp(uAlpha + .2 * fres + uEdge * edgeLine + uGlowK * uGate * .12 + pulse, 0.0, 1.0);`);
+gl_FragColor.a = clamp(uAlpha + .12 * fres + uEdge * edgeLine + uGlowK * uGate * .1 + pulse * .8, 0.0, 1.0);`);
   };
   m.customProgramCacheKey = () => 'finfet-ghost';
   return m;
@@ -185,49 +185,60 @@ totalEmissiveRadiance += uAmber * (sheet * 1.6 + front * 1.4 + wash);`);
 }
 
 /**
- * Carriers: particles on the fin surfaces (both side walls and the top) of the three fins. ON they
- * stream from source to drain through the channel; OFF they dam up at the gate edge, a few
- * hovering. Trails: the same particles drawn at earlier times with less alpha.
+ * Carriers: short streaks lying on the fin surfaces (both side walls and the top) of the three fins,
+ * one instanced quad each, bright at the head and fading along the tail. ON they stream from source
+ * to drain through the channel; OFF they stand in a sharp front at the gate edge, piled behind it.
  */
-function buildCarriers(lag, count) {
-  const g = new BufferGeometry();
+function buildCarriers(count) {
+  const quad = new PlaneGeometry(1, 1);
+  const g = new InstancedBufferGeometry();
+  g.index = quad.index;
+  g.setAttribute('position', quad.getAttribute('position'));
   const rand = i => ((Math.sin(i * 12.9898 + 4.1) * 43758.5453) % 1 + 1) % 1;
-  g.setAttribute('position', new BufferAttribute(new Float32Array(count * 3), 3));
-  g.setAttribute('aSeed', new BufferAttribute(Float32Array.from({ length: count * 4 }, (_, i) => rand(i + 7)), 4));
-  const points = new Points(g, new ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uStream: { value: 0 }, uScale: { value: 1 }, uLag: { value: lag }, uFade: { value: 1 } },
-    transparent: true, depthWrite: false, blending: AdditiveBlending,
+  g.setAttribute('aSeed', new InstancedBufferAttribute(Float32Array.from({ length: count * 4 }, (_, i) => rand(i + 7)), 4));
+  g.instanceCount = count;
+  const mesh = new Mesh(g, new ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uStream: { value: 0 }, uLength: { value: 7 } },
+    transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
     vertexShader: /* glsl */`
-      attribute vec4 aSeed; uniform float uTime, uStream, uScale, uLag; varying float vAlpha;
+      attribute vec4 aSeed; uniform float uTime, uStream, uLength; varying vec2 vUv; varying float vAlpha, vGlow;
       float halfWidth(float z) { return 5.0 - 2.0 * clamp(z / ${H.toFixed(1)}, 0.0, 1.0); }
       void main() {
         float fin = floor(aSeed.x * 2.999) - 1.0;
         float q = aSeed.y; // around the fin: left wall, top, right wall
-        float t = uTime - uLag;
-        float speed = .2 + .08 * aSeed.w;
-        float xon = -60.0 + fract(aSeed.z + t * speed) * 120.0;
-        // OFF: piled up before the gate (spacer edge), denser near it, jittering; a few hover.
-        float pile = pow(aSeed.z, .6);
-        float xoff = -${(L + 8.5).toFixed(1)} - pile * pile * 22.0 + sin(t * 2.3 + aSeed.w * 40.0) * .6;
+        float speed = .16 + .06 * aSeed.w;
+        float xon = -62.0 + fract(aSeed.z + uTime * speed) * 124.0;
+        // OFF: a sharp front at the gate edge, the rest piled behind it.
+        float dam = -${(L + 8.6).toFixed(1)};
+        float xoff = dam - pow(aSeed.z, 2.2) * 34.0 + sin(uTime * 2.1 + aSeed.w * 40.0) * .25;
         float x = mix(xoff, xon, uStream);
-        float z, y, off = .7;
-        if (q < .4) { z = 2.0 + q / .4 * ${(H - 5).toFixed(1)}; y = -halfWidth(z) - off; }
-        else if (q < .6) { float a = (q - .4) / .2; z = ${(H + .7).toFixed(1)} - 1.6 * pow(2.0 * a - 1.0, 2.0); y = mix(-halfWidth(${H.toFixed(1)}), halfWidth(${H.toFixed(1)}), a); }
-        else { z = 2.0 + (1.0 - q) / .4 * ${(H - 5).toFixed(1)}; y = halfWidth(z) + off; }
-        vec3 p = vec3(x, fin * ${DIM.finPitch.toFixed(1)} + y, z);
-        vAlpha = smoothstep(-60.0, -54.0, x) * (1.0 - smoothstep(54.0, 60.0, x)) * exp(-uLag * 9.0);
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_Position = projectionMatrix * mv;
-        gl_PointSize = max(1.5, 1.1 * uScale / -mv.z);
+        float len = mix(2.2, uLength, uStream);
+        vGlow = mix(1.8, 1.0, uStream);
+        vec3 p, across;
+        float off = .45;
+        if (q < .42) { float z = 2.0 + q / .42 * ${(H - 5).toFixed(1)}; p = vec3(x, -halfWidth(z) - off, z); across = vec3(0.0, 0.0, 1.0); }
+        else if (q < .58) { float a = (q - .42) / .16; p = vec3(x, mix(-2.4, 2.4, a), ${(H + .35).toFixed(1)}); across = vec3(0.0, 1.0, 0.0); }
+        else { float z = 2.0 + (1.0 - q) / .42 * ${(H - 5).toFixed(1)}; p = vec3(x, halfWidth(z) + off, z); across = vec3(0.0, 0.0, 1.0); }
+        p.y += fin * ${DIM.finPitch.toFixed(1)};
+        vUv = position.xy + .5;
+        // The quad: the head at x, the tail behind it along the fin, .45 nm wide on the surface.
+        vec3 world = p + vec3(-(1.0 - vUv.x) * len, 0.0, 0.0) + across * position.y * .45;
+        vAlpha = smoothstep(-62.0, -55.0, x) * (1.0 - smoothstep(54.0, 62.0, x));
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(world, 1.0);
       }`,
     fragmentShader: /* glsl */`
-      varying float vAlpha; uniform float uFade;
-      void main() { float r = length(gl_PointCoord - .5) * 2.0; float a = (1.0 - smoothstep(.1, 1.0, r)) * vAlpha * uFade;
-        gl_FragColor = vec4(vec3(.75, .9, 1.0) * a * 1.6, a); }`,
+      varying vec2 vUv; varying float vAlpha, vGlow;
+      void main() {
+        // clamp: interpolation can leave vUv a hair below 0, and pow() of a negative is NaN (black).
+        vec2 uv = clamp(vUv, 0.0, 1.0);
+        float a = pow(uv.x, 2.2) * (1.0 - pow(abs(uv.y - .5) * 2.0, 2.0)) * vAlpha;
+        gl_FragColor = vec4(vec3(.78, .9, 1.0) * a * 2.2 * vGlow, a);
+      }`,
   }));
-  points.frustumCulled = false;
-  points.renderOrder = 30;
-  return points;
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 30;
+  quad.dispose();
+  return mesh;
 }
 
 export async function createTransistor({ renderer, environment, dof, trails = 4 }) {
@@ -251,7 +262,7 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
   const epiMat = new MeshStandardMaterial({ color: '#8d98a3', metalness: .5, roughness: .22, transparent: true, opacity: .5, depthWrite: false, flatShading: true, envMapIntensity: .7 });
   add(mergeGeometries(epis.map(e => extrudeX(epiProfile(), e.center[0] - e.half[0], e.center[0] + e.half[0], e.center[1]))), epiMat, 5);
   // Ghosts, inner first so the outer glass composites over them.
-  ['dielectric', 'tin', 'gate', 'nitride', 'liner', 'tungsten'].forEach((kind, i) =>
+  ['dielectric', 'tin', 'gate', 'nitride', 'tungsten'].forEach((kind, i) =>
     add(mergedBoxes(parts.filter(c => c.kind === kind)), ghostMaterial(GHOSTS[kind], uniforms), 10 + i));
 
   const key = new DirectionalLight('#e6eef8', .9);
@@ -262,7 +273,7 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
   let carriers = [];
   const setTrails = n => {
     for (const c of carriers) { scene.remove(c); c.geometry.dispose(); c.material.dispose(); }
-    carriers = Array.from({ length: 1 + n }, (_, k) => buildCarriers(k * .07, 700));
+    carriers = [buildCarriers(n >= 4 ? 1400 : 800)];
     scene.add(...carriers);
   };
   setTrails(trails);
@@ -274,8 +285,8 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
-    /** Fewer trail copies on a weaker profile (fill rate). */
-    setTrails(n) { if (n !== carriers.length - 1) setTrails(n); },
+    /** Fewer carriers on a weaker profile (fill rate). */
+    setTrails(n) { if ((n >= 4 ? 1400 : 800) !== carriers[0].geometry.instanceCount) setTrails(n); },
     /**
      * state: { progress, time (ambient s), power: { on, s } (target state and the progress of its
      * switching sequence), fade (opacity over what the canvas holds) }.
@@ -284,7 +295,9 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
       const cam = transistorCamera(progress, framing, time * 2 * Math.PI / 80);
       const focus = Math.hypot(...cam.position.map((v, i) => v - cam.target[i]));
       camera.fov = cam.fov; camera.aspect = size[0] / size[1];
-      camera.near = focus * .3; camera.far = focus * 3;
+      // The near plane must stay clear of the wafer slab: at .3 x focus it sliced through the slab's
+      // front in the close view and the cut edge jumped with every sway of the camera.
+      camera.near = focus * .04; camera.far = focus * 6;
       camera.updateProjectionMatrix();
       camera.projectionMatrix.elements[8] = -cam.shift[0];
       camera.projectionMatrix.elements[9] = -cam.shift[1];
@@ -294,11 +307,7 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
       const st = switchState(power.on, power.s);
       uniforms.uGate.value = st.gate; uniforms.uPulse.value = st.pulse;
       uniforms.uChannel.value.set(...st.channel); uniforms.uStream.value = st.stream;
-      const height = renderer.getDrawingBufferSize(new Vector2()).y;
-      for (const c of carriers) {
-        const cu = c.material.uniforms;
-        cu.uTime.value = time; cu.uStream.value = st.stream; cu.uScale.value = height / 2 / Math.tan(cam.fov * Math.PI / 360);
-      }
+      for (const c of carriers) { const cu = c.material.uniforms; cu.uTime.value = time; cu.uStream.value = st.stream; }
       renderer.toneMappingExposure = .9;
       dof.render(scene, camera, { focus, aperture: APERTURE, opacity: fade });
       return fade > .6 ? { ...scaleBar(size[1], cam.fov, focus, 90), scene: 'transistor' } : null;

@@ -168,13 +168,15 @@ function placeLabels() {
     if (framing === 'mobile' && !MOBILE_LABELS.includes(key)) continue;
     // A part out of the frame (the camera moves in close mid-chapter) loses its label.
     const fp = project(point, cam, W / H);
-    if (!fp || fp[0] < .03 || fp[0] > .97 || fp[1] < .1 || fp[1] > .9) continue;
+    const li = labelItems.find(l => l.dataset.part === key), e = li?.hidden ? .03 : 0; // hysteresis
+    if (!fp || fp[0] < .03 + e || fp[0] > .97 - e || fp[1] < .1 + e || fp[1] > .9 - e) continue;
     const [fx, fy] = fp;
     anchors[key] = [(fx * W + (box[0] - W) / 2) / box[0] * 100, (fy * H + (box[1] - H) / 2) / box[1] * 100];
   }
   const layout = labelLayout(anchors, box, framing);
   for (const li of labelItems) {
     const l = layout[li.dataset.part];
+    li.dataset.wasHidden = String(li.hidden);
     li.hidden = !l;
     if (!l) continue;
     li.style.setProperty('--px', l.x.toFixed(2)); li.style.setProperty('--py', l.y.toFixed(2));
@@ -186,8 +188,11 @@ function placeLabels() {
   for (const li of labelItems) {
     if (li.hidden) continue;
     const r = li.querySelector('span').getBoundingClientRect();
-    li.hidden = copy.some(c => r.left < c.right + 8 && c.left < r.right + 8 && r.top < c.bottom + 4 && c.top < r.bottom + 4)
-      || r.left < 4 || r.right > W - 4;
+    // Hysteresis: a hidden label comes back only with a clear margin, so the camera's sway cannot
+    // make it blink on and off at the threshold.
+    const m = li.dataset.wasHidden === 'true' ? 24 : 8;
+    li.hidden = copy.some(c => r.left < c.right + m && c.left < r.right + m && r.top < c.bottom + m / 2 && c.top < r.bottom + m / 2)
+      || r.left < m / 2 || r.right > W - m / 2;
   }
 }
 

@@ -313,6 +313,9 @@ test('FinFET model keeps the sourced proportions and cuts through the front fin'
   const epi = components().filter(c => c.kind === 'epi').map(c => c.center[0]).sort((a, b) => a - b);
   assert.deepEqual(epi.slice(0, 3).map(x => -x), epi.slice(3));
   assert.equal(FRONT_FIN, -DIM.finPitch);
+  // Regression (flickering plates near the oxide): no glass face may touch or cut the isolation top.
+  for (const c of components().filter(c => c.ghost)) assert.ok(c.center[2] - c.half[2] >= .4, `${c.kind} glass reaches the oxide`);
+  for (const c of components().filter(c => c.root)) assert.ok(c.center[2] + c.half[2] <= -.4, 'fin root shares the oxide top');
   assert.ok(components().every(c => [...c.center, ...c.half].every(Number.isFinite) && c.half.every(v => v > 0)));
 });
 
