@@ -6,7 +6,8 @@ Serve the build first:  npm run build && npm run preview      (http://127.0.0.1:
     python tests/screens.py                       # everything on the NVIDIA GPU
     python tests/screens.py --gpu amd shots perf  # integrated AMD GPU: balanced shots + timings
 Steps: shots, board, handover, perf, transfer, record (hero, stage A); lattice, lattice-perf,
-lattice-record (hero -> lattice -> end of chapter 01); posters (writes src/assets/posters/lattice-*).
+lattice-record (hero -> lattice -> end of chapter 01); transistor, transistor-perf (chapter 02 OFF/ON);
+posters (writes src/assets/posters/lattice-* and finfet-*).
 Output: docs/qa/after/. The boards also take the AMD rows when they exist: run
 `--gpu amd shots lattice perf lattice-perf` first, then the NVIDIA run.
 """
@@ -57,14 +58,14 @@ def webp(png: Path, dst: Path, quality=82):
 
 
 def shots(browser, gpu, profiles, frames=None, prefix='hero'):
-    """frames: [(scene id, progress, file suffix)]; default: the hero at PROGRESS."""
+    """frames: [(scene id, progress, file suffix[, extra query])]; default: the hero at PROGRESS."""
     frames = frames or [('poczatek', p, f'{int(p * 100):03d}') for p in PROGRESS]
     log = {}
     for profile in profiles:
         for name, ctx in VIEWPORTS.items():
             page = browser.new_page(**ctx)
-            for scene, p, suffix in frames:
-                page.goto(f'{URL}?scene={scene}&progress={p}&quality={profile}&freeze=1', wait_until='networkidle')
+            for scene, p, suffix, *extra in frames:
+                page.goto(f'{URL}?scene={scene}&progress={p}&quality={profile}&freeze=1{"".join(extra)}', wait_until='networkidle')
                 ready(page, profile)
                 tag = f'{prefix}-{"amd-" if gpu == "amd" else ""}{profile}-{name}-{suffix}'
                 with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
@@ -106,28 +107,36 @@ LATTICE_ROWS = [('cinematic · RTX 3070', 'lattice-cinematic'), ('balanced · RT
                 ('balanced · AMD iGPU', 'lattice-amd-balanced'), ('calm · poster', 'lattice-calm')]
 
 
-def lattice_board():
-    """lattice-board.webp: handover columns (hero .76-.94) then chapter 01 at 0-100 %."""
+# Chapter 02 at 0-100 %, OFF then ON (power forced like a click on the switch).
+TRANSISTOR_FRAMES = [('tranzystor', p, f'{state}-{int(p * 100):03d}', f'&power={state}') for state in ('off', 'on') for p in PROGRESS]
+TRANSISTOR_ROWS = [(label, prefix.replace('lattice', 'transistor')) for label, prefix in LATTICE_ROWS]
+
+
+def lattice_board(frames=None, rows_spec=None, name='lattice-board.webp', title=None):
+    """lattice-board.webp: handover columns (hero .76-.94) then chapter 01 at 0-100 %. With other
+    frames/rows (the transistor), the same layout for another chapter."""
+    frames, rows_spec = frames or LATTICE_FRAMES, rows_spec or LATTICE_ROWS
+    title = title or (lambda scene, p, suffix: f'{"hero" if scene == "poczatek" else "01 materia"} {p:.2f}')
     h, gap, label_w = 230, 8, 190
     rows = []
-    for label, prefix in LATTICE_ROWS:
-        for name in VIEWPORTS:
-            files = [OUT / f'{prefix}-{name}-{suffix}.webp' for _, _, suffix in LATTICE_FRAMES]
+    for label, prefix in rows_spec:
+        for name_ in VIEWPORTS:
+            files = [OUT / f'{prefix}-{name_}-{f[2]}.webp' for f in frames]
             if all(f.exists() for f in files):
-                rows.append((f'{label}\n{name}', [(t := Image.open(f)).resize((round(t.width * h / t.height), h)) for f in files]))
+                rows.append((f'{label}\n{name_}', [(t := Image.open(f)).resize((round(t.width * h / t.height), h)) for f in files]))
     if not rows:
         return
     cell = max(t.width for _, tiles in rows for t in tiles) + gap
-    img = Image.new('RGB', (label_w + cell * len(LATTICE_FRAMES), len(rows) * (h + 12) + 30), (11, 14, 18))
+    img = Image.new('RGB', (label_w + cell * len(frames), len(rows) * (h + 12) + 30), (11, 14, 18))
     draw = ImageDraw.Draw(img)
-    for i, (scene, p, _) in enumerate(LATTICE_FRAMES):
-        draw.text((label_w + i * cell, 8), f'{"hero" if scene == "poczatek" else "01 materia"} {p:.2f}', fill=(200, 200, 200))
+    for i, (scene, p, suffix, *_) in enumerate(frames):
+        draw.text((label_w + i * cell, 8), title(scene, p, suffix), fill=(200, 200, 200))
     for r, (label, tiles) in enumerate(rows):
         y = 30 + r * (h + 12)
         draw.multiline_text((8, y + 100), label, fill=(210, 190, 150))
         for i, t in enumerate(tiles):
             img.paste(t, (label_w + i * cell, y))
-    img.save(OUT / 'lattice-board.webp', 'WEBP', quality=80, method=6)
+    img.save(OUT / name, 'WEBP', quality=80, method=6)
 
 
 def posters(browser):
@@ -283,6 +292,38 @@ def lattice_perf(browser, profiles):
     return out
 
 
+def transistor_perf(browser, profiles):
+    """Chapter 02: idle ON at progress .5 (carriers moving, depth-of-field pass), then a scroll
+    through the whole chapter and back."""
+    out = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            page.goto(f'{URL}?quality={profile}&debug&power=on', wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            page.evaluate(TO_CHAPTER, ['tranzystor', .5])
+            page.wait_for_timeout(2500)
+            page.evaluate('krzemDebug.reset()')
+            page.wait_for_timeout(4000)
+            idle, idle_gpu = page.evaluate('krzemDebug.intervals'), page.evaluate('krzemDebug.gpuMs') or []
+            page.evaluate('krzemDebug.reset()')
+            page.evaluate(SWEEP, ['tranzystor', [[0, 1, 6000], [1, .3, 2500], [.3, 1, 2500]]])
+            moving, gpu_ms = page.evaluate('krzemDebug.intervals'), page.evaluate('krzemDebug.gpuMs') or []
+            info = page.evaluate(INFO)
+            out[f'{profile}/{name}'] = {'idle': stats(idle), 'gpu_time_idle': stats(idle_gpu), 'scroll': stats(moving),
+                                        'gpu_time_scroll': stats(gpu_ms), 'gl': info['gl'],
+                                        'buffer': info['gpu']['buffer'] if info['gpu'] else None}
+            page.close()
+    return out
+
+
+TO_CHAPTER = '''([id,p])=>{const el=document.getElementById(id);scrollTo(0,el.getBoundingClientRect().top+scrollY+Math.max(0,el.offsetHeight-innerHeight)*p)}'''
+# Pinned-progress sweep of one chapter: segments [from, to, ms].
+SWEEP = '''async ([id,segments])=>{const el=document.getElementById(id),top=el.getBoundingClientRect().top+scrollY,span=Math.max(0,el.offsetHeight-innerHeight);
+  for(const [a,b,ms] of segments){const t0=performance.now();
+    await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,top+span*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}}'''
+
+
 def lattice_record(p, gpu):
     """Desktop ~30 s: hero, entry into the face, dissolve into the lattice, the whole of chapter 01,
     back up into the hero and down again."""
@@ -389,7 +430,7 @@ def record(p, gpu):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--gpu', default='nvidia', choices=['nvidia', 'amd'])
-    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record', 'lattice', 'lattice-perf', 'lattice-record'])
+    ap.add_argument('steps', nargs='*', default=['shots', 'board', 'handover', 'perf', 'transfer', 'record', 'lattice', 'lattice-perf', 'lattice-record', 'transistor', 'transistor-perf'])
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     log_path = OUT / f'capture-{a.gpu}.json'
@@ -408,6 +449,10 @@ if __name__ == '__main__':
             log['transfer'] = transfer(browser)
         if 'lattice' in a.steps:
             log['lattice_shots'] = shots(browser, a.gpu, profiles, LATTICE_FRAMES, 'lattice')
+        if 'transistor' in a.steps:
+            log['transistor_shots'] = shots(browser, a.gpu, profiles, TRANSISTOR_FRAMES, 'transistor')
+        if 'transistor-perf' in a.steps:
+            log['transistor_perf'] = transistor_perf(browser, [x for x in profiles if x != 'calm'])
         if 'lattice-perf' in a.steps:
             log['lattice_perf'] = lattice_perf(browser, [x for x in profiles if x != 'calm'])
         if 'posters' in a.steps and a.gpu == 'nvidia':
@@ -415,6 +460,8 @@ if __name__ == '__main__':
         browser.close()
         if 'lattice' in a.steps or 'board' in a.steps:
             lattice_board()
+        if 'transistor' in a.steps or 'board' in a.steps:
+            lattice_board(TRANSISTOR_FRAMES, TRANSISTOR_ROWS, 'transistor-board.webp', lambda scene, p, suffix: f'02 {suffix[:-4].upper()} {p:.2f}')
         if 'board' in a.steps or 'shots' in a.steps:
             board()
             if (OUT / 'hero-cinematic-desktop-000.webp').exists():
@@ -424,4 +471,4 @@ if __name__ == '__main__':
         if 'lattice-record' in a.steps and a.gpu == 'nvidia':
             log['lattice_record'] = lattice_record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
-    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record')}, indent=1)[:8000])
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf')}, indent=1)[:8000])
