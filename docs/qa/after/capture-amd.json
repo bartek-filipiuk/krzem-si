@@ -1198,7 +1198,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1231,7 +1231,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1264,7 +1264,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1297,7 +1297,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1330,7 +1330,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1363,7 +1363,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1396,7 +1396,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1429,7 +1429,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1462,7 +1462,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1495,7 +1495,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1528,7 +1528,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1561,7 +1561,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1594,7 +1594,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1627,7 +1627,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1660,7 +1660,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1693,7 +1693,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1726,7 +1726,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1759,7 +1759,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1792,7 +1792,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1825,7 +1825,7 @@
     },
     "triangles": 2,
     "textures": 5,
-    "geometries": 14,
+    "geometries": 11,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 0.9
@@ -1835,31 +1835,31 @@
  "transistor_perf": {
   "balanced/desktop": {
    "idle": {
-    "frames": 241,
+    "frames": 240,
     "median_ms": 16.7,
-    "p95_ms": 16.7,
+    "p95_ms": 16.8,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_idle": {
-    "frames": 238,
-    "median_ms": 7.87,
-    "p95_ms": 8.52,
-    "max_ms": 8.8,
+    "frames": 241,
+    "median_ms": 7.19,
+    "p95_ms": 7.26,
+    "max_ms": 7.4,
     "over_50ms": 0
    },
    "scroll": {
-    "frames": 663,
+    "frames": 664,
     "median_ms": 16.7,
     "p95_ms": 16.7,
     "max_ms": 16.8,
     "over_50ms": 0
    },
    "gpu_time_scroll": {
-    "frames": 658,
-    "median_ms": 7.25,
-    "p95_ms": 8.44,
-    "max_ms": 9.0,
+    "frames": 665,
+    "median_ms": 6.54,
+    "p95_ms": 7.23,
+    "max_ms": 7.5,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",
@@ -1878,9 +1878,9 @@
    },
    "gpu_time_idle": {
     "frames": 240,
-    "median_ms": 1.55,
-    "p95_ms": 1.65,
-    "max_ms": 1.7,
+    "median_ms": 1.34,
+    "p95_ms": 1.39,
+    "max_ms": 2.2,
     "over_50ms": 0
    },
    "scroll": {
@@ -1892,9 +1892,9 @@
    },
    "gpu_time_scroll": {
     "frames": 664,
-    "median_ms": 1.44,
-    "p95_ms": 1.64,
-    "max_ms": 1.7,
+    "median_ms": 1.24,
+    "p95_ms": 1.39,
+    "max_ms": 2.3,
     "over_50ms": 0
    },
    "gl": "ANGLE (AMD, RENOIR (renoir LLVM 15.0.7), OpenGL ES 3.2)",

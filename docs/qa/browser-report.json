@@ -1,5 +1,5 @@
 {
-  "url": "http://127.0.0.1:4175/",
+  "url": "http://127.0.0.1:4176/",
   "browser": "Chromium 145.0.7632.6",
   "gpu": "nvidia",
   "checks": [
@@ -565,6 +565,10 @@
     },
     {
       "name": "Direct load at #materia lands on the material chapter",
+      "passed": true
+    },
+    {
+      "name": "FinFET idle: frame-to-frame change stays small (426 px)",
       "passed": true
     },
     {
