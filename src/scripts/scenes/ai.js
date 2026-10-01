@@ -134,12 +134,12 @@ export async function createAi({ renderer, environment, dof }) {
     });
   }
   const laneMat = new ShaderMaterial({
-    uniforms: { uHead: { value: 0 }, uRest: { value: 0 } }, transparent: true, depthWrite: false, side: 2,
+    uniforms: { uHead: { value: 0 }, uRest: { value: 0 }, uShow: { value: 0 } }, transparent: true, depthWrite: false, side: 2,
     vertexShader: 'attribute float along; varying float vA; void main() { vA = along; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform float uHead, uRest; varying float vA;
+    fragmentShader: `uniform float uHead, uRest, uShow; varying float vA;
       void main() {
         float behind = step(vA, uHead), head = exp(-pow((uHead - vA) / .05, 2.0)) * behind;
-        float k = behind * uRest + head * 3.0;
+        float k = (behind * uRest + head * 3.0) * uShow;
         if (k < .01) discard;
         gl_FragColor = vec4(vec3(1.0, .64, .3) * k, min(1.0, k));
       }`,
@@ -187,9 +187,11 @@ export async function createAi({ renderer, environment, dof }) {
       const down = smoothstep(0, .35, dp.pulse), out = smoothstep(.3, 1, dp.pulse);
       threads.material.opacity = show * (ai.open ? .2 + .5 * smoothstep(0, 6, dp.rows) * (1 - .5 * out) : .12);
       threadEnds.forEach(([a, b], j) => {
-        const k = Math.min(1, Math.max(0, down * 1.15 - j * .03)), s = dp.pulse > 0 && k < 1 ? 1 : 0;
+        const k = Math.min(1, Math.max(0, down * 1.15 - j * .03)), s = dp.pulse > 0 && k < 1 && show > .5 ? 1 : 0;
         pulses.setMatrixAt(j, m4.makeScale(s, s, s).setPosition(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k));
       });
+      // Like the layer, all of it waits until the camera has left the die close-up (chapter 04's end).
+      laneMat.uniforms.uShow.value = show;
       laneMat.uniforms.uHead.value = out * 1.15;
       laneMat.uniforms.uRest.value = 1.1 * smoothstep(0, .25, out);
       pulses.instanceMatrix.needsUpdate = true;
