@@ -116,6 +116,26 @@
       "passed": true
     },
     {
+      "name": "Scale: heading hidden before the reveal",
+      "passed": true
+    },
+    {
+      "name": "Scale: live scale bar inside the stack",
+      "passed": true
+    },
+    {
+      "name": "Scale: heading shown after the reveal",
+      "passed": true
+    },
+    {
+      "name": "Scale: the bar reaches micrometres or millimetres at the exit",
+      "passed": true
+    },
+    {
+      "name": "Scale: GPU returns NO_ERROR",
+      "passed": true
+    },
+    {
       "name": "FinFET: six part labels on screen, clear of each other and of the copy",
       "passed": true
     },
@@ -169,6 +189,10 @@
     },
     {
       "name": "Motion OFF: chapter 01 shows the lattice poster",
+      "passed": true
+    },
+    {
+      "name": "Motion OFF: chapter 03 shows its poster and heading",
       "passed": true
     },
     {

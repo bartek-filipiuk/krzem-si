@@ -14,3 +14,6 @@
   frames `docs/qa/after/transistor-*.webp`; before/after of the readability round:
   `transistor-v1-cinematic-desktop-{off,on}-050.webp`, `transistor-v1-cinematic-mobile-on-050.webp`
   next to the same names without `v1`. GPU times in `docs/PERFORMANCE.md` ("Chapter 02").
+- Chapter 03 interconnect and die (2026-10-01): board `docs/qa/after/scale-board.webp` (0, .16, .25, .3, .5,
+  .6, .75, .8, 1), frames `docs/qa/after/scale-*.webp`, recording `docs/qa/after/scale-scroll-desktop.webm`
+  (02 -> 03 -> 04 with a reverse and a fling), GPU times in `docs/PERFORMANCE.md` ("Chapter 03").
