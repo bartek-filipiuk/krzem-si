@@ -386,6 +386,33 @@ def scale_record(p, gpu):
     return measured
 
 
+def transistor_record(p, gpu):
+    """Desktop ~25 s: scroll into chapter 02 (the automatic ON demo), press OFF, ON, a quick double
+    press, then the scroll on through the chapter and back."""
+    browser = launch(p, gpu)
+    ctx = VIEWPORTS['desktop']
+    with tempfile.TemporaryDirectory() as tmp:
+        context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=ctx['viewport'])
+        page = context.new_page()
+        page.goto(URL + '?debug', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.evaluate(TO_CHAPTER, ['tranzystor', 0])
+        page.wait_for_timeout(1000)
+        page.evaluate(SWEEP, ['tranzystor', [[0, .5, 4000]]])
+        page.wait_for_timeout(2500)
+        press = "document.querySelector('#transistor-toggle').click()"
+        for wait in (2500, 2500, 300, 2500):
+            page.evaluate(press)
+            page.wait_for_timeout(wait)
+        page.evaluate(SWEEP, ['tranzystor', [[.5, 1, 3500], [1, .3, 2500], [.3, .5, 1500]]])
+        page.wait_for_timeout(1000)
+        video = page.video.path()
+        context.close()
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                        '-crf', '40', '-row-mt', '1', '-an', str(OUT / 'transistor-switch-desktop.webm')], check=True)
+    browser.close()
+
+
 def lattice_record(p, gpu):
     """Desktop ~30 s: hero, entry into the face, dissolve into the lattice, the whole of chapter 01,
     back up into the hero and down again."""
@@ -536,6 +563,8 @@ if __name__ == '__main__':
                 before_after()
         if 'record' in a.steps and a.gpu == 'nvidia':
             log['record'] = record(p, a.gpu)
+        if 'transistor-record' in a.steps and a.gpu == 'nvidia':
+            transistor_record(p, a.gpu)
         if 'scale-record' in a.steps and a.gpu == 'nvidia':
             log['scale_record'] = scale_record(p, a.gpu)
         if 'lattice-record' in a.steps and a.gpu == 'nvidia':
