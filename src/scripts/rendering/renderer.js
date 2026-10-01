@@ -3,7 +3,7 @@
  * WebGL 2 context, one WebGLRenderer. The text layer owns the only requestAnimationFrame loop
  * and calls frame(state) from it; this module never schedules frames itself.
  */
-import { WebGLRenderer } from 'three';
+import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createAssetManager } from './assets.js';
 import { PROFILES, pixelRatio, textureSet } from './quality.js';
 import { entryPhases, latticeProgress, smoothstep } from '../story/timeline.js';
@@ -11,6 +11,7 @@ import { createHero } from '../scenes/hero.js';
 import { createLegacyScenes } from '../scenes/legacy.js';
 import { createLattice } from '../scenes/lattice.js';
 import { createTransistor } from '../scenes/transistor.js';
+import { createScale } from '../scenes/scale.js';
 import { createDof } from './dof.js';
 
 const dofSettings = p => ({ msaa: p.antialias, taps: p.antialias ? 24 : 12 });
@@ -22,16 +23,19 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, lattice = null, transistor = null, dof = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, transistor = null, scaleScene = null, dof = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     lattice = await createLattice({ renderer, environment: hero.environment });
     dof = createDof(renderer, dofSettings(settings));
     transistor = await createTransistor({ renderer, environment: hero.environment, dof });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFShadowMap;
+    scaleScene = await createScale({ renderer, environment: hero.environment, dof, shadows: settings.antialias });
     signal?.throwIfAborted();
     legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
-    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
+    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); scaleScene?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
   }
 
@@ -44,6 +48,8 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
     transistor.resize(width, height, current.framing);
+    scaleScene.resize(width, height, current.framing);
+    scaleScene.setShadows(p.antialias);
     dof.configure(dofSettings(p));
     legacy.resize(width, height, p.lod);
   }
@@ -74,9 +80,13 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         if (blend < .5) scale = lattice.render({ u, time: state.time, emerge: 1 - smoothstep(0, .5, blend) });
         else transistor.render({ progress: 0, time: state.time, power: state.power, fade: smoothstep(.5, 1, blend) });
       } else if (state.index === 2) {
-        // Chapter 02; on the way out it fades to the background and chapter 03 (legacy) fades in.
-        scale = transistor.render({ progress: state.progress, time: state.time, power: state.power, fade: 1 - smoothstep(0, .5, state.transition) });
-        if (scale) scale.scene = 'transistor';
+        // Chapter 02; on the way out the chapter 03 scene (same camera at its start, the device
+        // now one of a row) comes up under it and the transistor dissolves away.
+        if (state.transition > 0) scaleScene.render({ progress: 0, time: state.time });
+        scale = transistor.render({ progress: state.progress, time: state.time, power: state.power, fade: 1 - smoothstep(0, .6, state.transition) });
+      } else if (state.index === 3) {
+        // Chapter 03; on the way out it fades to the background and chapter 04 (legacy) fades in.
+        scale = scaleScene.render({ progress: state.progress, time: state.time, opacity: 1 - smoothstep(0, .5, state.transition) });
         if (state.transition > 0) {
           renderer.resetState();
           legacy.render({ ...state, keep: true });
@@ -101,7 +111,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); lattice.dispose(); transistor.dispose(); dof.dispose(); legacy.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); transistor.dispose(); scaleScene.dispose(); dof.dispose(); legacy.dispose(); assets.dispose();
       renderer.dispose();
     },
   };

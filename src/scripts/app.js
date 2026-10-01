@@ -21,7 +21,7 @@ const aiPanel = document.querySelector('#ai-demo');
 const progressBar = document.querySelector('#reading-progress-bar');
 const partLabels = document.querySelector('.part-labels');
 const labelItems = [...partLabels.querySelectorAll('[data-part]')];
-const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale') };
+const scaleBoxes = { lattice: document.querySelector('#lattice-scale'), transistor: document.querySelector('#transistor-scale'), scale: document.querySelector('#scale-scale') };
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reader = createScrollReader(sections, document.querySelector('#zrodla'));
 const controller = new QualityController();
@@ -91,6 +91,8 @@ function update() {
   if (index === 5) { const open = manualAI ?? (progress > .23 && progress < .66); aiPanel.classList.toggle('is-open', open); aiButton.setAttribute('aria-expanded', String(open)); }
   if (motionFull()) {
     root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));
+    // Chapter 03's heading lands only after the perspective shift (the reveal frame).
+    root.style.setProperty('--scale-copy', (index < 3 ? 0 : index > 3 ? 1 : smoothstep(.56, .64, progress)).toFixed(3));
   }
   dirty = false;
 }
@@ -200,7 +202,7 @@ function stop(message = 'TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ') {
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   layer?.dispose(); layer = null; liveAt = 0; lastFrame = 0; profile = 'calm';
   root.dataset.renderer = 'static'; root.dataset.quality = 'calm'; delete root.dataset.hero;
-  root.style.removeProperty('--hero-copy'); showScale(null); partLabels.removeAttribute('data-live');
+  root.style.removeProperty('--hero-copy'); root.style.removeProperty('--scale-copy'); showScale(null); partLabels.removeAttribute('data-live');
   for (const li of labelItems) for (const v of ['--px', '--py', '--pax', '--pay']) li.style.removeProperty(v);
   status.textContent = message; motionLabel.textContent = 'Włącz animacje'; motionButton.setAttribute('aria-pressed', 'true');
   relayout('static');

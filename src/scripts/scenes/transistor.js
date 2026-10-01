@@ -267,7 +267,7 @@ export async function createTransistor({ renderer, environment, dof }) {
       }
       renderer.toneMappingExposure = .85;
       dof.render(scene, camera, { focus, aperture: APERTURE, opacity: fade });
-      return fade > .6 ? scaleBar(size[1], cam.fov, focus, 90) : null;
+      return fade > .6 ? { ...scaleBar(size[1], cam.fov, focus, 90), scene: 'transistor' } : null;
     },
     dispose() {
       for (const g of Object.values(geometries)) g.dispose();

@@ -1,6 +1,7 @@
 /**
- * v0.1 procedural scenes for chapters 3-6, kept until stages B/C replace them. Chapters 1 and 2
- * are the lattice and the FinFET; index 1-2 here draw nothing, only the cross-fade into chapter 3. They draw into the
+ * v0.1 procedural scenes for chapters 4-6, kept until stage C replaces them. Chapters 1-3 are the
+ * lattice, the FinFET and the interconnect stack; index 1-3 here draw nothing (only the cross-fade
+ * into chapter 4 from index 3). They draw into the
  * same WebGL 2 context as Three.js (GLSL ES 1.00 shaders are valid there); the caller resets
  * Three's state cache around render(). Chapter 0 is the Three.js hero now.
  */
@@ -112,7 +113,7 @@ export function createLegacyScenes(gl) {
   function mesh(name){
     if(meshes.has(name))return meshes.get(name);
     if(name==='rock')return upload(name,geometry.crystal());
-    const makers={circuit:()=>geometry.circuit(quality==='high'?30:20),computer:()=>geometry.computer(false),phone:()=>geometry.computer(true),compute:geometry.compute};
+    const makers={computer:()=>geometry.computer(false),phone:()=>geometry.computer(true),compute:geometry.compute};
     const group=name.split(':')[0];
     for(const [part,data] of Object.entries(makers[group]()))upload(`${group}:${part}`,data);
     return meshes.get(name);
@@ -147,11 +148,7 @@ export function createLegacyScenes(gl) {
     const s=mobile?.61:1.30;
     const px=mobile?0:pointer[0]*.07,py=mobile?0:pointer[1]*.06;
     function compose(index,p){
-    if(index===3){
-      const scale=s*lerp(1.55,.8,smoothstep(0,1,p));
-      const mat=model(x,y-.15,0,.74+py,-.30+p*.24+px,-.16,scale);
-      draw('circuit:out',mat,2);draw('circuit:routes',mat,3,1,.6);
-    }else if(index===4){
+    if(index===4){
       const a=1-smoothstep(.4,.6,p),b=smoothstep(.4,.6,p);
       const mat=model(x,y+.05,0,py,-.20+px+t*.012,0,s);
       for(const [device,opacity] of [['computer',a],['phone',b]]){
@@ -168,7 +165,7 @@ export function createLegacyScenes(gl) {
       draw('rock',model(x,y,0,.12,t*.025,-.14,s*.88),5,fade);
     }
     }
-    const blend=smoothstep(0,1,transition);sceneAlpha=1-blend;compose(index,p);
+    const blend=smoothstep(0,1,transition);sceneAlpha=1-blend;if(index>=4)compose(index,p);
     if(blend>0&&index<6){gl.clear(gl.DEPTH_BUFFER_BIT);sceneAlpha=blend;compose(index+1,0);}
     sceneAlpha=1;
   }

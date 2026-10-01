@@ -106,8 +106,6 @@ html[data-renderer=webgl] .scene-poster{visibility:hidden}
 .switch-demo[aria-pressed=true]{border-color:#c9a57266}
 .switch-state{font:19px var(--mono);margin-left:10px;color:#a8b2bf}
 .switch-demo[aria-pressed=true] .switch-state{color:var(--amber)}
-.scale-marker{position:absolute;right:12%;bottom:18%;display:flex;align-items:center;gap:18px;font:8px var(--mono);letter-spacing:1.4px;color:#96a2b0;z-index:3}
-.scale-marker i{display:block;height:1px;width:110px;background:linear-gradient(90deg,#414b55,#c4a174)}
 
 .ai-interface{position:absolute;z-index:4;right:11%;bottom:16%;width:35%;max-width:470px;background:linear-gradient(140deg,#1a232de8,#0a111beb);border:1px solid #ffffff29;border-radius:11px;padding:17px 22px;box-shadow:0 12px 50px #0005}
 .ai-interface-top{display:flex;align-items:center;gap:8px;font:7px var(--mono);letter-spacing:1.1px;color:#a5acb4}
@@ -218,8 +216,6 @@ h2{font-size:54px;line-height:1.02;letter-spacing:-.06em}
 .process-strip{left:var(--pad);right:var(--pad);bottom:12.5%;font-size:9px}
 .process-strip li span{font-size:7px}
 .switch-demo{margin-top:20px;padding:10px 12px;min-width:240px;font-size:10px}
-.scale-marker{left:var(--pad);right:auto;bottom:14%;font-size:7px;gap:12px}
-.scale-marker i{width:75px}
 .ai-interface{width:calc(100% - 2 * var(--pad));max-width:440px;left:var(--pad);right:auto;bottom:12%;padding:14px 17px;background:#111b26f0}
 .ai-interface-top{font-size:6px;letter-spacing:.85px}
 .prompt{font-size:10px}
@@ -278,7 +274,7 @@ h2{font-size:60px}
 *,*:before,*:after{animation:none!important;transition:none!important}
 }
 
-@media print{.header,.chapter-nav,.chapter-footer,.hero-poster,.ambient,#scene-canvas,.reading-progress,.scene-poster,.ai-interface,.element-card,.scene-caption,.process-strip,.scale-marker,.final-wordmark,.text-link,.switch-demo{display:none!important}
+@media print{.header,.chapter-nav,.chapter-footer,.hero-poster,.ambient,#scene-canvas,.reading-progress,.scene-poster,.ai-interface,.element-card,.scene-caption,.process-strip,.final-wordmark,.text-link,.switch-demo{display:none!important}
 body{background:white;color:black}
 .chapter,.hero,.chapter#skala,.chapter#inteligencja,.stage{height:auto;min-height:0;position:relative;overflow:visible}
 .chapter{padding:25px 0;break-inside:avoid}
@@ -379,3 +375,7 @@ html[data-renderer=webgl] .part-labels:not([data-live]){visibility:hidden}
  /* A phone keeps the four labels that carry the story. */
  .part-label[data-part=oxide],.part-label[data-part=contact]{display:none}
 }
+
+/* Chapter 03: the heading waits for the reveal frame (app.js sets --scale-copy); without the live
+   scene (calm, no JS) it is simply there. */
+html[data-renderer=webgl][data-motion=full] #skala .chapter-copy{opacity:var(--scale-copy,1);text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}
