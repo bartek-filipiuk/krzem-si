@@ -36,7 +36,7 @@ export function finaleAssembly(name, k) {
   switch (name) {
     case 'battery': return at(0, .45, .18, .32);
     case 'frame': return at(.2, .65, .22, .38);
-    case 'display': return at(.55, 1, .21, .6);
+    case 'display': return at(.55, 1, .17, .6); // .17: not yet visible (appears from .19)
     case 'glass': return at(.8, 1, .5, .66);
     default: return 1; // package, board, parts
   }
