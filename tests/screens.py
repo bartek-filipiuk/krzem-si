@@ -120,6 +120,9 @@ WORLD_FRAMES = [('swiat', p, f'{round(p * 100):03d}') for p in (0, .25, .5, .75,
 WORLD_ROWS = [(label, prefix.replace('lattice', 'world')) for label, prefix in LATTICE_ROWS]
 AI_FRAMES = [('inteligencja', p, f'{round(p * 100):03d}') for p in (0, .25, .5, .75, 1)]
 AI_ROWS = [(label, prefix.replace('lattice', 'ai')) for label, prefix in LATTICE_ROWS]
+# Chapter 06 at 0/25/50/75/100 plus the frame just before the match (.5): screen, then the real chunk.
+FINALE_FRAMES = [('fundament', p, f'{round(p * 1000):04d}') for p in (0, .25, .4985, .5, .75, 1)]
+FINALE_ROWS = [(label, prefix.replace('lattice', 'finale')) for label, prefix in LATTICE_ROWS]
 
 
 def lattice_board(frames=None, rows_spec=None, name='lattice-board.webp', title=None):
@@ -471,6 +474,63 @@ def device_record(p, gpu):
     return measured
 
 
+def finale_perf(browser, profiles):
+    """Chapter 06: idle 4 s at the match (.5) and at rest (1), then the chapter from chapter 05's end and back."""
+    out = {}
+    for profile in profiles:
+        for name, ctx in VIEWPORTS.items():
+            page = browser.new_page(**ctx)
+            page.goto(f'{URL}?quality={profile}&debug', wait_until='networkidle')
+            page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+            row = {}
+            for key, p in (('match', .5), ('rest', 1)):
+                page.evaluate(TO_CHAPTER, ['fundament', p]); page.wait_for_timeout(2500)
+                page.evaluate('krzemDebug.reset()'); page.wait_for_timeout(4000)
+                row[f'idle_{key}'] = stats(page.evaluate('krzemDebug.intervals'))
+                row[f'gpu_time_idle_{key}'] = stats(page.evaluate('krzemDebug.gpuMs') or [])
+            page.evaluate(TO_CHAPTER, ['inteligencja', .95]); page.wait_for_timeout(1500)
+            page.evaluate('krzemDebug.reset()')
+            page.evaluate(SWEEP, ['fundament', [[0, 1, 9000], [1, .3, 3000], [.3, .7, 2000]]])
+            info = page.evaluate(INFO)
+            out[f'{profile}/{name}'] = {**row, 'scroll': stats(page.evaluate('krzemDebug.intervals')),
+                                        'gpu_time_scroll': stats(page.evaluate('krzemDebug.gpuMs') or []), 'gl': info['gl'],
+                                        'buffer': info['gpu']['buffer'] if info['gpu'] else None}
+            page.close()
+    return out
+
+
+# Scroll on by `screens` viewport heights over `ms` (out of chapter 06 into the sources).
+SCROLL_ON = '''async ([screens, ms])=>{const t0=performance.now(),y0=scrollY;await new Promise(done=>{(function step(now){
+  const k=Math.min(1,(now-t0)/ms);scrollTo(0,y0+innerHeight*screens*k);k<1?requestAnimationFrame(step):done();})(t0);});}'''
+
+
+def finale_record(p, gpu):
+    """Desktop ~45 s: end of 05 -> the whole of 06 (device, screen, match, rest) -> a reverse back
+    before the match -> forward to rest -> on into the sources."""
+    browser = launch(p, gpu)
+    ctx = VIEWPORTS['desktop']
+    with tempfile.TemporaryDirectory() as tmp:
+        context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=ctx['viewport'])
+        page = context.new_page()
+        page.goto(URL + '?debug', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.evaluate(TO_CHAPTER, ['inteligencja', .7])
+        page.wait_for_timeout(2000)
+        page.evaluate('krzemDebug.reset()')
+        page.evaluate(SWEEP, ['inteligencja', [[.7, 1, 2500]]])
+        page.evaluate(SWEEP, ['fundament', [[0, .5, 9000], [.5, 1, 9000], [1, 1, 2000], [1, .3, 5000], [.3, .3, 800], [.3, 1, 7000], [1, 1, 2500]]])
+        page.evaluate(SCROLL_ON, [1.2, 3000])
+        page.wait_for_timeout(1000)
+        measured = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                    'gpu_time': stats(page.evaluate('krzemDebug.gpuMs') or [])}
+        video = page.video.path()
+        context.close()
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                        '-crf', '40', '-row-mt', '1', '-an', str(OUT / 'finale-scroll-desktop.webm')], check=True)
+    browser.close()
+    return measured
+
+
 def transistor_record(p, gpu):
     """Desktop ~25 s: scroll into chapter 02 (the automatic ON demo), press OFF, ON, a quick double
     press, then the scroll on through the chapter and back."""
@@ -631,6 +691,10 @@ if __name__ == '__main__':
             log['world_shots'] = shots(browser, a.gpu, profiles, WORLD_FRAMES, 'world')
         if 'ai' in a.steps:
             log['ai_shots'] = shots(browser, a.gpu, profiles, AI_FRAMES, 'ai')
+        if 'finale' in a.steps:
+            log['finale_shots'] = shots(browser, a.gpu, profiles, FINALE_FRAMES, 'finale')
+        if 'finale-perf' in a.steps:
+            log['finale_perf'] = finale_perf(browser, [x for x in profiles if x != 'calm'])
         if 'device-perf' in a.steps:
             log['device_perf'] = device_perf(browser, [x for x in profiles if x != 'calm'])
         if 'scale-perf' in a.steps:
@@ -652,6 +716,8 @@ if __name__ == '__main__':
             lattice_board(TRANSISTOR_FRAMES, TRANSISTOR_ROWS, 'transistor-board.webp', lambda scene, p, suffix: f'02 {suffix[:-4].upper()} {p:.2f}')
         if 'world' in a.steps or 'board' in a.steps:
             lattice_board(WORLD_FRAMES, WORLD_ROWS, 'world-board.webp', lambda scene, p, suffix: f'04 {p:.2f}')
+        if 'finale' in a.steps or 'board' in a.steps:
+            lattice_board(FINALE_FRAMES, FINALE_ROWS, 'finale-board.webp', lambda scene, p, suffix: '06 match' if suffix == '0500' else '06 before the match' if suffix == '0498' else f'06 {p:.2f}')
         if 'ai' in a.steps or 'board' in a.steps:
             lattice_board(AI_FRAMES, AI_ROWS, 'ai-board.webp', lambda scene, p, suffix: f'05 {p:.2f}')
         if 'board' in a.steps or 'shots' in a.steps:
@@ -664,9 +730,11 @@ if __name__ == '__main__':
             transistor_record(p, a.gpu)
         if 'scale-record' in a.steps and a.gpu == 'nvidia':
             log['scale_record'] = scale_record(p, a.gpu)
+        if 'finale-record' in a.steps and a.gpu == 'nvidia':
+            log['finale_record'] = finale_record(p, a.gpu)
         if 'device-record' in a.steps and a.gpu == 'nvidia':
             log['device_record'] = device_record(p, a.gpu)
         if 'lattice-record' in a.steps and a.gpu == 'nvidia':
             log['lattice_record'] = lattice_record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
-    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf', 'scale_perf', 'scale_record', 'device_perf', 'device_record')}, indent=1)[:8000])
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf', 'scale_perf', 'scale_record', 'device_perf', 'device_record', 'finale_perf', 'finale_record')}, indent=1)[:8000])

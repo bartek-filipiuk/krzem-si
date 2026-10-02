@@ -243,3 +243,33 @@ Recording (`device-record`, cinematic, RTX 3070, 03 -> 04 -> 05 with the demo ru
 reopened, a reverse back into 04, then on to 06): 2927 frames, 16.7 / 16.8 / max 33.3 ms,
 0 over 50 ms (before the fix: max 83 ms with three frames over 50 ms, then 50 ms after
 the texture pre-upload).
+
+## Chapter 06: the finale (2026-10-02)
+
+`finale-perf` step (built site, port 4176): idle 4 s at the match (.5: the device, the screen and
+the chunk) and at rest (1), then the chapter from chapter 05's end, back to .3 and on to .7. Raw
+data: `finale_perf` in `docs/qa/after/capture-*.json`. Times in ms (median / p95 / max).
+
+| GPU | profile / framing | buffer | scroll interval | >50 | GPU idle match | GPU idle rest | GPU scroll |
+|---|---|---|---|---|---|---|---|
+| RTX 3070 | cinematic / desktop | 1440×1000 | 16.7 / 16.7 / 16.8 | 0 | 3.45 / 5.11 | 1.8 / 3.16 | 2.83 / 5.32 / 8.1 |
+| RTX 3070 | cinematic / mobile | 585×1266 | 16.7 / 16.7 / 16.8 | 0 | 4.38 / 5.0 | 1.02 / 1.77 | 2.67 / 5.67 / 7.2 |
+| RTX 3070 | balanced / desktop | 1440×1000 | 16.7 / 16.7 / 16.8 | 0 | 2.19 / 2.23 | 0.45 / 0.51 | 1.78 / 3.63 / 6.6 |
+| RTX 3070 | balanced / mobile | 390×844 | 16.7 / 16.8 / 16.8 | 0 | 1.07 / 1.1 | 0.27 / 0.3 | 0.6 / 1.47 / 3.7 |
+| AMD iGPU | balanced / desktop | 1440×1000 | 16.7 / 16.8 / 33.3 | 0 | 2.23 / 3.08 | 0.26 / 0.66 | 2.68 / 6.65 / 12.0 |
+| AMD iGPU | balanced / mobile | 390×844 | 16.7 / 16.7 / 16.8 | 0 | 1.39 / 1.94 | 0.28 / 0.43 | 0.52 / 1.71 / 10.8 |
+
+AMD iGPU balanced desktop: GPU 2.2 / 3.1 ms at the match, 0.3 / 0.7 ms at rest (only the chunk is
+drawn), scroll 2.7 / 6.7 / max 12.0 ms: comparable to chapters 04-05 and well inside a 60 Hz frame.
+
+First sight: the chunk is the hero's own scene, compiled for the canvas when the hero loads; the
+device's unlit screen material is compiled with the device (both variants) and the links are
+resolved during loading (dof.js). The entry face's detail patch used to load on the chunk's first
+draw; a deep link straight to the finale then uploaded its textures at the match (one 67-83 ms
+frame). It now loads 20 frames after the GPU layer starts, whichever chapter is on screen. Probe on
+the AMD iGPU (balanced, from chapter 05's end through chapter 06): no new program links, max frame
+interval 16.8 ms on desktop and mobile.
+
+Recording (`finale-record`, cinematic, RTX 3070, 05 -> 06 -> rest -> a reverse to before the match
+-> rest -> on into the sources): 2518 frames, 16.7 / 16.7 / max 16.8 ms, 0 over 50 ms.
+
