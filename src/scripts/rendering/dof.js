@@ -88,8 +88,12 @@ export function createDof(renderer, settings = { msaa: true, taps: 24 }) {
      */
     async compile(scene, camera) {
       const previous = renderer.getRenderTarget();
+      // Hidden objects too (three compiles only what is visible): a part that first shows mid-scroll
+      // (the transistor's carriers on the way in from chapter 01) linked its program right there.
+      const hidden = [];
+      scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
       renderer.setRenderTarget(target);
-      try { await renderer.compileAsync(scene, camera); } finally { renderer.setRenderTarget(previous); }
+      try { await renderer.compileAsync(scene, camera); } finally { renderer.setRenderTarget(previous); for (const o of hidden) o.visible = false; }
       // The composite is drawn to the canvas (tone mapped); compile that variant once too, or it
       // links on the first frame of whichever chapter is seen first (a 40-70 ms hitch).
       if (!postCompiled) {

@@ -189,7 +189,7 @@ totalEmissiveRadiance += uAmber * (sheet * 1.6 + front * 1.4 + wash);`);
  * one instanced quad each, bright at the head and fading along the tail. ON they stream from source
  * to drain through the channel; OFF they stand in a sharp front at the gate edge, piled behind it.
  */
-function buildCarriers(count) {
+function buildCarriers(count, material = null) {
   const quad = new PlaneGeometry(1, 1);
   const g = new InstancedBufferGeometry();
   g.index = quad.index;
@@ -197,7 +197,7 @@ function buildCarriers(count) {
   const rand = i => ((Math.sin(i * 12.9898 + 4.1) * 43758.5453) % 1 + 1) % 1;
   g.setAttribute('aSeed', new InstancedBufferAttribute(Float32Array.from({ length: count * 4 }, (_, i) => rand(i + 7)), 4));
   g.instanceCount = count;
-  const mesh = new Mesh(g, new ShaderMaterial({
+  const mesh = new Mesh(g, material ?? new ShaderMaterial({
     uniforms: { uTime: { value: 0 }, uStream: { value: 0 }, uLength: { value: 7 } },
     transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
     vertexShader: /* glsl */`
@@ -272,8 +272,10 @@ export async function createTransistor({ renderer, environment, dof, trails = 4 
   scene.add(key, warm);
   let carriers = [];
   const setTrails = n => {
-    for (const c of carriers) { scene.remove(c); c.geometry.dispose(); c.material.dispose(); }
-    carriers = [buildCarriers(n >= 4 ? 1400 : 800)];
+    // The material (and its linked program) is kept: a new one linked on first sight, mid-scroll.
+    const material = carriers[0]?.material;
+    for (const c of carriers) { scene.remove(c); c.geometry.dispose(); }
+    carriers = [buildCarriers(n >= 4 ? 1400 : 800, material)];
     scene.add(...carriers);
   };
   setTrails(trails);
