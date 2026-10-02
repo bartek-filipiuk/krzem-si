@@ -374,6 +374,13 @@ html[data-renderer=webgl] .part-labels:not([data-live]){visibility:hidden}
  .part-label[data-side-mobile=left] span{translate:calc(-100% - 6px) -50%}
  .part-label[data-side-mobile=right] span{translate:6px -50%}
  #tranzystor .lattice-legend{bottom:58px}
+ /* Chapters 04-05 on a phone: the legend sits just above the footer, giving the scene its own band
+    between the copy and the legend (05: the demo panel above the legend, compact while the scene
+    plays; its numbers are in the 3D layer, so the panel keeps the prompt, the stages and the answer). */
+ #swiat .lattice-legend,#inteligencja .lattice-legend{bottom:58px}
+ html[data-renderer=webgl][data-motion=full] #inteligencja .ai-interface{bottom:calc(58px + 76px);padding:11px 15px}
+ html[data-renderer=webgl][data-motion=full] #inteligencja .ai-interface.is-open .computation{display:none}
+ html[data-renderer=webgl][data-motion=full] #inteligencja .ai-stages{margin-top:9px}
  /* A phone keeps the four labels that carry the story. */
  .part-label[data-part=oxide],.part-label[data-part=contact]{display:none}
 }

@@ -94,7 +94,7 @@ export function aiCamera(u, framing = 'desktop', drift = 0) {
   paths[framing] ??= cameraPath(KEYS, [
     dieClose(framing),
     // The chip, the number layer above it and the threads between them, clear of the demo panel.
-    { target: m ? [0, 3, 5] : [1, 6, 9], d: m ? 150 : 108, az: .66, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.02] : [.24, .1], aperture: .002 },
+    { target: m ? [1, 6, 8] : [1, 6, 9], d: m ? 215 : 108, az: .66, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.31] : [.24, .1], aperture: .002 },
     { target: [0, -6, 2], d: m ? 230 : 160, az: .55, el: .66, fov: m ? 40 : 32, shift: m ? [0, -.2] : [.26, .14], aperture: .006 },
     { target: [40, 60, 10], d: m ? 520 : 360, az: .62, el: .38, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .008 },
     aiEnd(framing),
