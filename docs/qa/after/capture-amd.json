@@ -2699,7 +2699,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 4,
     "assets": 1,
     "toneMapping": 7,
@@ -2732,8 +2732,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 13,
+    "textures": 13,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2765,8 +2765,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2798,8 +2798,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2831,7 +2831,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
@@ -2864,7 +2864,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 4,
     "assets": 1,
     "toneMapping": 7,
@@ -2897,8 +2897,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 13,
+    "textures": 13,
+    "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2930,8 +2930,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2963,8 +2963,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -2996,7 +2996,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
@@ -3031,7 +3031,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3064,7 +3064,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3097,7 +3097,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3130,7 +3130,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3163,7 +3163,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3196,7 +3196,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 29,
     "assets": 1,
     "toneMapping": 7,
@@ -3229,7 +3229,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3262,7 +3262,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3295,7 +3295,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3328,7 +3328,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 11,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3363,7 +3363,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 12,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3396,7 +3396,7 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 12,
+    "textures": 13,
     "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
@@ -3429,8 +3429,8 @@
      "bonds": 18423
     },
     "triangles": 2,
-    "textures": 12,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3462,8 +3462,8 @@
      "bonds": 18423
     },
     "triangles": 22000,
-    "textures": 14,
-    "geometries": 15,
+    "textures": 15,
+    "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1.1892
@@ -3495,7 +3495,7 @@
      "bonds": 18423
     },
     "triangles": 22000,
-    "textures": 14,
+    "textures": 15,
     "geometries": 1,
     "assets": 1,
     "toneMapping": 7,
@@ -3528,7 +3528,7 @@
      "bonds": 18423
     },
     "triangles": 22000,
-    "textures": 14,
+    "textures": 15,
     "geometries": 1,
     "assets": 1,
     "toneMapping": 7,
@@ -3561,7 +3561,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 12,
+    "textures": 13,
     "geometries": 16,
     "assets": 1,
     "toneMapping": 7,
@@ -3594,7 +3594,7 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 12,
+    "textures": 13,
     "geometries": 14,
     "assets": 1,
     "toneMapping": 7,
@@ -3627,8 +3627,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 12,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3660,8 +3660,8 @@
      "bonds": 14826
     },
     "triangles": 2,
-    "textures": 12,
-    "geometries": 14,
+    "textures": 13,
+    "geometries": 15,
     "assets": 1,
     "toneMapping": 7,
     "exposure": 1
@@ -3693,7 +3693,7 @@
      "bonds": 14826
     },
     "triangles": 22000,
-    "textures": 14,
+    "textures": 15,
     "geometries": 1,
     "assets": 1,
     "toneMapping": 7,
@@ -3726,7 +3726,7 @@
      "bonds": 14826
     },
     "triangles": 22000,
-    "textures": 14,
+    "textures": 15,
     "geometries": 1,
     "assets": 1,
     "toneMapping": 7,
