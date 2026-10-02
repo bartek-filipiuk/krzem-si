@@ -156,7 +156,7 @@ def posters(browser):
     chapter 03: the reveal frame (progress .64)."""
     out = ROOT / 'src/assets/posters'
     shots_ = [('lattice', 'scene=materia&progress=1'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
-              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6'), ('world', 'scene=swiat&progress=0.775'), ('ai', 'scene=inteligencja&progress=0.4')]
+              ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6'), ('world', 'scene=swiat&progress=0.775'), ('ai', 'scene=inteligencja&progress=0.4'), ('finale', 'scene=fundament&progress=1')]
     for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
                       'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
         page = browser.new_page(**ctx)
@@ -169,6 +169,22 @@ def posters(browser):
                 page.screenshot(path=tmp.name)
                 webp(Path(tmp.name), out / f'{prefix}-{name}.webp', 84)
         page.close()
+
+
+# The phone-like display in chapter 06 shows this capture of the page's own hero (70 x 148 mm,
+# aspect .473 = 390 x 824). Regenerate with `npm run capture:screen` (see docs/ASSET_MANIFEST.md).
+SCREEN_VIEWPORT = dict(viewport={'width': 390, 'height': 824}, device_scale_factor=2, is_mobile=True, has_touch=True)
+
+
+def site_screen(browser):
+    """src/assets/posters/site-hero-screen.webp: the built page's hero as a phone shows it, at rest."""
+    page = browser.new_page(**SCREEN_VIEWPORT)
+    page.goto(f'{URL}?scene=poczatek&progress=0&quality=cinematic&freeze=1', wait_until='networkidle')
+    ready(page, 'cinematic')
+    with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
+        page.screenshot(path=tmp.name)
+        webp(Path(tmp.name), ROOT / 'src/assets/posters/site-hero-screen.webp', 86)
+    page.close()
 
 
 def before_after():
@@ -623,6 +639,8 @@ if __name__ == '__main__':
             log['transistor_perf'] = transistor_perf(browser, [x for x in profiles if x != 'calm'])
         if 'lattice-perf' in a.steps:
             log['lattice_perf'] = lattice_perf(browser, [x for x in profiles if x != 'calm'])
+        if 'site-screen' in a.steps and a.gpu == 'nvidia':
+            site_screen(browser)
         if 'posters' in a.steps and a.gpu == 'nvidia':
             posters(browser)
         browser.close()
