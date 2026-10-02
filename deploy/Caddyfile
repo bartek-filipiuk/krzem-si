@@ -9,10 +9,16 @@
         X-Content-Type-Options nosniff
         Referrer-Policy strict-origin-when-cross-origin
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
-        Cache-Control "no-cache"
+        # connect-src 'self' blob:: the 3D layer fetches its GLB/HDR assets, and GLTFLoader fetches the embedded
+        # textures back through blob URLs (img-src blob: for the same). style-src-attr: the static label positions in index.html are style attributes.
+        Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; font-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+        # "?" = default only: Caddy runs the matched /assets header below first, this must not overwrite it.
+        ?Cache-Control "no-cache"
         -Server
     }
+    # Vite fingerprints everything under /assets, so those files never change under the same name.
+    @hashed path /assets/*
+    header @hashed Cache-Control "public, max-age=31536000, immutable"
     file_server {
         precompressed br gzip
     }
