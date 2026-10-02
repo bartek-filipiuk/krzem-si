@@ -245,7 +245,8 @@ export async function createWorld({ renderer, environment, dof }) {
       const lit = smoothstep(WORDS[0] - .04, WORDS[0] + .02, u) * placement('display', u).appear * (1 - xray);
       display.material.opacity = lit;
       display.material.emissiveIntensity = 1.5 * lit;
-      spill.position.set(0, 30, display.position.z - 3); // below the screen: lights the layers, no glare on it spill.intensity = 2600 * lit;
+      // Below the screen: it lights the layers around it without a glare on the screen itself.
+      spill.position.set(0, 30, display.position.z - 3); spill.intensity = 1600 * lit;
       // (transparent from the start: switching it would build another program mid-scroll)
       for (const o of [battery, frame, back]) {
         o.material.opacity = 1 - .85 * xray; o.material.depthWrite = xray < .5;
