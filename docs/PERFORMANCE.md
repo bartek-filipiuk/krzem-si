@@ -273,3 +273,22 @@ interval 16.8 ms on desktop and mobile.
 Recording (`finale-record`, cinematic, RTX 3070, 05 -> 06 -> rest -> a reverse to before the match
 -> rest -> on into the sources): 2518 frames, 16.7 / 16.7 / max 16.8 ms, 0 over 50 ms.
 
+## Chapter 01 exit: the wafer (2026-10-02)
+
+Probe on the AMD iGPU, balanced (built site): from chapter 01 at .6 through the glide's end, the
+pull-back to the wafer, the dive onto chapter 02 and back to .7, then 3 s idle on the mirror (.93).
+
+| framing | buffer | scroll interval (median / p95 / max) | GPU scroll | GPU idle on the wafer | new program links |
+|---|---|---|---|---|---|
+| desktop | 1440×1000 | 16.7 / 16.7 / 16.8 | 4.0 / 6.2 / 14.7 | 3.5 / 4.1 | 0 |
+| mobile | 390×844 | 16.7 / 16.8 / 16.8 | 1.2 / 1.7 / 9.9 | 0.9 / 1.5 | 0 |
+
+The wafer adds one full-screen surface pass (its pattern and mirror are a per-pixel shader on a
+square under the camera, or on the disc from afar) and a small studio cube made once at load.
+First sight: before the fix in dof.compile (hidden parts compiled too) and the transistor keeping
+its carriers' material, the carriers linked their program on the way into chapter 02 (83 ms).
+
+Recording (`wafer-record`, cinematic, RTX 3070: chapter 01 from .6 to the wafer, the dive into
+chapter 02, back up to the atoms, down again): 2231 frames, 16.7 / 16.7 / max 33.3 ms,
+0 over 50 ms.
+
