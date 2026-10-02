@@ -26,11 +26,27 @@ export const SCREEN_Z = LAYERS.display.center[2] + LAYERS.display.size[2] / 2;
  */
 export const CHUNK_IN_SCREEN = { c: [-.115, -.465], h: .33 };
 
+/**
+ * Chapter 04 progress (placement() in world-math.js) of each layer for the finale's assembly k
+ * (0..1): the chip's board is in place, battery and frame arrive first, the display only once they
+ * are home (dark until it lights), the glass last.
+ */
+export function finaleAssembly(name, k) {
+  const at = (a, b, from, to) => from + (to - from) * smoothstep(a, b, k);
+  switch (name) {
+    case 'battery': return at(0, .45, .18, .32);
+    case 'frame': return at(.2, .65, .22, .38);
+    case 'display': return at(.55, 1, .21, .6);
+    case 'glass': return at(.8, 1, .5, .66);
+    default: return 1; // package, board, parts
+  }
+}
+
 /** Chapter progress marks. */
 export const FINALE = {
   board: [.12, .2], // the accelerator board gives way to the phone board (cross-fade)
-  assemble: [.12, .32], // battery, frame, display, glass close around the chip
-  screen: [.24, .34], // the display lights up with the site
+  assemble: [.12, .36], // battery, frame, then the (dark) display, then the glass close around the chip
+  screen: [.33, .41], // the display lights up with the site
   glass: [.4, .5], // the cover glass clears as the camera squares up to the screen
   match: .5, // the real chunk takes over from the chunk on the screen
   dissolve: [.5, .58], // the device dissolves away
@@ -47,9 +63,9 @@ export function finaleCamera(u, framing = 'desktop') {
   paths[framing] ??= cameraPath(KEYS, [
     aiEnd(framing),
     // Back to our board's chip, both boards' common frame (the cross-fade happens around here).
-    { target: [0, 2, 0], d: m ? 190 : 130, az: .72, el: .82, fov: m ? 40 : 30, shift: m ? [0, -.2] : [.26, .02], aperture: .006 },
+    { target: m ? [0, 12, 0] : [0, 2, 0], d: m ? 300 : 130, az: m ? .5 : .72, el: .82, fov: m ? 40 : 30, shift: m ? [0, -.2] : [.26, .02], aperture: .006 },
     // The device closed around it, the display lit.
-    { target: [0, 30, 1], d: m ? 470 : 340, az: .4, el: 1.02, fov: m ? 40 : 30, shift: m ? [0, -.1] : [.3, 0], aperture: .004 },
+    { target: [0, 30, 1], d: m ? 470 : 340, az: m ? .25 : .4, el: 1.02, fov: m ? 40 : 30, shift: m ? [0, -.1] : [.3, 0], aperture: .004 },
     match,
     { ...match, d: match.d * .9 },
   ]);

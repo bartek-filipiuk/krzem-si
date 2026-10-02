@@ -13,6 +13,7 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { LAYERS, WORDS, XRAY, activeWord, boardLayout, leibniz, placement, worldCamera } from './world-math.js';
 import { createDie, boxes, boardTexture } from './parts.js';
+import { finaleAssembly } from './finale-math.js';
 import { scaleBar } from './lattice-math.js';
 import { smoothstep } from '../story/timeline.js';
 
@@ -143,6 +144,25 @@ function createScreen() {
   return { texture: tex, draw, dispose: () => { tex.dispose(); hero?.close(); } };
 }
 
+/** The battery's wrap: graphite film, a pressed border, two seams and a fine grain. */
+function batteryWrap() {
+  const W = 600, H = 700, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#1b1e22'; g.fillRect(0, 0, W, H);
+  let a = 9; const rnd = () => ((a = (a * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(255,255,255,${(rnd() * .025).toFixed(3)})`; g.fillRect(rnd() * W, rnd() * H, 2, 2); }
+  g.strokeStyle = 'rgba(255,255,255,.09)'; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(34, 34, W - 68, H - 68, 26); g.stroke();
+  g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(40, 40, W - 80, H - 80, 22); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.05)';
+  g.fillRect(W * .5 - 2, 40, 4, H - 80); g.fillRect(40, H * .22, W - 80, 3);
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+
 export async function createWorld({ renderer, environment, dof }) {
   const scene = new Scene();
   scene.environment = environment;
@@ -182,7 +202,12 @@ export async function createWorld({ renderer, environment, dof }) {
   const partsGroup = [chips, passives];
   for (const p of partsGroup) board.add(p);
   // Battery, frame (with its back), display, cover glass.
-  const battery = own(new Mesh(new RoundedBoxGeometry(...LAYERS.battery.size, 3, 1.4), new MeshStandardMaterial({ color: '#454b53', metalness: .55, roughness: .38 })));
+  // Battery: a dark pouch cell in its wrap (seams, a pressed border, a fine grain), no label, and
+  // the flex tail that runs to the board.
+  const wrap = batteryWrap();
+  const battery = own(new Mesh(new RoundedBoxGeometry(...LAYERS.battery.size, 3, 1.4), new MeshStandardMaterial({ map: wrap, color: '#ffffff', metalness: .25, roughness: .52 })), () => wrap.dispose());
+  const flex = own(new Mesh(new BoxGeometry(9, 7, .14), new MeshStandardMaterial({ color: '#8a5a24', metalness: .35, roughness: .4 })));
+  flex.position.set(-14, -LAYERS.battery.size[1] / 2 - 2.4, 1.2); battery.add(flex);
   const alu = new MeshStandardMaterial({ color: '#b4bac1', metalness: 1, roughness: .26 });
   const f = LAYERS.frame;
   const frame = own(new Mesh(frameRing(f.size[0], f.size[1], f.radius, 1.6, f.size[2]), alu));
@@ -244,8 +269,8 @@ export async function createWorld({ renderer, environment, dof }) {
      */
     render({ progress: u, time, opacity = 1, finale = null }) {
       const cam = finale?.cam ?? worldCamera(u, framing, time * 2 * Math.PI / 90);
-      // In the finale the chip's board is in place and the rest arrives as in chapter 04.
-      const at = name => !finale ? u : ['package', 'board', 'parts'].includes(name) ? 1 : .2 + .5 * finale.assemble;
+      // In the finale the chip's board is in place and the rest arrives in order (finale-math.js).
+      const at = name => finale ? finaleAssembly(name, finale.assemble) : u;
       camera.fov = cam.fov; camera.aspect = size[0] / size[1];
       camera.near = cam.d * .02; camera.far = cam.d * 20;
       camera.updateProjectionMatrix();
@@ -263,10 +288,13 @@ export async function createWorld({ renderer, environment, dof }) {
       for (const p of partsGroup) { p.visible = pp.appear > .001; p.position.z = pp.offset[2]; p.scale.set(1, 1, Math.max(.001, pp.k)); }
       // The screen switches on with the first word and the device turns to a ghost at the end.
       const xray = finale ? 0 : smoothstep(XRAY[0], XRAY[1], u);
-      const lit = finale ? finale.screen : smoothstep(WORDS[0] - .04, WORDS[0] + .02, u) * placement('display', u).appear * (1 - xray);
-      display.material = finale ? siteScreen : lcdScreen;
-      display.material.opacity = lit;
-      if (!finale) display.material.emissiveIntensity = 1.5 * lit;
+      const lit = finale ? finale.screen : smoothstep(WORDS[0] + .01, WORDS[0] + .05, u) * placement('display', u).appear * (1 - xray);
+      // The screen is opaque as soon as it is there, black while off (a half-transparent screen
+      // over the board read as a rendering fault); the finale's capture fades up from black.
+      display.material = finale && lit > 0 ? siteScreen : lcdScreen; // glossy black while off
+      display.material.opacity = placement('display', at('display')).appear > .001 ? 1 : 0;
+      if (finale) siteScreen.color.setScalar(lit);
+      lcdScreen.emissiveIntensity = finale ? 0 : 1.5 * lit;
       // Below the screen: it lights the layers around it without a glare on the screen itself.
       spill.position.set(0, 30, display.position.z - 3); spill.intensity = finale ? 0 : 1600 * lit; // (the finale's screen is unlit)
       // (transparent from the start: switching it would build another program mid-scroll)

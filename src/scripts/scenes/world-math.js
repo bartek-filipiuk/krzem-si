@@ -25,7 +25,7 @@ export const ASSEMBLY = {
   battery: { from: [0, 0, -40], at: [.18, .32] },
   frame: { from: [0, 0, -60], at: [.22, .38] },
   // The display hovers above the device while it shows the words, the gap closing slowly.
-  display: { from: [0, 0, 45], at: [.16, .6] },
+  display: { from: [0, 0, 45], at: [.21, .6] },
   glass: { from: [0, 0, 30], at: [.5, .66] },
 };
 /** At the end the device turns to a ghost (x-ray) so the camera can return to the die through it. */
@@ -101,19 +101,21 @@ export function boardLayout(seed = 11) {
 /** Die close-up shared with chapter 05's entry. */
 export function dieClose(framing = 'desktop') {
   const m = framing === 'mobile';
-  return { target: [0, 0, 0], d: m ? 26 : 16, az: .9, el: .82, fov: m ? 36 : 30, shift: m ? [0, -.5] : [.24, 0], aperture: .012 };
+  // Above the demo panel of chapter 05 (desktop: right, lower half; phone: the bottom band).
+  return { target: [0, 0, 0], d: m ? 26 : 16, az: .9, el: .82, fov: m ? 36 : 30, shift: m ? [0, -.18] : [.24, .2], aperture: .012 };
 }
 const KEYS = [0, .1, .27, .52, .74, .86, .95, 1];
 const paths = {};
 /** Camera for chapter progress u (from chapter 03's exit frame to the die close-up). */
 export function worldCamera(u, framing = 'desktop', drift = 0) {
   const m = framing === 'mobile';
-  const word = (target, d, az, el) => ({ target, d: m ? d * 1.4 : d, az, el, fov: m ? 40 : 30, shift: m ? [0, -.46] : [.3, -.02], aperture: .003 });
+  // A phone: the device turned further across its wide band between the copy and the legend.
+  const word = (target, d, az, el) => ({ target, d: m ? d * 1.62 : d, az: m ? az + .32 : az, el, fov: m ? 40 : 30, shift: m ? [0, -.38] : [.3, -.02], aperture: .003 });
   paths[framing] ??= cameraPath(KEYS, [
     dieExitFrame(framing, 1e-6),
     { target: [0, 0, -1], d: m ? 90 : 55, az: .75, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.24, -.02], aperture: .012 },
     // The words: the lit display faces the camera, in the focal plane, the device large in frame.
-    word([0, 34, 24], 400, .55, .98), // Liczyć: the display hovers about 25 mm above the device
+    word([0, 34, 30], 440, .55, .98), // Liczyć: the display hovers about 25 mm above the device
     word([0, 30, 9], 360, .42, 1.08), // Tworzyć
     word([0, 30, 3], 350, .62, 1.02), // Łączyć: the device closed
     { ...word([0, 12, 1], 250, .72, .98), aperture: .006 }, // the device turns to a ghost
