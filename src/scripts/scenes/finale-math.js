@@ -108,7 +108,7 @@ export function finaleState(u, framing, aspect) {
     glass: 1 - smoothstep(...FINALE.glass, u),
     device: 1 - smoothstep(...FINALE.dissolve, u),
     // The chunk turns with the scroll after the match (the capture was taken at rest, theta 0).
-    theta: .9 * smoothstep(FINALE.match, 1, u),
+    theta: .45 * smoothstep(FINALE.match, 1, u),
     copy: smoothstep(...FINALE.copy, u),
   };
 }
