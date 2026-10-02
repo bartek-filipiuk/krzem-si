@@ -197,6 +197,13 @@ with sync_playwright() as p:
     desktop.wait_for_timeout(5000)
     check('AI: the demo runs its stages in order and ends on the answer', early in ('0', '1') and not early_answer and stage() == '4' and answer())
     check('AI: live scale bar over the board', lattice_scale(desktop, '#ai-scale')[0] and gpu_error(desktop) == 0)
+    # Chapter 06: the heading waits for the chunk to settle; no scale bar (nothing to scale there).
+    final_copy = lambda: float(desktop.evaluate("getComputedStyle(document.querySelector('#fundament .chapter-copy')).opacity"))
+    goto_chapter(desktop, 'fundament', .4); desktop.wait_for_timeout(200)
+    hidden_mid = final_copy() < .05 and float(desktop.evaluate("getComputedStyle(document.querySelector('.final-wordmark')).opacity")) < .05
+    goto_chapter(desktop, 'fundament', 1); desktop.wait_for_timeout(200)
+    check('Finale: heading and wordmark hidden mid-move, shown at rest', hidden_mid and final_copy() > .95)
+    check('Finale: no scale bar, GPU returns NO_ERROR', desktop.evaluate("[...document.querySelectorAll('.lattice-scale')].every(e=>e.hidden)") and gpu_error(desktop) == 0)
     goto_chapter(desktop, 'inteligencja')
     ai = desktop.locator('#ai-toggle')
     before = ai.get_attribute('aria-expanded')

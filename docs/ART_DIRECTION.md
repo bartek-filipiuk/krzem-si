@@ -111,7 +111,7 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 
 Robot, świecący mózg, fioletowy gradient AI, HUD, burze cząsteczek, plastikowe klocki, jednolity
 chrom. Krzem nie jest kwarcem, diamentem ani folią. Bloomu i postprocessu nie ma także w sieci.
-Rozdział 06 wciąż korzysta ze sceny v0.1 i czeka na etap C.
+Wszystkie rozdziały korzystają z jednego renderera; scen v0.1 już nie ma.
 
 ## 02 przełącznik: FinFET (`scenes/transistor.js`, `scenes/transistor-math.js`)
 
@@ -189,3 +189,19 @@ granat-czerń, mgła do koloru tła. Na telefonie kadr niżej i miękka grafitow
   widoczny także na stopklatce). Kadr składa chip, warstwę i nici razem, nad panelem demonstracji.
 - W dalekim planie obudowy w rzędach łapią kontur światła od tyłu, a na każdej płytce świecą dwie
   małe bursztynowe diody stanu. Oszczędnie.
+
+## 06 fundament: strona w stronie (`finale-math.js`, `world.js`, `ai.js`, `hero.js`)
+
+- Wejście z ostatniego kadru rozdziału 05 (rzędy płytek). Kamera wraca do naszego chipu; płytka
+  akceleratora ustępuje płytce telefonu z rozdziału 04 (przenikanie w tym samym kadrze, chip w
+  tym samym miejscu), a wokół chipu zamyka się to samo urządzenie: bateria, rama, ekran, szkło.
+- Ekran zapala się i pokazuje tę stronę: zrzut jej hero (nagłówek „Krzem.”, bryłka, karta
+  pierwiastka), bez oświetlenia, dokładnie tak, jak wygląda strona. Szkło znika, kamera staje
+  prostopadle do ekranu.
+- Dopasowanie: w tym kadrze prawdziwa bryłka z hero (ten sam model, materiał i studio) rysuje się
+  dokładnie na bryłce ze zrzutu (kamera, którą zrobiono zrzut, z bryłą widzenia odwzorowaną na
+  prostokąt ekranu). Urządzenie rozpływa się, zostaje prawdziwa bryłka, która powoli się obraca
+  i przesuwa na swoje miejsce w kompozycji.
+- Kadr końcowy: bryłka, nagłówek, tekst i znak Si → SI pojawiają się dopiero, gdy obraz stoi.
+  Spokojnie, bez niczego więcej. Gdy strona przewija się do źródeł, bryłka odjeżdża razem z nią.
+

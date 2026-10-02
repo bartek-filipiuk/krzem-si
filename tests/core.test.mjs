@@ -1,17 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chapterAt, heroProgress, positionOf, storyAt, entryPhases, latticeProgress, ENTRY, LATTICE_PIN, clamp, smoothstep } from '../src/scripts/story/timeline.js';
-import { A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT, FOCUS, FRONT_NORMAL } from '../src/scripts/scenes/lattice-math.js';
+import { FINALE, SCREEN_ASPECT, SCREEN_Z, finaleCamera, finaleState, matchFrame, projectNdc, screenRect, restRect, screenHeroPose } from '../src/scripts/scenes/finale-math.js';
+import heroConfig from '../src/assets/models/hero-camera.json' with { type: 'json' };
+import { seeded, A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT, FOCUS, FRONT_NORMAL } from '../src/scripts/scenes/lattice-math.js';
 import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG, rotateY } from '../src/scripts/story/camera-rig.js';
 import { selectProfile, pixelRatio, textureSet, QualityController } from '../src/scripts/rendering/quality.js';
 import { createAssetManager } from '../src/scripts/rendering/assets.js';
-import { identity, multiply, model, lookAt, perspective, seeded } from '../src/scripts/scenes/legacy-math.js';
 import { components, DIM, FRONT_FIN, ANCHORS, LABELS, MOBILE_LABELS, POSTER, coverMap, labelLayout, project, transistorCamera, switchState, finHalfWidth } from '../src/scripts/scenes/transistor-math.js';
 import { readFileSync } from 'node:fs';
 import { STACK, LEVELS, KEYS, AFTER, route, scaleCamera, growth, transistorRows, DIE as DIE_NM } from '../src/scripts/scenes/scale-math.js';
 import { ORDER, ASSEMBLY, LAYERS, placement, activeWord, leibniz, boardLayout, worldCamera } from '../src/scripts/scenes/world-math.js';
 import { X as AI_X, W as AI_W, B as AI_B, forward, demoLines, fmt, STAGES, STAGE_AT, stageAt, demoProgress, acceleratorLayout, aiCamera, pulseLanes } from '../src/scripts/scenes/ai-math.js';
-import { crystal, cylinder, circuit, transistor, bevelBox } from '../src/scripts/scenes/legacy-geometry.js';
 
 const near = (a, b, eps = 1e-9) => a.every((v, i) => Math.abs(v - b[i]) < eps);
 const dist = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
@@ -72,7 +72,7 @@ test('lattice progress is continuous from the hero into the material chapter', (
   assert.equal(latticeProgress({ index: 3, progress: .2 }), 1);
 });
 
-test('legacy cross-fade only runs in full motion and not for the hero', () => {
+test('chapter cross-fade only runs in full motion and not for the hero', () => {
   const y = 1550 + 1750 - 500;
   assert.ok(storyAt(y, 1000, bounds).transition > 0);
   assert.equal(storyAt(y, 1000, bounds, { motion: false }).transition, 0);
@@ -515,20 +515,51 @@ test('hand-over 04 -> 05: the same die close-up; no jumps through chapter 05', (
   }
 });
 
-// ---- legacy chapters 5-6 (v0.1 renderer, kept until stages B/C) ------------------------------
-test('legacy matrices are column-major', () => {
-  const m = model(2, 3, 4, .1, .2, .3, 2); assert.deepEqual(multiply(identity(), m), m);
-  assert.deepEqual([...multiply(model(1, 2, 3), model(2, 3, 4))].slice(12, 15), [3, 5, 7]);
-  assert.equal(lookAt([0, 0, 8])[14], -8); assert.ok(perspective(Math.PI / 3, 1.7).every(Number.isFinite));
-  assert.equal(smoothstep(0, 1, .5), .5);
+test('hand-over 05 -> 06: the same frame on the rows of boards; no jumps through chapter 06', () => {
+  for (const framing of ['desktop', 'mobile']) {
+    const a = aiCamera(1, framing), b = finaleCamera(0, framing);
+    assert.ok(dist(a.position, b.position) < 1e-9 && dist(a.target, b.target) < 1e-9 && a.fov === b.fov && near(a.shift, b.shift, 1e-12));
+    let prev = b;
+    for (let i = 1; i <= 2000; i++) {
+      const c = finaleCamera(i / 2000, framing);
+      assert.ok(dist(c.position, prev.position) < .06 * Math.min(c.d, prev.d) && Math.abs(Math.log(c.d / prev.d)) < .05, `jump at ${i / 2000}`);
+      prev = c;
+    }
+  }
 });
-test('legacy geometry is seeded, finite and has unit normals', () => {
+
+test('finale match: the real chunk lands exactly on the chunk in the screen capture', () => {
+  const hero = { ...screenHeroPose(heroConfig), up: [0, 1, 0], shift: [0, 0] };
+  const [w, h] = LAYERS.display.size, [cx, cy] = LAYERS.display.center;
+  for (const [framing, aspect] of [['desktop', 1440 / 1000], ['mobile', 390 / 844], ['desktop', 1920 / 1080], ['mobile', 360 / 800]]) {
+    const cam = finaleCamera(FINALE.match, framing), rect = finaleState(FINALE.match, framing, aspect).chunk;
+    assert.ok(near(cam.target, matchFrame(framing).target, 1e-9), 'the match frame is a key');
+    for (let i = 0; i < 200; i++) {
+      // Points in and around the chunk (glTF metres, longest side 1 m, centred at the origin).
+      const r = seeded(i)(), p = [Math.sin(i) * .5 * r, Math.cos(i * 1.7) * .5 * r, Math.sin(i * 2.3) * .5 * r];
+      const n = projectNdc(p, hero, SCREEN_ASPECT); // where the capture shows it (its NDC)
+      // ...drawn on the display (the texture spans it exactly), seen by the scene camera:
+      const onScreen = projectNdc([cx + n[0] * w / 2, cy + n[1] * h / 2, SCREEN_Z], cam, aspect);
+      // ...and where the hero scene draws it through the mapped frustum:
+      const drawn = [rect.c[0] + n[0] * rect.h[0], rect.c[1] + n[1] * rect.h[1]];
+      assert.ok(dist(onScreen, drawn) < 1e-3, `${framing} ${aspect.toFixed(2)}: off by ${dist(onScreen, drawn)}`);
+    }
+    // The screen is in frame and upright at the match, and the chunk's rectangle never jumps.
+    const s = screenRect(cam, aspect);
+    assert.ok(s.c.every(v => Math.abs(v) < 1) && s.h[1] > .8);
+    for (let u = FINALE.match; u < 1; u += .001) {
+      const a = finaleState(u, framing, aspect).chunk, b = finaleState(u + .001, framing, aspect).chunk;
+      assert.ok(dist(a.c, b.c) < .02 && dist(a.h, b.h) < .03, `chunk jumps at ${u}`);
+    }
+    // At rest the chunk sits where the layout expects it, inside the frame.
+    const rest = finaleState(1, framing, aspect).chunk, want = restRect(framing, aspect);
+    assert.ok(near(rest.c, want.c, 1e-9) && near(rest.h, want.h, 1e-9));
+  }
+  assert.ok(Math.abs(SCREEN_ASPECT - 390 / 824) < 2e-3, 'the capture viewport has the display aspect');
+});
+
+test('the seeded PRNG repeats exactly', () => {
   const a = seeded(14), b = seeded(14);
   assert.deepEqual(Array.from({ length: 20 }, a), Array.from({ length: 20 }, b));
-  assert.deepEqual(crystal(), crystal());
-  const out = []; bevelBox(out, 0, 0, 0, 2, 1, 1);
-  for (const data of [crystal(), cylinder(), ...Object.values(circuit(12)), ...Object.values(transistor()), new Float32Array(out)]) {
-    assert.equal(data.length % 27, 0); assert.ok(data.every(Number.isFinite));
-    for (let i = 0; i < data.length; i += 9) assert.ok(Math.abs(Math.hypot(data[i + 3], data[i + 4], data[i + 5]) - 1) < 1e-5);
-  }
+  assert.ok(Array.from({ length: 1000 }, seeded(3)).every(v => v >= 0 && v < 1));
 });

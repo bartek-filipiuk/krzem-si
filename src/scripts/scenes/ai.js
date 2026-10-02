@@ -166,9 +166,9 @@ export async function createAi({ renderer, environment, dof }) {
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
-    /** state: { progress (chapter 05), time, ai: { open, t } (seconds since opened), opacity }. */
-    render({ progress: u, time, ai = { open: false, t: 0 }, opacity = 1 }) {
-      const cam = aiCamera(u, framing, time * 2 * Math.PI / 90);
+    /** state: { progress (chapter 05), time, ai: { open, t } (seconds since opened), opacity, view (camera override) }. */
+    render({ progress: u, time, ai = { open: false, t: 0 }, opacity = 1, view = null }) {
+      const cam = view ?? aiCamera(u, framing, time * 2 * Math.PI / 90); // view: chapter 06 drives it
       camera.fov = cam.fov; camera.aspect = size[0] / size[1];
       camera.near = cam.d * .02; camera.far = cam.d * 30;
       camera.updateProjectionMatrix();

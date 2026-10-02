@@ -8,13 +8,13 @@ import { createAssetManager } from './assets.js';
 import { PROFILES, pixelRatio, textureSet } from './quality.js';
 import { entryPhases, latticeProgress, smoothstep } from '../story/timeline.js';
 import { createHero } from '../scenes/hero.js';
-import { createLegacyScenes } from '../scenes/legacy.js';
 import { createLattice } from '../scenes/lattice.js';
 import { createTransistor } from '../scenes/transistor.js';
 import { createScale } from '../scenes/scale.js';
 import { createWorld } from '../scenes/world.js';
 import { createAi } from '../scenes/ai.js';
 import { createDof } from './dof.js';
+import { finaleState } from '../scenes/finale-math.js';
 
 const dofSettings = p => ({ msaa: p.antialias, taps: p.antialias ? 24 : 12 });
 
@@ -25,7 +25,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, lattice = null, transistor = null, scaleScene = null, world = null, ai = null, dof = null, legacy = null, scale = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, transistor = null, scaleScene = null, world = null, ai = null, dof = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     lattice = await createLattice({ renderer, environment: hero.environment });
@@ -37,7 +37,6 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     world = await createWorld({ renderer, environment: hero.environment, dof });
     ai = await createAi({ renderer, environment: hero.environment, dof });
     signal?.throwIfAborted();
-    legacy = createLegacyScenes(renderer.getContext());
   } catch (error) {
     hero?.dispose(); lattice?.dispose(); transistor?.dispose(); scaleScene?.dispose(); world?.dispose(); ai?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
@@ -58,7 +57,6 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     ai.resize(width, height, current.framing);
     scaleScene.setShadows(p.antialias);
     dof.configure(dofSettings(p));
-    legacy.resize(width, height, p.lod);
   }
 
   return {
@@ -74,6 +72,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
       renderer.setRenderTarget(null); renderer.setClearColor(0x000000, 0); renderer.clear();
       const u = latticeProgress(state);
       scale = null;
+      if (state.index > 0) hero.prepare();
       if (state.index === 0) {
         // Hero, then the fracture face dims while the lattice emerges in front of it (no cut).
         const entry = entryPhases(state.hero);
@@ -102,17 +101,19 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         scale = world.render({ progress: state.progress, time: state.time, opacity: 1 - smoothstep(0, .6, state.transition) });
         if (state.transition > .6) scale = null;
       } else if (state.index === 5) {
-        // Chapter 05; on the way out it fades and chapter 06 (legacy) fades in.
-        scale = ai.render({ progress: state.progress, time: state.time, ai: state.ai, opacity: 1 - smoothstep(0, .5, state.transition) });
-        if (state.transition > 0) {
-          renderer.resetState();
-          legacy.render({ ...state, keep: true });
-          renderer.resetState();
-        }
+        // Chapter 05; its last frame is chapter 06's first (finale-math.js), so it simply holds.
+        scale = ai.render({ progress: state.progress, time: state.time, ai: state.ai });
       } else {
-        renderer.resetState();
-        legacy.render(state);
-        renderer.resetState();
+        // Chapter 06: the chip on its board, the device closing around it, the site on its screen,
+        // then the real chunk over the chunk on that screen.
+        const f = finaleState(state.progress, current.framing, current.width / current.height);
+        if (f.board < 1) ai.render({ progress: 1, time: state.time, ai: state.ai, view: f.cam });
+        if (f.board > 0 && f.device > 0) world.render({ progress: 1, time: state.time, opacity: f.board * f.device, finale: f });
+        // A slow sway once the chunk has settled (the ambient clock; a frozen QA frame holds still).
+        const sway = .12 * Math.sin(state.time * 2 * Math.PI / 40) * smoothstep(.84, 1, state.progress);
+        // As the stage scrolls away into the sources the chunk goes up with it (2 NDC = one screen).
+        const rect = f.chunk && { c: [f.chunk.c[0], f.chunk.c[1] + 2 * state.transition], h: f.chunk.h };
+        if (rect) hero.renderOver({ rect, theta: f.theta + sway, fade: 1 - .5 * smoothstep(0, 1, state.transition) });
       }
       timer?.end();
       return performance.now() - started;
@@ -128,7 +129,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); lattice.dispose(); transistor.dispose(); scaleScene.dispose(); world.dispose(); ai.dispose(); dof.dispose(); legacy.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); transistor.dispose(); scaleScene.dispose(); world.dispose(); ai.dispose(); dof.dispose(); assets.dispose();
       renderer.dispose();
     },
   };

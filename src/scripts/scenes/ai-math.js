@@ -6,7 +6,7 @@
 import { clamp, smoothstep } from '../story/timeline.js';
 import { cameraPath } from './scale-math.js';
 import { dieClose } from './world-math.js';
-import { seeded } from './legacy-math.js';
+import { seeded } from './lattice-math.js';
 
 export const X = [.14, -.08, .91, .33, -.45, .27];
 const rand = seeded(5);
@@ -81,6 +81,11 @@ export function pulseLanes() {
 /** Board size (mm) and the edge connector. */
 export const BOARD = { size: [130, 112, 1.6], fingers: 48 };
 
+/** The last frame of chapter 05 (the rows of boards): chapter 06 starts here. */
+export function aiEnd(framing = 'desktop') {
+  const m = framing === 'mobile';
+  return { target: [60, 140, 20], d: m ? 800 : 560, az: .6, el: .3, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .006 };
+}
 const KEYS = [0, .25, .55, .8, 1];
 const paths = {};
 /** Camera for chapter progress u: from the die close-up (chapter 04's end) out to the rows of boards. */
@@ -92,7 +97,7 @@ export function aiCamera(u, framing = 'desktop', drift = 0) {
     { target: m ? [0, 3, 5] : [1, 6, 9], d: m ? 150 : 108, az: .66, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.02] : [.24, .1], aperture: .002 },
     { target: [0, -6, 2], d: m ? 230 : 160, az: .55, el: .66, fov: m ? 40 : 32, shift: m ? [0, -.2] : [.26, .14], aperture: .006 },
     { target: [40, 60, 10], d: m ? 520 : 360, az: .62, el: .38, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .008 },
-    { target: [60, 140, 20], d: m ? 800 : 560, az: .6, el: .3, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.26, -.06], aperture: .006 },
+    aiEnd(framing),
   ]);
   return paths[framing](u, drift);
 }

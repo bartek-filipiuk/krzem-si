@@ -7,8 +7,8 @@
  * Generic and unbranded; not to scale beyond the die (docs/SCIENCE.md).
  */
 import {
-  BoxGeometry, CanvasTexture, Color, DirectionalLight, ExtrudeGeometry, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial,
-  MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Shape, SphereGeometry, SRGBColorSpace,
+  BoxGeometry, CanvasTexture, MeshBasicMaterial, Color, DirectionalLight, ExtrudeGeometry, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial,
+  MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Shape, SphereGeometry, SRGBColorSpace, Texture,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { LAYERS, WORDS, XRAY, activeWord, boardLayout, leibniz, placement, worldCamera } from './world-math.js';
@@ -17,6 +17,8 @@ import { scaleBar } from './lattice-math.js';
 import { smoothstep } from '../story/timeline.js';
 
 const HERO = new URL('../../assets/posters/hero-mobile.webp', import.meta.url).href;
+// Chapter 06: the display shows this capture of the site's hero (npm run capture:screen).
+const SITE = new URL('../../assets/posters/site-hero-screen.webp', import.meta.url).href;
 
 /** A rounded rectangle outline (mm) as a three.js Shape. */
 function roundedRect(w, h, r, shape = new Shape()) {
@@ -216,15 +218,34 @@ export async function createWorld({ renderer, environment, dof }) {
   camera.up.set(0, 0, 1);
   let framing = 'desktop', size = [1, 1];
   screen.draw(.3, 0);
+  const siteImage = new Image(); siteImage.src = SITE;
+  await siteImage.decode();
+  const site = new Texture(siteImage);
+  site.colorSpace = SRGBColorSpace; site.anisotropy = 8; site.needsUpdate = true;
+  disposers.push(() => site.dispose());
+  renderer.initTexture(site);
+  // The finale's screen is unlit: the capture exactly as the page looks (a lit, glossy screen
+  // picked up the key and rim lights as a haze over the chunk the real one has to meet).
+  const siteScreen = new MeshBasicMaterial({ map: site, transparent: true });
+  disposers.push(() => siteScreen.dispose());
+  const lcdScreen = display.material;
+  display.material = siteScreen; await dof.compile(scene, camera); // both variants, before first sight
+  display.material = lcdScreen;
   await dof.compile(scene, camera);
   // Upload the canvas textures now, not on the first frame that sees them (a 50-80 ms hitch).
   scene.traverse(n => [n.material].flat().forEach(m => m && Object.values(m).forEach(v => v?.isTexture && renderer.initTexture(v))));
 
   return {
     resize(width, height, nextFraming) { size = [width, height]; framing = nextFraming; },
-    /** state: { progress (chapter 04), time, opacity }. Returns the scale bar (true for the die plane). */
-    render({ progress: u, time, opacity = 1 }) {
-      const cam = worldCamera(u, framing, time * 2 * Math.PI / 90);
+    /**
+     * state: { progress (chapter 04), time, opacity, finale }. Returns the scale bar (true for the
+     * die plane). finale (chapter 06, finale-math.js finaleState): the camera, the device closing
+     * around the chip (assemble), the display showing the site capture (screen), the glass.
+     */
+    render({ progress: u, time, opacity = 1, finale = null }) {
+      const cam = finale?.cam ?? worldCamera(u, framing, time * 2 * Math.PI / 90);
+      // In the finale the chip's board is in place and the rest arrives as in chapter 04.
+      const at = name => !finale ? u : ['package', 'board', 'parts'].includes(name) ? 1 : .2 + .5 * finale.assemble;
       camera.fov = cam.fov; camera.aspect = size[0] / size[1];
       camera.near = cam.d * .02; camera.far = cam.d * 20;
       camera.updateProjectionMatrix();
@@ -234,30 +255,31 @@ export async function createWorld({ renderer, environment, dof }) {
       camera.position.set(...cam.position);
       camera.lookAt(...cam.target);
       for (const [name, list] of Object.entries(layers)) {
-        const pl = placement(name, u);
+        const pl = placement(name, at(name));
         for (const o of list) { o.visible = pl.appear > .001; o.position.set(...o.userData.home.map((v, i) => v + pl.offset[i])); }
       }
       // Parts settle onto the board one after another (seeded order).
-      const pp = placement('parts', u);
+      const pp = placement('parts', at('parts'));
       for (const p of partsGroup) { p.visible = pp.appear > .001; p.position.z = pp.offset[2]; p.scale.set(1, 1, Math.max(.001, pp.k)); }
       // The screen switches on with the first word and the device turns to a ghost at the end.
-      const xray = smoothstep(XRAY[0], XRAY[1], u);
-      const lit = smoothstep(WORDS[0] - .04, WORDS[0] + .02, u) * placement('display', u).appear * (1 - xray);
+      const xray = finale ? 0 : smoothstep(XRAY[0], XRAY[1], u);
+      const lit = finale ? finale.screen : smoothstep(WORDS[0] - .04, WORDS[0] + .02, u) * placement('display', u).appear * (1 - xray);
+      display.material = finale ? siteScreen : lcdScreen;
       display.material.opacity = lit;
-      display.material.emissiveIntensity = 1.5 * lit;
+      if (!finale) display.material.emissiveIntensity = 1.5 * lit;
       // Below the screen: it lights the layers around it without a glare on the screen itself.
-      spill.position.set(0, 30, display.position.z - 3); spill.intensity = 1600 * lit;
+      spill.position.set(0, 30, display.position.z - 3); spill.intensity = finale ? 0 : 1600 * lit; // (the finale's screen is unlit)
       // (transparent from the start: switching it would build another program mid-scroll)
       for (const o of [battery, frame, back]) {
         o.material.opacity = 1 - .85 * xray; o.material.depthWrite = xray < .5;
       }
       // Fades in as it lands: a floating dark slab with its reflections read as a smear.
-      glass.material.opacity = .2 * placement('glass', u).k ** 2 * (1 - .5 * xray);
-      ring.material.opacity = smoothstep(.06, .14, u) * (1 - smoothstep(.93, 1, u));
-      screen.draw(u, time);
+      glass.material.opacity = .2 * placement('glass', at('glass')).k ** 2 * (1 - .5 * xray) * (finale?.glass ?? 1);
+      ring.material.opacity = finale ? 0 : smoothstep(.06, .14, u) * (1 - smoothstep(.93, 1, u));
+      if (!finale) screen.draw(u, time);
       renderer.toneMappingExposure = 1;
       dof.render(scene, camera, { focus: cam.d, aperture: cam.aperture, opacity });
-      return opacity > .6 ? { ...scaleBar(size[1], cam.fov, cam.d * 1e6, 90), scene: 'world' } : null;
+      return opacity > .6 && !finale ? { ...scaleBar(size[1], cam.fov, cam.d * 1e6, 90), scene: 'world' } : null;
     },
     dispose() { for (const d of disposers) d(); },
   };

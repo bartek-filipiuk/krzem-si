@@ -8,9 +8,14 @@
  * even coordinates, the shifted sites all odd ones, and every bond is one of four odd steps.
  */
 import { clamp, smoothstep } from '../story/timeline.js';
-import { seeded } from './legacy-math.js'; // ponytail: move here when the legacy renderer goes
 
 /** CODATA 2022 lattice parameter of silicon, 5.431 020 511(89) x 10^-10 m. */
+/** Seeded PRNG (mulberry32): the same seed gives the same scene in every browser and in tests. */
+export function seeded(seed = 14028) {
+  let a = seed >>> 0;
+  return () => { a += 0x6D2B79F5; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
 export const A = .5431020511;
 export const BOND = A * Math.sqrt(3) / 4;
 const FCC = [[0, 0, 0], [0, 2, 2], [2, 0, 2], [2, 2, 0]];

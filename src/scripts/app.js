@@ -8,6 +8,7 @@ import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
 import { activeWord } from './scenes/world-math.js';
 import { stageAt } from './scenes/ai-math.js';
+import { FINALE } from './scenes/finale-math.js';
 import { ANCHORS, MOBILE_LABELS, POSTER, SWITCH_MS, labelLayout, project, transistorCamera } from './scenes/transistor-math.js';
 
 const root = document.documentElement;
@@ -128,6 +129,8 @@ function update() {
     root.style.setProperty('--hero-copy', entryPhases(story.hero).copy.toFixed(3));
     // Chapter 03's heading lands only after the perspective shift (the reveal frame).
     root.style.setProperty('--scale-copy', (index < 3 ? 0 : index > 3 ? 1 : smoothstep(.52, .6, progress)).toFixed(3));
+    // Chapter 06's heading and wordmark come in once the chunk has settled.
+    root.style.setProperty('--final-copy', (index < 6 ? 0 : smoothstep(...FINALE.copy, progress)).toFixed(3));
   }
   dirty = false;
 }
@@ -264,7 +267,7 @@ function stop(message = 'TRYB SPOKOJNY · PEŁNA OPOWIEŚĆ') {
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   layer?.dispose(); layer = null; liveAt = 0; lastFrame = 0; profile = 'calm';
   root.dataset.renderer = 'static'; root.dataset.quality = 'calm'; delete root.dataset.hero;
-  root.style.removeProperty('--hero-copy'); root.style.removeProperty('--scale-copy'); showScale(null); partLabels.removeAttribute('data-live');
+  root.style.removeProperty('--hero-copy'); root.style.removeProperty('--scale-copy'); root.style.removeProperty('--final-copy'); showScale(null); partLabels.removeAttribute('data-live');
   for (const li of labelItems) for (const v of ['--px', '--py', '--pax', '--pay']) li.style.removeProperty(v);
   status.textContent = message; motionLabel.textContent = 'Włącz animacje'; motionButton.setAttribute('aria-pressed', 'true');
   relayout('static');

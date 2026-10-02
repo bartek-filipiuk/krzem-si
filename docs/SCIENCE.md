@@ -86,3 +86,13 @@ układu, stopnie zasilania, kondensatory, złącze krawędziowe), bez marki i be
 produktu (NIEZWERYFIKOWANE). W skali jest tylko chip (4 × 3 mm, ten sam co w rozdziałach 03 i 04).
 Nici od macierzy do chipu i impulsy na ścieżkach (do pamięci i do złącza krawędziowego) są ilustracją przepływu danych, nie symulacją sygnałów ani prawdziwym rozkładem połączeń. Podziałka jest
 prawdziwa dla płaszczyzny ostrości.
+
+## Finał w rozdziale 06 (`src/scripts/scenes/finale-math.js`)
+
+Nic nowego do udowodnienia. Ten sam chip i ta sama umowna płytka akceleratora co w rozdziale 05,
+potem to samo ogólne, umowne urządzenie co w rozdziale 04 (bez marki, w skali tylko chip). Ekran
+urządzenia pokazuje zrzut tej strony (jej hero tak, jak widzi go telefon), nie wymyśloną
+grafikę. Bryłka na końcu to ta sama bryłka z początku strony (ten sam model i to samo studio);
+„spotkanie” bryłki na ekranie z prawdziwą jest zabiegiem kamery, nie zjawiskiem fizycznym.
+Podziałki tu nie ma: nic w tym rozdziale nie jest pokazane w skali.
+

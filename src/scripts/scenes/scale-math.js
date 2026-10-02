@@ -9,7 +9,7 @@
  * above 160 nm, every thickness, the segment lengths and the via density.
  */
 import { clamp, smoothstep } from '../story/timeline.js';
-import { seeded } from './legacy-math.js';
+import { seeded } from './lattice-math.js';
 import { DIM, transistorCamera } from './transistor-math.js';
 
 /**

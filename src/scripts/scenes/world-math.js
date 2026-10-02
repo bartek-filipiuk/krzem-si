@@ -4,7 +4,7 @@
  * generic, unbranded device, not to scale except the die (4 x 3 mm, as in chapter 03).
  */
 import { clamp, smoothstep } from '../story/timeline.js';
-import { seeded } from './legacy-math.js';
+import { seeded } from './lattice-math.js';
 import { cameraPath, dieExitFrame } from './scale-math.js';
 
 export const DIE_MM = { w: 4, h: 3, t: .3 };

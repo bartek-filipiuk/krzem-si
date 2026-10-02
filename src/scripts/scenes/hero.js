@@ -6,7 +6,7 @@
  */
 import {
   AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, NoToneMapping, DataTexture,
-  EquirectangularReflectionMapping, Group, LinearFilter, LinearSRGBColorSpace, PerspectiveCamera, PMREMGenerator,
+  EquirectangularReflectionMapping, Group, LinearFilter, LinearSRGBColorSpace, Matrix4, PerspectiveCamera, PMREMGenerator,
   Raycaster, RGBAFormat, Scene, Vector3,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -14,6 +14,7 @@ import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import config from '../../assets/models/hero-camera.json';
 import { cameraPose, heroPose, normalize, rotateY } from '../story/camera-rig.js';
 import { entryPhases, smoothstep } from '../story/timeline.js';
+import { SCREEN_ASPECT, screenHeroPose } from './finale-math.js';
 
 const URLS = {
   '2k': new URL('../../assets/models/silicon-chunk-2k.glb', import.meta.url).href,
@@ -85,6 +86,7 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
   const lightYaw = config.entryFace?.lightRotationY ?? rest;
   const camera = new PerspectiveCamera(config.fov, 1, .01, 40);
   let hero = heroPose(config, 'desktop', 1.6);
+  const over = new PerspectiveCamera(config.fov, 1, .01, 40), map = new Matrix4(); // chapter 06
   await renderer.compileAsync(scene, camera);
   signal?.throwIfAborted();
 
@@ -119,6 +121,8 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       camera.updateProjectionMatrix();
     },
     setAnisotropy(value) { setAnisotropy(pivot, value); },
+    /** Called every frame in the other chapters: a deep link still gets the entry detail early (the finale shows it). */
+    prepare() { if (!detail && ++frames > 20) loadDetail(); },
     /** state: { hero: hero progress, time: ambient seconds, parallax: [x, y] } */
     render(state) {
       const theta = rest + state.time * 2 * Math.PI / TURN_SECONDS;
@@ -140,6 +144,24 @@ export async function createHero({ renderer, assets, textures, anisotropy, signa
       camera.position.set(...pose.position.map((v, i) => pose.target[i] + (v - pose.target[i]) * (1 - PUSH * push)));
       camera.lookAt(...pose.target);
       renderer.render(scene, camera);
+    },
+    /**
+     * Chapter 06: the chunk drawn over the current frame with the camera the site capture on the
+     * device's screen was taken with, its frustum mapped onto rect ({ c, h } in NDC). theta: turn
+     * from the capture's rest pose; fade dims it (exposure) as the chapter scrolls away.
+     */
+    renderOver({ rect, theta = 0, fade = 1 }) {
+      const pose = screenHeroPose(config);
+      over.fov = pose.fov; over.aspect = SCREEN_ASPECT;
+      over.position.set(...pose.position); over.lookAt(...pose.target);
+      over.updateProjectionMatrix();
+      over.projectionMatrix.premultiply(map.set(rect.h[0], 0, 0, rect.c[0], 0, rect.h[1], 0, rect.c[1], 0, 0, 1, 0, 0, 0, 0, 1));
+      over.projectionMatrixInverse.copy(over.projectionMatrix).invert();
+      pivot.rotation.y = rest + theta;
+      scene.environmentRotation.y = 0;
+      renderer.toneMappingExposure = exposure * fade;
+      const auto = renderer.autoClear;
+      renderer.autoClear = false; renderer.clearDepth(); renderer.render(scene, over); renderer.autoClear = auto;
     },
     dispose() {
       environment.dispose();

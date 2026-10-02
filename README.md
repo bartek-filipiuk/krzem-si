@@ -137,9 +137,14 @@ wykonuje tylko `npm ci` i `npm run verify`.
   (współdzielone, anulowalne ładowanie i zwalnianie), `quality.js` (profile i kontroler).
 - `src/scripts/scenes/`: `hero.js` (bryłka), `lattice.js` + `lattice-math.js` (sieć krzemu, rozdział 01;
   matematyka sieci testowana w Node), `transistor.js` + `transistor-math.js` (FinFET, rozdział 02),
-  `scale.js` + `scale-math.js` (połączenia i chip, rozdział 03), `legacy*.js` (sceny v0.1 rozdziałów 04–06).
+  `scale.js` + `scale-math.js` (połączenia i chip, rozdział 03), `world.js` + `world-math.js`
+  (urządzenie, rozdział 04), `ai.js` + `ai-math.js` (akcelerator, rozdział 05), `parts.js` (wspólne
+  części), `finale-math.js` (finał, rozdział 06: urządzenie ze stroną na ekranie i prawdziwa bryłka).
 - `src/assets/`: modele, HDR, JSON kamery i postery z etapu A2 (`docs/ASSET_MANIFEST.md`).
-- `tools/`: pipeline Blendera (niepotrzebny do builda). `scripts/art/`: odtwarzanie posterów v0.1.
+- `tools/`: pipeline Blendera (niepotrzebny do builda).
+- Ekran w finale pokazuje zrzut własnego hero strony: `npm run build`, `npx vite preview --port 4176`,
+  potem `KRZEM_TEST_URL=http://127.0.0.1:4176/ npm run capture:screen` (zapisuje
+  `src/assets/posters/site-hero-screen.webp`). Powtórz po każdej zmianie hero.
 - `tests/`: testy Node, smoke w Playwright, screeny i nagrania.
 
 ## Materiały i licencja

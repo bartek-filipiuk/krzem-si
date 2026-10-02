@@ -66,6 +66,7 @@ main{position:relative;z-index:2}
 .hero{height:155vh;height:155svh}
 .chapter#skala{height:190vh;height:190svh}
 .chapter#inteligencja{height:180vh;height:180svh}
+.chapter#fundament{height:260vh;height:260svh}
 .stage{position:sticky;top:0;height:100vh;height:100svh;min-height:620px;overflow:hidden;isolation:isolate}
 .chapter-copy{position:absolute;z-index:3;top:50%;left:var(--pad);width:43%;max-width:650px;transform:translateY(-47%)}
 .eyebrow{font:10px/1.6 var(--mono);letter-spacing:2px;color:#abaeb3;display:flex;gap:12px;align-items:center;margin-bottom:30px}
@@ -187,6 +188,7 @@ html[data-motion=static] .process-strip li:before{background:var(--amber)}
 .chapter{height:153svh}
 .hero{height:138svh}
 .chapter#skala,.chapter#inteligencja{height:158svh}
+.chapter#fundament{height:230svh}
 .stage{min-height:740px;height:100svh}
 .chapter-copy{left:var(--pad);top:111px;transform:none;width:86%;max-width:530px}
 .eyebrow{font-size:8px;letter-spacing:1.55px;gap:9px;margin-bottom:20px}
@@ -276,7 +278,7 @@ h2{font-size:60px}
 
 @media print{.header,.chapter-nav,.chapter-footer,.hero-poster,.ambient,#scene-canvas,.reading-progress,.scene-poster,.ai-interface,.element-card,.scene-caption,.process-strip,.final-wordmark,.text-link,.switch-demo{display:none!important}
 body{background:white;color:black}
-.chapter,.hero,.chapter#skala,.chapter#inteligencja,.stage{height:auto;min-height:0;position:relative;overflow:visible}
+.chapter,.hero,.chapter#skala,.chapter#inteligencja,.chapter#fundament,.stage{height:auto;min-height:0;position:relative;overflow:visible}
 .chapter{padding:25px 0;break-inside:avoid}
 .chapter-copy{position:static;transform:none;width:100%;max-width:none}
 .eyebrow,.body-copy,.small-note,em{color:#333}
@@ -289,7 +291,7 @@ button{display:none}
 }
 
 
-/* Keep the legacy scenery (chapters 2-6) behind the copy. The hero and the entry into the
+/* Keep the scenery (chapters 2-6) behind the copy. The hero and the entry into the
    material fill the frame, so they are not masked. */
 html:not([data-chapter="0"]):not([data-chapter="1"]) #scene-canvas{mask-image:linear-gradient(90deg,transparent 12%,#0002 28%,#000b 44%,#000 63%);-webkit-mask-image:linear-gradient(90deg,transparent 12%,#0002 28%,#000b 44%,#000 63%)}
 
@@ -401,3 +403,6 @@ html[data-renderer=webgl] #swiat .chapter-copy,html[data-renderer=webgl] #swiat 
 .ai-interface[data-stage="0"] .computation span,.ai-interface[data-stage="1"] .computation span:nth-child(n+2),.ai-interface[data-stage="2"] .computation span:nth-child(3),.ai-interface[data-stage="3"] .computation span:nth-child(3){visibility:hidden}
 .ai-interface.is-open[data-stage="4"] .ai-answer{display:block}
 html[data-renderer=webgl] #inteligencja .chapter-copy,html[data-renderer=webgl] #inteligencja .lattice-legend{text-shadow:0 1px 22px #0b0e12cc,0 0 3px #0b0e1299}
+/* Chapter 06: heading, text and wordmark wait until the chunk has settled (app.js --final-copy). */
+html[data-renderer=webgl][data-motion=full] #fundament .chapter-copy,html[data-renderer=webgl][data-motion=full] #fundament .final-wordmark{opacity:var(--final-copy,1)}
+html[data-renderer=webgl][data-motion=full] #fundament .chapter-copy{text-shadow:0 1px 22px #0b0e12cc}
