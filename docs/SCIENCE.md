@@ -28,6 +28,21 @@ Użyte 0/1 to abstrakcyjne stany poglądowego przełącznika. Nie definiują nap
 
 Geometria tranzystora jest uproszczona i nie jest rysunkiem produkcyjnym. Struktury układu są artystyczne i nie mają fizycznej podziałki. Akcenty świetlne nie przedstawiają rzeczywistych świecących elektronów. Etapy produkcji materiału są skondensowane. Przykład AI nie pokazuje wewnętrznego rozumowania ani rzeczywistego śladu obliczeń modelu.
 
+## Płytka na końcu rozdziału 01 (`src/scripts/scenes/wafer-math.js`, `wafer.js`)
+
+Kamera wychodzi z kanału [110] nad ściętą powierzchnię (001) tego samego kryształu: płytki do
+układów scalonych tnie się zwykle w płaszczyźnie (100), a górna warstwa atomów ma tu ten sam
+układ co sieć z rozdziału (odstęp a/√2 ≈ 0,384 nm wzdłuż [110]). Płytka ma 300 mm średnicy,
+775 µm grubości i karb wskazujący kierunek <110> (wymiary według normy SEMI M1 dla płytek 300 mm;
+głębokość karbu przybliżona). Pomijamy cięcie sztabki na płytki, szlifowanie i polerowanie
+chemiczno-mechaniczne. Prawdziwa wypolerowana płytka jest płaska niemal do pojedynczych warstw
+atomów; to, że pod kamerą atomy „zlewają się” w lustro, jest ciągiem dalszym obrazu (kiedy atomy
+są mniejsze od piksela, widać już tylko odbicie), nie etapem procesu. Lustro odbija umowne
+studio (pas i dwie listwy światła); kolor płytki to ciemny, niebieskawoszary połysk krzemu bez
+tęczowych nalotów. Podziałka jest prawdziwa dla płaszczyzny ostrości przez cały odjazd (od nm do
+cm). Na wejściu do rozdziału 02 kamera wraca na powierzchnię tej płytki: tranzystor naprawdę
+na niej powstaje (umowny jest tylko jego kadr).
+
 ## Tranzystor FinFET w rozdziale 02 (`src/scripts/scenes/transistor-math.js`)
 
 Źródła (sprawdzone 1 października 2026):

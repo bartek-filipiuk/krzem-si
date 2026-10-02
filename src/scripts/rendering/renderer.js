@@ -9,6 +9,8 @@ import { PROFILES, pixelRatio, textureSet } from './quality.js';
 import { entryPhases, latticeProgress, smoothstep } from '../story/timeline.js';
 import { createHero } from '../scenes/hero.js';
 import { createLattice } from '../scenes/lattice.js';
+import { createWafer } from '../scenes/wafer.js';
+import { WAFER_START, waferState } from '../scenes/wafer-math.js';
 import { createTransistor } from '../scenes/transistor.js';
 import { createScale } from '../scenes/scale.js';
 import { createWorld } from '../scenes/world.js';
@@ -25,11 +27,12 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
   renderer.setClearColor(0x000000, 0);
   const assets = createAssetManager();
   const timer = gpuTimer ? createGpuTimer(renderer.getContext()) : null; // QA/debug only
-  let hero = null, lattice = null, transistor = null, scaleScene = null, world = null, ai = null, dof = null, scale = null, current = { profile, framing, width: 1, height: 1 };
+  let hero = null, lattice = null, wafer = null, transistor = null, scaleScene = null, world = null, ai = null, dof = null, scale = null, current = { profile, framing, width: 1, height: 1 };
   try {
     hero = await createHero({ renderer, assets, textures: textureSet(profile, framing), anisotropy: settings.anisotropy, signal, invalidate });
     lattice = await createLattice({ renderer, environment: hero.environment });
     dof = createDof(renderer, dofSettings(settings));
+    wafer = await createWafer({ renderer, dof });
     transistor = await createTransistor({ renderer, environment: hero.environment, dof });
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = PCFShadowMap;
@@ -38,7 +41,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     ai = await createAi({ renderer, environment: hero.environment, dof });
     signal?.throwIfAborted();
   } catch (error) {
-    hero?.dispose(); lattice?.dispose(); transistor?.dispose(); scaleScene?.dispose(); world?.dispose(); ai?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
+    hero?.dispose(); lattice?.dispose(); wafer?.dispose(); transistor?.dispose(); scaleScene?.dispose(); world?.dispose(); ai?.dispose(); dof?.dispose(); assets.dispose(); renderer.dispose();
     throw error;
   }
 
@@ -50,6 +53,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
     hero.resize(width, height, current.framing);
     hero.setAnisotropy(p.anisotropy);
     lattice.resize(width, height, current.framing, p.lod);
+    wafer.resize(width, height, current.framing);
     transistor.resize(width, height, current.framing);
     transistor.setTrails(p.antialias ? 4 : 2);
     scaleScene.resize(width, height, current.framing);
@@ -80,11 +84,18 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         if (entry.lattice > 0) scale = lattice.render({ u, time: state.time, emerge: entry.lattice, fade: entry.dark, over: entry.hero });
         else if (!entry.hero) renderer.clear();
       } else if (state.index === 1) {
-        // Hand-over 01 -> 02 through the background: the lattice recedes into the fog, then the
-        // transistor comes up out of the graphite.
-        const blend = state.transition;
-        if (blend < .5) scale = lattice.render({ u, time: state.time, emerge: 1 - smoothstep(0, .5, blend) });
-        else transistor.render({ progress: 0, time: state.time, power: state.power, fade: smoothstep(.5, 1, blend) });
+        // Chapter 01: the glide to the channel, then (from WAFER_START) the pull-back over the cut
+        // face to the wafer; on the way out the camera dives back to the surface, onto chapter 02.
+        if (state.progress < WAFER_START && state.transition === 0) {
+          // The sway calms down before the glide ends, so the pull-back starts on the exact frame.
+          scale = lattice.render({ u, time: state.time, emerge: 1, sway: 1 - smoothstep(WAFER_START - .08, WAFER_START, state.progress) });
+        } else {
+          const w = waferState({ progress: state.progress, transition: state.transition, framing: current.framing });
+          if (w.lattice > 0) scale = lattice.render({ u: 1, time: state.time, emerge: 1, view: w.cam, cut: w.cut });
+          if (w.wafer > 0) { const bar = wafer.render({ cam: w.cam, opacity: w.wafer }); if (w.lattice < .5) scale = bar; }
+          if (w.transistor > 0) transistor.render({ progress: 0, time: state.time, power: state.power, fade: w.transistor });
+          if (state.transition > 0) scale = null;
+        }
       } else if (state.index === 2) {
         // Chapter 02; on the way out the chapter 03 scene (same camera at its start, the device
         // now one of a row) comes up under it and the transistor dissolves away.
@@ -129,7 +140,7 @@ export async function createGpuLayer({ canvas, profile, framing, signal, invalid
         assets: assets.size, toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure };
     },
     dispose() {
-      hero.dispose(); lattice.dispose(); transistor.dispose(); scaleScene.dispose(); world.dispose(); ai.dispose(); dof.dispose(); assets.dispose();
+      hero.dispose(); lattice.dispose(); wafer.dispose(); transistor.dispose(); scaleScene.dispose(); world.dispose(); ai.dispose(); dof.dispose(); assets.dispose();
       renderer.dispose();
     },
   };

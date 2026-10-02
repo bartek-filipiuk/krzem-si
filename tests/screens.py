@@ -104,6 +104,9 @@ def board():
 # Hero -> lattice handover (hero progress) and chapter 01 (pinned progress).
 LATTICE_FRAMES = [('poczatek', p, f'h{int(p * 100):03d}') for p in (.76, .82, .88, .94)] + \
                  [('materia', p, f'{int(p * 100):03d}') for p in PROGRESS]
+# Chapter 01's exit: the end of the glide (.8), the cut face, atoms -> mirror, the wafer.
+WAFER_FRAMES = [('materia', p, f'{round(p * 1000):04d}') for p in (.8, .85, .86, .88, .93, 1)]
+WAFER_ROWS = [(label, prefix.replace('lattice', 'wafer')) for label, prefix in [('cinematic · RTX 3070', 'lattice-cinematic'), ('balanced · RTX 3070', 'lattice-balanced'), ('balanced · AMD iGPU', 'lattice-amd-balanced'), ('calm · poster', 'lattice-calm')]]
 LATTICE_ROWS = [('cinematic · RTX 3070', 'lattice-cinematic'), ('balanced · RTX 3070', 'lattice-balanced'),
                 ('balanced · AMD iGPU', 'lattice-amd-balanced'), ('calm · poster', 'lattice-calm')]
 
@@ -158,7 +161,7 @@ def posters(browser):
     chapter 02: the FinFET OFF and ON at the frame transistor-math.js POSTER names (progress .5);
     chapter 03: the reveal frame (progress .64)."""
     out = ROOT / 'src/assets/posters'
-    shots_ = [('lattice', 'scene=materia&progress=1'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
+    shots_ = [('lattice', 'scene=materia&progress=0.8'), ('finfet-off', 'scene=tranzystor&progress=0.5&power=off'),
               ('finfet-on', 'scene=tranzystor&progress=0.5&power=on'), ('scale', 'scene=skala&progress=0.6'), ('world', 'scene=swiat&progress=0.775'), ('ai', 'scene=inteligencja&progress=0.4'), ('finale', 'scene=fundament&progress=1')]
     for name, ctx in {'desktop': dict(viewport={'width': 1600, 'height': 1000}, device_scale_factor=1),
                       'mobile': dict(viewport={'width': 450, 'height': 700}, device_scale_factor=2, is_mobile=True, has_touch=True)}.items():
@@ -531,6 +534,34 @@ def finale_record(p, gpu):
     return measured
 
 
+def wafer_record(p, gpu):
+    """Desktop ~35 s: chapter 01 from the channel through the cut face to the wafer, the dive into
+    chapter 02, back up to the wafer and the atoms, and down again into chapter 02."""
+    browser = launch(p, gpu)
+    ctx = VIEWPORTS['desktop']
+    on = '''async ([a, b, ms])=>{const el=document.getElementById('materia'),end=el.getBoundingClientRect().top+scrollY+el.offsetHeight-innerHeight;
+      const t0=performance.now();await new Promise(done=>{(function step(now){const k=Math.min(1,(now-t0)/ms);scrollTo(0,end+innerHeight*(a+(b-a)*k));k<1?requestAnimationFrame(step):done();})(t0);});}'''
+    with tempfile.TemporaryDirectory() as tmp:
+        context = browser.new_context(**ctx, record_video_dir=tmp, record_video_size=ctx['viewport'])
+        page = context.new_page()
+        page.goto(URL + '?debug', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.dataset.hero==='live'", timeout=30000)
+        page.evaluate(TO_CHAPTER, ['materia', .6]); page.wait_for_timeout(2000)
+        page.evaluate('krzemDebug.reset()')
+        page.evaluate(SWEEP, ['materia', [[.6, .8, 3000], [.8, 1, 9000]]]); page.wait_for_timeout(1000)
+        page.evaluate(on, [0, 1.05, 5000]); page.wait_for_timeout(1200)
+        page.evaluate(on, [1.05, 0, 3500]); page.evaluate(SWEEP, ['materia', [[1, .84, 4000]]]); page.wait_for_timeout(800)
+        page.evaluate(SWEEP, ['materia', [[.84, 1, 4000]]]); page.evaluate(on, [0, 1.05, 4000]); page.wait_for_timeout(1500)
+        measured = {'profile': page.evaluate('krzemDebug.profile'), **stats(page.evaluate('krzemDebug.intervals')),
+                    'gpu_time': stats(page.evaluate('krzemDebug.gpuMs') or [])}
+        video = page.video.path()
+        context.close()
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', video, '-c:v', 'libvpx-vp9', '-b:v', '0',
+                        '-crf', '40', '-row-mt', '1', '-an', str(OUT / 'wafer-scroll-desktop.webm')], check=True)
+    browser.close()
+    return measured
+
+
 def transistor_record(p, gpu):
     """Desktop ~25 s: scroll into chapter 02 (the automatic ON demo), press OFF, ON, a quick double
     press, then the scroll on through the chapter and back."""
@@ -691,6 +722,8 @@ if __name__ == '__main__':
             log['world_shots'] = shots(browser, a.gpu, profiles, WORLD_FRAMES, 'world')
         if 'ai' in a.steps:
             log['ai_shots'] = shots(browser, a.gpu, profiles, AI_FRAMES, 'ai')
+        if 'wafer' in a.steps:
+            log['wafer_shots'] = shots(browser, a.gpu, profiles, WAFER_FRAMES, 'wafer')
         if 'finale' in a.steps:
             log['finale_shots'] = shots(browser, a.gpu, profiles, FINALE_FRAMES, 'finale')
         if 'finale-perf' in a.steps:
@@ -716,6 +749,8 @@ if __name__ == '__main__':
             lattice_board(TRANSISTOR_FRAMES, TRANSISTOR_ROWS, 'transistor-board.webp', lambda scene, p, suffix: f'02 {suffix[:-4].upper()} {p:.2f}')
         if 'world' in a.steps or 'board' in a.steps:
             lattice_board(WORLD_FRAMES, WORLD_ROWS, 'world-board.webp', lambda scene, p, suffix: f'04 {p:.2f}')
+        if 'wafer' in a.steps or 'board' in a.steps:
+            lattice_board(WAFER_FRAMES, WAFER_ROWS, 'wafer-board.webp', lambda scene, p, suffix: f'01 {p:.3f}')
         if 'finale' in a.steps or 'board' in a.steps:
             lattice_board(FINALE_FRAMES, FINALE_ROWS, 'finale-board.webp', lambda scene, p, suffix: '06 match' if suffix == '0500' else '06 before the match' if suffix == '0498' else f'06 {p:.2f}')
         if 'ai' in a.steps or 'board' in a.steps:
@@ -730,6 +765,8 @@ if __name__ == '__main__':
             transistor_record(p, a.gpu)
         if 'scale-record' in a.steps and a.gpu == 'nvidia':
             log['scale_record'] = scale_record(p, a.gpu)
+        if 'wafer-record' in a.steps and a.gpu == 'nvidia':
+            log['wafer_record'] = wafer_record(p, a.gpu)
         if 'finale-record' in a.steps and a.gpu == 'nvidia':
             log['finale_record'] = finale_record(p, a.gpu)
         if 'device-record' in a.steps and a.gpu == 'nvidia':
@@ -737,4 +774,4 @@ if __name__ == '__main__':
         if 'lattice-record' in a.steps and a.gpu == 'nvidia':
             log['lattice_record'] = lattice_record(p, a.gpu)
     log_path.write_text(json.dumps(log, indent=1, ensure_ascii=False))
-    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf', 'scale_perf', 'scale_record', 'device_perf', 'device_record', 'finale_perf', 'finale_record')}, indent=1)[:8000])
+    print(json.dumps({k: v for k, v in log.items() if k in ('handover', 'perf', 'transfer', 'lattice_perf', 'lattice_record', 'transistor_perf', 'scale_perf', 'scale_record', 'device_perf', 'device_record', 'finale_perf', 'finale_record', 'wafer_record')}, indent=1)[:8000])

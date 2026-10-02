@@ -108,17 +108,17 @@ const TRAVEL = 3.2;
  * Lattice camera for u in [0, 1] (0: the lattice starts to emerge in the hero, .2: chapter 01
  * pins, 1: chapter 01 ends). It glides forward along a [110] channel, decelerating to rest, and
  * turns from an oblique view onto the channel axis while the crystal orders. `drift` (radians of
- * ambient phase) adds a slow sway. framing: lens shift puts the vanishing point beside the text.
+ * ambient phase) adds a slow sway of amplitude `amp` (0: none, for the hand-over to the wafer). framing: lens shift puts the vanishing point beside the text.
  */
-export function latticeCamera(u, framing = 'desktop', drift = 0) {
+export function latticeCamera(u, framing = 'desktop', drift = 0, amp = 1) {
   u = clamp(u);
   const align = smoothstep(.55, .95, u);
-  const yaw = (1 - align) * 24 * Math.PI / 180 + Math.sin(drift) * .006;
-  const pitch = (1 - align) * -9 * Math.PI / 180 + Math.sin(drift * .73) * .004;
+  const yaw = (1 - align) * 24 * Math.PI / 180 + Math.sin(drift) * .006 * amp;
+  const pitch = (1 - align) * -9 * Math.PI / 180 + Math.sin(drift * .73) * .004 * amp;
   const forward = rotate(rotate(CHANNEL_DIR, UP, yaw), RIGHT, pitch);
   const travel = -TRAVEL * (1 - u) ** 2.2;
   const offset = add(scale(RIGHT, .55), scale(UP, .3));
-  const sway = add(scale(RIGHT, Math.sin(drift * .9) * .015), scale(UP, Math.sin(drift * .61) * .012));
+  const sway = scale(add(scale(RIGHT, Math.sin(drift * .9) * .015), scale(UP, Math.sin(drift * .61) * .012)), amp);
   const position = add(add(add(CHANNEL_POINT, scale(CHANNEL_DIR, travel)), scale(offset, 1 - align)), sway);
   const mobile = framing === 'mobile';
   return { position, forward: normalize(forward), up: UP, fov: mobile ? 58 : 44, shift: mobile ? [0, -.28] : [.26, 0] };
@@ -190,10 +190,10 @@ export function buildLattice({ seed = 14, framing = 'desktop', far = 4.4, margin
  * Scale bar for a perspective camera: pixels per nm at `distance` in front of it, for a viewport
  * `height` CSS px tall and a vertical FOV in degrees. Picks a round length close to `target` px.
  */
-const BAR_STEPS = [.05, .1, .2, .5, 1, 2, 5, 10, 20, 50, 100, 200, 500].flatMap(v => [v, v * 1e3, v * 1e6]).filter(v => v < 1e7).sort((a, b) => a - b);
+const BAR_STEPS = [.05, .1, .2, .5, 1, 2, 5, 10, 20, 50, 100, 200, 500].flatMap(v => [v, v * 1e3, v * 1e6]).filter(v => v < 1e7).concat([1e7, 2e7, 5e7, 1e8]).sort((a, b) => a - b);
 export function scaleBar(height, fov, distance = FOCUS, target = 110) {
   const pxPerNm = height / 2 / Math.tan(fov * Math.PI / 360) / distance;
   const nm = BAR_STEPS.reduce((best, v) => Math.abs(v * pxPerNm - target) < Math.abs(best * pxPerNm - target) ? v : best);
-  const [value, unit] = nm >= 1e6 ? [nm / 1e6, 'mm'] : nm >= 1e3 ? [nm / 1e3, 'µm'] : [nm, 'nm'];
+  const [value, unit] = nm >= 1e7 ? [nm / 1e7, 'cm'] : nm >= 1e6 ? [nm / 1e6, 'mm'] : nm >= 1e3 ? [nm / 1e3, 'µm'] : [nm, 'nm'];
   return { nm, px: nm * pxPerNm, label: `${String(Number(value.toPrecision(3))).replace('.', ',')} ${unit}` };
 }

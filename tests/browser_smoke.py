@@ -143,6 +143,11 @@ with sync_playwright() as p:
     shown, label, width = lattice_scale(desktop)
     check('Lattice: live scale bar in chapter 01', shown and re.fullmatch(r'\d+(,\d+)? nm', label) is not None and 40 < width < 260)
     check('Lattice: live canvas, poster hidden', not lattice_poster_shown(desktop))
+    plate = lambda: desktop.evaluate("document.querySelector('[data-process=\"3\"]').dataset.active") == 'true'
+    before_wafer = plate()
+    goto_chapter(desktop, 'materia', 1); desktop.wait_for_timeout(200)
+    check('Wafer: "Płytka" lights up with the wafer, the scale bar reaches millimetres or centimetres', not before_wafer and plate() and re.search(r'(mm|cm)$', lattice_scale(desktop)[1]) is not None)
+    check('Wafer: GPU returns NO_ERROR', gpu_error(desktop) == 0)
     goto_chapter(desktop, 'poczatek', .1)
     check('Lattice: no scale bar over the hero', not lattice_scale(desktop)[0])
     # Chapter 03: the heading waits for the reveal, the scale bar runs with the camera.

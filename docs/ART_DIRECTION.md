@@ -100,6 +100,21 @@ wyłącznie skalę sieci; skoku rzędów wielkości nie udajemy liczbami.
 - **Podziałka:** element DOM pod tekstem, liczony co klatkę z kamery (piksele na nm w płaszczyźnie
   2 nm przed kamerą), widoczny tylko przy żywej kamerze. Podpis mówi wprost, co jest umowne.
 
+## 01 → 02: sieć staje się płytką (`scenes/wafer.js`, `scenes/wafer-math.js`)
+
+- Ostatnia piąta część rozdziału 01: z kadru na kanał kamera cofa się i wznosi nad ściętą
+  powierzchnię (001). Atomy nad cięciem znikają, sieć przekazuje obraz powierzchni rysowanej per
+  piksel (ten sam wzór atomów i wiązań); gdy atomy schodzą poniżej piksela, ta sama powierzchnia
+  staje się lustrem. Dalej tylko lustro i odbite w nim listwy światła, aż w kadrze pojawia się
+  okrągła krawędź płytki 300 mm. Ten sam materiał od atomów do płytki, bez przenikania.
+- Własne studio płytki: ciemna kopuła z miękkim pasem i dwiema ostrymi listwami (w lustrze ostre
+  krawędzie czytają się jako „polerowane”). Bez tęczy. Strona z nagłówkiem przyciemniona.
+- Krok „Płytka” w pasku etapów zapala się razem z tym odjazdem.
+- Przejście do 02: z płytki kamera nurkuje z powrotem do powierzchni i kończy w pierwszym
+  kadrze tranzystora, który wyłania się na tej samej powierzchni (zamiast przejścia przez tło).
+- Poster rozdziału 01 zostaje kadrem kanału (koniec przelotu, .8): jako stopklatka jest
+  czytelniejszy niż ciemna płytka.
+
 ## Profile
 
 - **cinematic:** tekstury 2K (1K przy kadrze mobile), MSAA, anizotropia 8, DPR do 1,5.

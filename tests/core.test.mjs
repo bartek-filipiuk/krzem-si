@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chapterAt, heroProgress, positionOf, storyAt, entryPhases, latticeProgress, ENTRY, LATTICE_PIN, clamp, smoothstep } from '../src/scripts/story/timeline.js';
 import { FINALE, SCREEN_ASPECT, SCREEN_Z, finaleCamera, finaleState, matchFrame, projectNdc, screenRect, restRect, screenHeroPose } from '../src/scripts/scenes/finale-math.js';
+import { WAFER_START, WAFER, WAFER_CENTRE, SURFACE_Z, waferState, waferOutline, latticeEnd } from '../src/scripts/scenes/wafer-math.js';
 import heroConfig from '../src/assets/models/hero-camera.json' with { type: 'json' };
 import { seeded, A, BOND, diamondCubic, bonds, buildLattice, latticeCamera, latticeFront, scaleBar, CHANNEL_DIR, CHANNEL_POINT, FOCUS, FRONT_NORMAL } from '../src/scripts/scenes/lattice-math.js';
 import { cameraPose, heroPose, framingFor, isCompact, END_DISTANCE, PARALLAX_DEG, rotateY } from '../src/scripts/story/camera-rig.js';
@@ -439,6 +440,40 @@ test('scale bar labels run from nanometres to millimetres', () => {
   assert.equal(scaleBar(1000, 30, 6000).label, '500 nm');
   assert.equal(scaleBar(1000, 30, 250000).label, '10 µm');
   assert.equal(scaleBar(1000, 30, 3e7).label, '2 mm');
+  assert.equal(scaleBar(1000, 32, 5.2e8).label, '2 cm');
+});
+
+test('chapter 01 exit: lattice -> cut face -> wafer -> chapter 02, one continuous camera', () => {
+  const lookAt = c => c.target ?? c.position.map((v, i) => v + c.forward[i] * FOCUS);
+  for (const framing of ['desktop', 'mobile']) {
+    // The pull-back starts on the lattice's last frame (no sway) ...
+    const glide = latticeCamera(1, framing, 0, 0), start = waferState({ progress: WAFER_START, framing }).cam;
+    assert.ok(dist(glide.position, start.position) < 1e-9 && dist(lookAt(glide), start.target) < 1e-9, `${framing}: pull-back starts elsewhere`);
+    assert.ok(Math.abs(glide.fov - start.fov) < 1e-9 && near(glide.shift, start.shift, 1e-12));
+    // ... the glide reaches that frame exactly at WAFER_START (chapter progress) ...
+    assert.equal(latticeProgress({ index: 1, progress: WAFER_START }), 1);
+    // ... runs without jumps up to the wafer and down again onto chapter 02's first frame.
+    const steps = [];
+    const states = [];
+    for (let i = 0; i <= 3000; i++) states.push(waferState({ progress: WAFER_START + (1 - WAFER_START) * i / 3000, framing }));
+    for (let i = 1; i <= 3000; i++) states.push(waferState({ progress: 1, transition: i / 3000, framing }));
+    for (const st of states) steps.push(st.cam);
+    for (let i = 1; i < steps.length; i++) {
+      const a = steps[i - 1], b = steps[i];
+      assert.ok(dist(a.position, b.position) < .08 * Math.min(a.d, b.d) && Math.abs(Math.log(a.d / b.d)) < .06, `${framing}: jump at step ${i}`);
+      // Inside the crystal only while the surface is not drawn yet (the camera rises out of the channel).
+      if (states[i].wafer > 0) assert.ok(b.position[2] > SURFACE_Z + .05, `${framing}: surface drawn with the camera under it at step ${i}`);
+    }
+    const t = transistorCamera(0, framing), end = steps.at(-1);
+    assert.ok(dist(t.position, end.position) < 1e-6 * Math.hypot(...t.position) && dist(t.target, end.target) < 1e-6 && Math.abs(t.fov - end.fov) < 1e-9, `${framing}: dive does not end on chapter 02`);
+    // The scale bar runs from nanometres to centimetres along the way.
+    const units = new Set(steps.slice(0, 3001).map(c => scaleBar(framing === 'mobile' ? 844 : 1000, c.fov, c.d).label.split(' ')[1]));
+    assert.deepEqual([...units].sort(), ['cm', 'mm', 'nm', 'µm'].sort());
+  }
+  // The wafer: 300 mm, a notch about 1 mm deep, centred so the atoms we looked at lie on it.
+  const r = waferOutline().map(([x, y]) => Math.hypot(x - WAFER_CENTRE[0], y - WAFER_CENTRE[1]));
+  assert.ok(Math.abs(Math.max(...r) - 150e6) < 1 && Math.abs(Math.min(...r) - (150e6 - WAFER.notch)) < 2e4);
+  assert.ok(Math.hypot(WAFER_CENTRE[0], WAFER_CENTRE[1]) < WAFER.radius - 1e6);
 });
 
 // ---- device (chapter 04) ---------------------------------------------------------------------

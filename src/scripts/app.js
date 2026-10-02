@@ -3,7 +3,7 @@
  * transistor and AI demos, profile selection and the single requestAnimationFrame loop.
  * Everything here works without the GPU layer, which is imported lazily and never in `calm`.
  */
-import { clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
+import { GLIDE_END, clamp, createScrollReader, entryPhases, smoothstep } from './story/timeline.js';
 import { framingFor, isCompact } from './story/camera-rig.js';
 import { QualityController, selectProfile } from './rendering/quality.js';
 import { activeWord } from './scenes/world-math.js';
@@ -121,7 +121,8 @@ function update() {
     controller.hold(performance.now(), 500); // first frames of a chapter upload its meshes
   }
   progressBar.style.transform = `scaleX(${story.reading})`;
-  if (index === 1) { const step = Math.min(3, Math.floor(progress * 4)); document.querySelectorAll('[data-process]').forEach((li, i) => li.dataset.active = String(i <= step)); }
+  // Chapter 01's strip: the first three steps along the glide, "Płytka" with the wafer (GLIDE_END).
+  if (index === 1) { const step = progress >= GLIDE_END ? 3 : Math.min(2, Math.floor(progress / GLIDE_END * 3)); document.querySelectorAll('[data-process]').forEach((li, i) => li.dataset.active = String(i <= step)); }
   if (index === 2) setPower(manualPower ?? (progress > .35));
   if (index === 4) { const w = activeWord(progress); wordItems.forEach((el, i) => el.classList.toggle('is-active', i === w)); }
   if (index === 5) setAI(manualAI ?? (progress > .23 && progress < .66));

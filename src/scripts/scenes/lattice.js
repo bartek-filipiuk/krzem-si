@@ -28,7 +28,7 @@ const AMBER = new Color('#d98a4a'); // redder than the CSS amber: dimmed by fog 
 
 // Shared vertex code: lattice position -> current position for the front and grain pose.
 const COMMON = /* glsl */`
-uniform vec4 uFront; uniform float uBand, uHeat, uTime, uRadius, uBond, uFocus, uAperture;
+uniform vec4 uFront; uniform float uBand, uHeat, uTime, uRadius, uBond, uFocus, uAperture, uCut;
 varying float vHeat, vOrder, vSharp;
 float blurAt(float z) { return uAperture * abs(z - uFocus) / uFocus; }
 vec3 rotateAxis(vec3 v, vec3 k, float a) { float c = cos(a), s = sin(a); return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c); }
@@ -42,7 +42,8 @@ vec3 placeAtom(vec3 lattice, vec3 centre, vec4 rot, float seed, out float t, out
   return p + heat * .03 * sin(vec3(3.1, 2.7, 3.7) * uTime + seed * vec3(40.0, 17.0, 29.0));
 }
 // The camera sits in a clearing: atoms nearer than ~1 nm shrink away instead of filling the lens.
-float nearFade(vec3 p) { return smoothstep(.45, .95, distance(p, cameraPosition)); }
+// Above the cut (chapter 01's exit: the crystal's (001) face) there are no atoms.
+float nearFade(vec3 p) { return smoothstep(.45, .95, distance(p, cameraPosition)) * (1.0 - smoothstep(uCut - .02, uCut + .02, p.z)); }
 `;
 
 const FOG = /* glsl */`
@@ -179,7 +180,7 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
   scene.environmentIntensity = 1;
   scene.fog = new Fog(BG, 1, LOD.high.far);
   const shared = {
-    uFront: { value: new Vector4() }, uBand: { value: BAND }, uFocus: { value: FOCUS }, uAperture: { value: APERTURE }, uBond: { value: BOND }, uHeat: { value: 0 }, uTime: { value: 0 },
+    uFront: { value: new Vector4() }, uCut: { value: 1e9 }, uBand: { value: BAND }, uFocus: { value: FOCUS }, uAperture: { value: APERTURE }, uBond: { value: BOND }, uHeat: { value: 0 }, uTime: { value: 0 },
     uAmber: { value: AMBER }, uViewport: { value: new Vector2(1, 1) }, uVeil: { value: new Vector4() }, uFloor: { value: new Vector3() }, uCentre: { value: new Vector2() },
   };
   const atomMaterial = patch(new MeshStandardMaterial({ color: '#b3bcc6', metalness: .45, roughness: .38, transparent: true }),
@@ -228,14 +229,17 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
     resize(width, height, nextFraming, lod) { size = [width, height]; rebuild(nextFraming, lod); },
     /**
      * state: { u: lattice progress, time: ambient seconds, emerge: 0..1 (fog opens from the
-     * background), fade: 0..1 (dims what is already drawn), over: draw on top of the frame }.
+     * background), fade: 0..1 (dims what is already drawn), over: draw on top of the frame,
+     * sway: amplitude of the ambient sway, view: a camera from cameraPath (chapter 01's exit,
+     * wafer-math.js) with cut: the z above which atoms are gone }.
      * Returns the scale bar for the current camera, or null while the lattice is not readable.
      */
-    render({ u, time, emerge, fade = 0, over = false }) {
-      const cam = latticeCamera(u, framing, time * 2 * Math.PI / 70);
+    render({ u, time, emerge, fade = 0, over = false, sway = 1, view = null, cut = 1e9 }) {
+      const cam = view ?? latticeCamera(u, framing, time * 2 * Math.PI / 70, sway);
       project(cam);
       camera.position.set(...cam.position);
-      camera.lookAt(target.copy(camera.position).addScaledVector(forward.set(...cam.forward), FOCUS));
+      camera.lookAt(view ? target.set(...view.target) : target.copy(camera.position).addScaledVector(forward.set(...cam.forward), FOCUS));
+      shared.uCut.value = cut;
       const f = latticeFront(u);
       shared.uFront.value.set(...f.normal, f.offset);
       shared.uHeat.value = f.heat;
@@ -246,9 +250,11 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
       shared.uCentre.value.set(.5 + cam.shift[0] / 2, .5 + cam.shift[1] / 2);
       // While the lattice emerges the focus racks from the nearest grain (1.1 nm) out to FOCUS;
       // it is there before the scale bar appears (emerge > .6), so the bar is always true.
-      shared.uFocus.value = 1.1 + (FOCUS - 1.1) * smoothstep(0, .6, emerge);
+      shared.uFocus.value = view ? view.d : 1.1 + (FOCUS - 1.1) * smoothstep(0, .6, emerge);
       scene.fog.near = .5 + .9 * emerge;
       scene.fog.far = 1.3 + (far - 1.3) * emerge;
+      if (view) { scene.fog.near = Math.max(scene.fog.near, view.d * .7); scene.fog.far = Math.max(scene.fog.far, view.d * 1.6 + 1.5); }
+      camera.far = Math.max(far + 1, scene.fog.far + 1); camera.updateProjectionMatrix(); project(cam);
       dim.material.uniforms.uColor.value.set(...BG_SRGB, fade);
       dim.visible = over;
       renderer.toneMappingExposure = EXPOSURE;
@@ -262,7 +268,7 @@ export async function createLattice({ renderer, environment, seed = 14 }) {
         renderer.render(scene, camera);
         renderer.setClearColor(0x000000, 0);
       }
-      return emerge > .6 ? { ...scaleBar(size[1], cam.fov), scene: 'lattice' } : null;
+      return emerge > .6 ? { ...scaleBar(size[1], cam.fov, view ? view.d : FOCUS), scene: 'lattice' } : null;
     },
     dispose() {
       for (const mesh of meshes) mesh.geometry.dispose();

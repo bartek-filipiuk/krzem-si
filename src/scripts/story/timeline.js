@@ -44,9 +44,11 @@ export function entryPhases(t) {
  * LATTICE_PIN when the material chapter pins, 1 at the end of the material chapter.
  */
 export const LATTICE_PIN = .2;
+/** Chapter 01 progress where the lattice glide ends; the rest of the chapter is the wafer (wafer-math.js). */
+export const GLIDE_END = .8;
 export function latticeProgress({ index, progress, hero }) {
   if (index === 0) return clamp((hero - ENTRY.lattice) / (1 - ENTRY.lattice)) * LATTICE_PIN;
-  return index === 1 ? LATTICE_PIN + (1 - LATTICE_PIN) * progress : 1;
+  return index === 1 ? LATTICE_PIN + (1 - LATTICE_PIN) * Math.min(1, progress / GLIDE_END) : 1;
 }
 
 export function createScrollReader(sections, footer) {
