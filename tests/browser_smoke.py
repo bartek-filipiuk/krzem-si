@@ -282,6 +282,7 @@ with sync_playwright() as p:
 
     for name, viewport, config, expect in [
         ('mobile', {'width': 390, 'height': 844}, {'is_mobile': True, 'has_touch': True, 'device_scale_factor': 2}, 'webgl'),
+        ('phone-360', {'width': 360, 'height': 800}, {'is_mobile': True, 'has_touch': True, 'device_scale_factor': 2}, 'webgl'),
         ('small-phone', {'width': 320, 'height': 640}, {'is_mobile': True, 'has_touch': True}, 'webgl'),
         ('landscape-phone', {'width': 844, 'height': 390}, {'is_mobile': True, 'has_touch': True}, 'webgl'),
         ('tablet', {'width': 1024, 'height': 768}, {}, 'webgl'),
@@ -305,9 +306,33 @@ with sync_playwright() as p:
         for chapter in CHAPTERS:
             goto_chapter(page, chapter, .5)
             check(f'{name}/{chapter}: heading visible', page.locator(f'#{chapter} h1,#{chapter} h2').is_visible())
-            if chapter == 'tranzystor' and name in ('mobile', 'no-javascript', 'reduced-motion', 'tablet'):
+            if chapter == 'tranzystor' and name in ('mobile', 'phone-360', 'no-javascript', 'reduced-motion', 'tablet'):
                 page.wait_for_timeout(200)
                 check(f'{name}: FinFET labels clear of each other and of the copy', labels_ok(page))
+        page.close()
+
+    # No micro-text: every rendered text node is at least 11 px on desktop, tablet and phones, live
+    # and static, with the AI demo open and closed.
+    SMALLEST = '''()=>{let min=[99,''];const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+      while(n=w.nextNode()){if(!n.textContent.trim())continue;const e=n.parentElement;if(!e||!e.getClientRects().length)continue;
+        const cs=getComputedStyle(e);if(cs.visibility!=='visible'||e.closest('[hidden],[aria-hidden=true] noscript'))continue;
+        const r=e.getBoundingClientRect();if(r.width<2&&r.height<2)continue;
+        const f=parseFloat(cs.fontSize);if(f<min[0])min=[f,(e.className||e.tagName)+': '+n.textContent.trim().slice(0,40)];}
+      return min}'''
+    for name, viewport, config in [
+        ('desktop', {'width': 1440, 'height': 1000}, {}), ('tablet', {'width': 1024, 'height': 768}, {}),
+        ('phone 390', {'width': 390, 'height': 844}, {'is_mobile': True, 'has_touch': True, 'device_scale_factor': 2}),
+        ('phone 360', {'width': 360, 'height': 800}, {'is_mobile': True, 'has_touch': True, 'device_scale_factor': 2}),
+        ('static desktop', {'width': 1440, 'height': 1000}, {'reduced_motion': 'reduce'}),
+        ('static phone', {'width': 390, 'height': 844}, {'reduced_motion': 'reduce', 'is_mobile': True}),
+    ]:
+        page = browser.new_page(viewport=viewport, **config)
+        load(page, live=not name.startswith('static'))
+        sizes = [page.evaluate(SMALLEST)]
+        page.evaluate("document.querySelector('#ai-toggle').click()"); page.wait_for_timeout(100)
+        sizes.append(page.evaluate(SMALLEST))
+        smallest = min(sizes)
+        check(f'Type: no text below 11 px ({name}; smallest {smallest[0]} px, {smallest[1]})', smallest[0] >= 11)
         page.close()
 
     # Explicit user choice beats reduced motion.
