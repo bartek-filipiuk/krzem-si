@@ -110,7 +110,7 @@ const paths = {};
 export function worldCamera(u, framing = 'desktop', drift = 0) {
   const m = framing === 'mobile';
   // A phone: the device turned further across its wide band between the copy and the legend.
-  const word = (target, d, az, el) => ({ target, d: m ? d * 1.62 : d, az: m ? az + .32 : az, el, fov: m ? 40 : 30, shift: m ? [0, -.38] : [.3, -.02], aperture: .003 });
+  const word = (target, d, az, el) => ({ target, d: m ? d * 1.62 : d, az: m ? az + .32 : az, el, fov: m ? 40 : 30, shift: m ? [0, -.31] : [.3, -.02], aperture: .003 });
   paths[framing] ??= cameraPath(KEYS, [
     dieExitFrame(framing, 1e-6),
     { target: [0, 0, -1], d: m ? 90 : 55, az: .75, el: .72, fov: m ? 40 : 32, shift: m ? [0, -.45] : [.24, -.02], aperture: .012 },
